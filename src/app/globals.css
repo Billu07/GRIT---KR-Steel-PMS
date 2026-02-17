@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap");
 @import "tailwindcss";
 
 @theme {
@@ -22,29 +22,6 @@
 
 :root {
   --font-inter: "Inter", sans-serif;
-  --blue: #1a3a6b;
-  --blue-mid: #2a52a0;
-  --blue-light: #e8eef8;
-  --paste: #e8e4d9;
-  --paste-dark: #d4cfc3;
-  --paste-light: #f2efe8;
-  --ink: #1c1c1c;
-  --muted: #7a7670;
-  --rule: #c8c4b8;
-  --white: #faf9f7;
-  --red: #8b2020;
-  --red-light: #fdf0f0;
-  --amber: #92580a;
-  --amber-light: #fdf6e3;
-  --green: #2d6a4f;
-  --green-light: #edf7f2;
-
-  --font-serif: "Libre Baskerville", Georgia, serif;
-  --font-mono: "DM Mono", "Courier New", monospace;
-
-  --sidebar-w: 220px;
-  --sidebar-w-rail: 56px;
-  --topbar-h: 56px;
 }
 
 body {

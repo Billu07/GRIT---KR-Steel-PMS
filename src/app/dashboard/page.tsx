@@ -3,6 +3,22 @@
 import React, { useEffect, useState } from "react";
 import Card from "@/components/ui/Card";
 
+/*
+  Design tokens — mirrors LoginPage.tsx exactly
+  --navy:        #1A3A52
+  --navy-dark:   #132D40
+  --paste:       #EAE7DF
+  --paste-light: #F5F3EF
+  --white:       #FAFAF8
+  --ink:         #1A1A1A
+  --muted:       #7A8A93
+  --rule:        #D0CBC0
+  --accent:      #8FBED6
+  --error:       #8B2020
+  --amber:       #C4873A
+  --green:       #4A7C5A
+*/
+
 export default function DashboardPage() {
   const [data, setData] = useState({
     stats: {
@@ -28,124 +44,389 @@ export default function DashboardPage() {
       });
   }, []);
 
-  if (loading) return <div className="p-8">Loading dashboard...</div>;
+  if (loading) {
+    return (
+      <div
+        style={{
+          padding: "40px",
+          fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: "13px",
+          color: "#7A8A93",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
 
   const stats = [
     {
       title: "Jobs Today",
       value: data.stats.jobsToday,
-      borderColor: "border-t-blue-600",
+      accent: "#1A3A52",
+      light: "#EAF1F6",
     },
     {
       title: "Jobs This Month",
       value: data.stats.jobsThisMonth,
-      borderColor: "border-t-blue-400",
+      accent: "#8FBED6",
+      light: "#EBF4FA",
     },
     {
       title: "Due Jobs",
       value: data.stats.dueJobs,
-      borderColor: "border-t-orange-400",
+      accent: "#C4873A",
+      light: "#FAF3E8",
     },
     {
       title: "Overdue Jobs",
       value: data.stats.overdueJobs,
-      borderColor: "border-t-red-600",
+      accent: "#8B2020",
+      light: "#F9ECEC",
     },
   ];
 
+  const criticalityConfig: Record<
+    string,
+    { color: string; bg: string; border: string }
+  > = {
+    high: {
+      color: "#8B2020",
+      bg: "rgba(139,32,32,0.07)",
+      border: "rgba(139,32,32,0.2)",
+    },
+    medium: {
+      color: "#8B5A00",
+      bg: "rgba(196,135,58,0.10)",
+      border: "rgba(196,135,58,0.25)",
+    },
+    low: {
+      color: "#2D6A42",
+      bg: "rgba(74,124,90,0.08)",
+      border: "rgba(74,124,90,0.2)",
+    },
+  };
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Dashboard</h1>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className={`p-6 rounded-sm shadow-sm bg-white border border-gray-200 border-t-4 ${stat.borderColor}`}
+        .db-root {
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        .db-stat {
+          background: #FAFAF8;
+          border: 1px solid #D0CBC0;
+          position: relative;
+          overflow: hidden;
+          transition: box-shadow 0.18s ease, transform 0.18s ease;
+        }
+
+        .db-stat:hover {
+          box-shadow: 0 4px 18px rgba(26,58,82,0.10);
+          transform: translateY(-1px);
+        }
+
+        .db-tbody tr { transition: background 0.12s ease; }
+        .db-tbody tr:hover td { background: #EAF1F6; }
+
+        .db-table-wrap::-webkit-scrollbar { height: 4px; }
+        .db-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
+        .db-table-wrap::-webkit-scrollbar-thumb { background: #8FBED6; border-radius: 2px; }
+      `}</style>
+
+      <div className="db-root">
+        {/* Page header */}
+        <div style={{ marginBottom: "32px" }}>
+          <p
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "#4A6A7A",
+              marginBottom: "8px",
+            }}
           >
-            <div>
-              <p className="text-gray-500 uppercase text-xs font-bold tracking-wider">
-                {stat.title}
-              </p>
-              <p className="text-3xl font-extrabold text-gray-800 mt-2">
-                {stat.value}
-              </p>
-            </div>
+            KR Steel · Ship Recycling Facility
+          </p>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "14px" }}>
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "#1A3A52",
+                margin: 0,
+                lineHeight: 1,
+              }}
+            >
+              Dashboard
+            </h1>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 400,
+                letterSpacing: "0.04em",
+                color: "#7A8A93",
+              }}
+            >
+              {new Date().toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </span>
           </div>
-        ))}
-      </div>
+          <div
+            style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
+          />
+        </div>
 
-      <Card title="Recent Jobs" className="border border-gray-200 shadow-none">
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-separate border-spacing-0">
-            <thead>
-              <tr className="bg-gray-100 border-b border-gray-300">
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Job Code
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Job Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Equipment Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Due Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {data.recentJobs.length > 0 ? (
-                data.recentJobs.map((job: any) => (
-                  <tr
-                    key={job.id}
-                    className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
+        {/* Stat cards */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "16px",
+            marginBottom: "32px",
+          }}
+        >
+          {stats.map((stat, i) => (
+            <div key={i} className="db-stat">
+              <div style={{ height: "4px", background: stat.accent }} />
+              <div style={{ padding: "22px 24px 24px" }}>
+                <p
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#7A8A93",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {stat.title}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-end",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "42px",
+                      fontWeight: 600,
+                      color: "#1A1A1A",
+                      letterSpacing: "-0.03em",
+                      lineHeight: 1,
+                      margin: 0,
+                    }}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {job.jobCode}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {job.jobName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {job.equipment?.name || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-bold uppercase tracking-wide rounded-sm 
-                        ${
-                          job.criticality === "high"
-                            ? "bg-red-100 text-red-800"
-                            : job.criticality === "medium"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {job.criticality}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                      {new Date(job.dateDue).toLocaleDateString()}
+                    {stat.value}
+                  </p>
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      background: stat.light,
+                      border: `1px solid ${stat.accent}40`,
+                      borderRadius: "2px",
+                      flexShrink: 0,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent Jobs */}
+        <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
+          {/* Section header — navy bar */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 24px",
+              borderBottom: "1px solid #D0CBC0",
+              background: "#1A3A52",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#EAE7DF",
+                margin: 0,
+              }}
+            >
+              Recent Jobs
+            </p>
+            <p
+              style={{
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+                color: "rgba(234,231,223,0.45)",
+                margin: 0,
+              }}
+            >
+              {data.recentJobs.length} records
+            </p>
+          </div>
+
+          {/* Table */}
+          <div className="db-table-wrap" style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "13px",
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#EAE7DF" }}>
+                  {[
+                    "Job Code",
+                    "Job Name",
+                    "Equipment",
+                    "Criticality",
+                    "Due Date",
+                  ].map((col) => (
+                    <th
+                      key={col}
+                      style={{
+                        padding: "11px 24px",
+                        textAlign: "left",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: "#1A3A52",
+                        whiteSpace: "nowrap",
+                        borderBottom: "1px solid #D0CBC0",
+                      }}
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="db-tbody">
+                {data.recentJobs.length > 0 ? (
+                  data.recentJobs.map((job: any) => {
+                    const crit =
+                      criticalityConfig[job.criticality] ??
+                      criticalityConfig.low;
+                    return (
+                      <tr key={job.id}>
+                        <td
+                          style={{
+                            padding: "14px 24px",
+                            whiteSpace: "nowrap",
+                            fontWeight: 600,
+                            color: "#1A3A52",
+                            borderBottom: "1px solid #EAE7DF",
+                            letterSpacing: "0.04em",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {job.jobCode}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 24px",
+                            whiteSpace: "nowrap",
+                            color: "#1A1A1A",
+                            borderBottom: "1px solid #EAE7DF",
+                          }}
+                        >
+                          {job.jobName}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 24px",
+                            whiteSpace: "nowrap",
+                            color: "#5A6A73",
+                            borderBottom: "1px solid #EAE7DF",
+                          }}
+                        >
+                          {job.equipment?.name || "—"}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 24px",
+                            whiteSpace: "nowrap",
+                            borderBottom: "1px solid #EAE7DF",
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "3px 10px",
+                              fontSize: "10px",
+                              fontWeight: 600,
+                              letterSpacing: "0.1em",
+                              textTransform: "uppercase",
+                              borderRadius: "2px",
+                              color: crit.color,
+                              background: crit.bg,
+                              border: `1px solid ${crit.border}`,
+                            }}
+                          >
+                            {job.criticality}
+                          </span>
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 24px",
+                            whiteSpace: "nowrap",
+                            color: "#5A6A73",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {new Date(job.dateDue).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        padding: "48px 24px",
+                        textAlign: "center",
+                        fontSize: "12px",
+                        letterSpacing: "0.06em",
+                        color: "#7A8A93",
+                      }}
+                    >
+                      No recent jobs found.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No recent jobs found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+    </>
   );
 }

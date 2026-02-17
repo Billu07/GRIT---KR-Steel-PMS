@@ -69,116 +69,376 @@ export default function CategoryPage() {
       eq.code.toLowerCase().includes(search.toLowerCase()),
   );
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!category) return <div className="p-8">Category not found</div>;
+  if (loading)
+    return (
+      <div
+        style={{
+          padding: "40px",
+          fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: "13px",
+          color: "#7A8A93",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}
+      >
+        Loading...
+      </div>
+    );
+
+  if (!category)
+    return (
+      <div
+        style={{
+          padding: "40px",
+          fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: "13px",
+          color: "#7A8A93",
+        }}
+      >
+        Category not found.
+      </div>
+    );
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">{category.name}</h1>
-          <p className="text-sm text-gray-500">
-            {category.description || "Manage equipment in this category"}
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsEquipmentModalOpen(true)}
-          className="mt-4 md:mt-0 flex items-center"
-        >
-          <Plus size={18} className="mr-2" />
-          Add Equipment
-        </Button>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-      <Card className="mb-6">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="text-gray-400" size={20} />
+        .eq-root {
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+
+        .eq-search:focus {
+          border-color: #1A3A52 !important;
+          box-shadow: 0 0 0 3px rgba(26,58,82,0.07) !important;
+          outline: none;
+        }
+
+        .eq-tbody tr {
+          transition: background 0.12s ease;
+          cursor: pointer;
+        }
+
+        .eq-tbody tr:hover td {
+          background: #EAF1F6;
+        }
+
+        .eq-view-link {
+          color: #1A3A52;
+          font-weight: 600;
+          font-size: 12px;
+          letter-spacing: 0.06em;
+          text-decoration: none;
+          transition: color 0.15s ease;
+        }
+
+        .eq-view-link:hover {
+          color: #8FBED6;
+        }
+
+        .eq-add-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 20px;
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #EAE7DF;
+          background: #1A3A52;
+          border: none;
+          border-radius: 2px;
+          cursor: pointer;
+          transition: background 0.15s ease;
+          white-space: nowrap;
+        }
+
+        .eq-add-btn:hover { background: #1F4460; }
+        .eq-add-btn:active { background: #132D40; }
+
+        .eq-table-wrap::-webkit-scrollbar { height: 4px; }
+        .eq-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
+        .eq-table-wrap::-webkit-scrollbar-thumb { background: #8FBED6; border-radius: 2px; }
+      `}</style>
+
+      <div className="eq-root">
+        {/* ── Page header ── */}
+        <div style={{ marginBottom: "32px" }}>
+          <p
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "#4A6A7A",
+              marginBottom: "8px",
+            }}
+          >
+            KR Steel · Equipment
+          </p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: "16px",
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  fontSize: "28px",
+                  fontWeight: 600,
+                  letterSpacing: "-0.02em",
+                  color: "#1A3A52",
+                  margin: 0,
+                  lineHeight: 1,
+                }}
+              >
+                {category.name}
+              </h1>
+              <p
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 400,
+                  color: "#7A8A93",
+                  marginTop: "6px",
+                }}
+              >
+                {category.description || "Manage equipment in this category"}
+              </p>
+            </div>
+            <button
+              className="eq-add-btn"
+              onClick={() => setIsEquipmentModalOpen(true)}
+            >
+              <Plus size={14} />
+              Add Equipment
+            </button>
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-            placeholder="Search equipment..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          <div
+            style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
           />
         </div>
-      </Card>
 
-      <Card
-        title="Equipment List"
-        className="border border-gray-200 shadow-none"
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 border-b border-gray-300">
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Equipment Code
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Equipment Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {filteredEquipment.length > 0 ? (
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                filteredEquipment.map((eq: any) => (
-                  <tr
-                    key={eq.id}
-                    className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/equipment/${categoryId}/detail/${eq.id}`,
-                      )
-                    }
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      {eq.code}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {eq.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {eq.location}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-bold uppercase tracking-wide rounded-sm 
-                        ${eq.status === "active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+        {/* ── Search bar ── */}
+        <div style={{ marginBottom: "20px", position: "relative" }}>
+          <Search
+            size={14}
+            style={{
+              position: "absolute",
+              left: "14px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "#7A8A93",
+              pointerEvents: "none",
+            }}
+          />
+          <input
+            type="text"
+            className="eq-search"
+            placeholder="Search by name or code…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%",
+              maxWidth: "360px",
+              padding: "10px 14px 10px 38px",
+              fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+              fontSize: "13px",
+              color: "#1A1A1A",
+              background: "#FAFAF8",
+              border: "1px solid #D0CBC0",
+              borderRadius: "2px",
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+            }}
+          />
+        </div>
+
+        {/* ── Equipment table ── */}
+        <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
+          {/* Section header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 24px",
+              borderBottom: "1px solid #D0CBC0",
+              background: "#1A3A52",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#EAE7DF",
+                margin: 0,
+              }}
+            >
+              Equipment List
+            </p>
+            <p
+              style={{
+                fontSize: "10px",
+                letterSpacing: "0.1em",
+                color: "rgba(234,231,223,0.45)",
+                margin: 0,
+              }}
+            >
+              {filteredEquipment.length} records
+            </p>
+          </div>
+
+          <div className="eq-table-wrap" style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "13px",
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#EAE7DF" }}>
+                  {[
+                    "Equipment Code",
+                    "Equipment Name",
+                    "Location",
+                    "Status",
+                    "Actions",
+                  ].map((col) => (
+                    <th
+                      key={col}
+                      style={{
+                        padding: "11px 24px",
+                        textAlign: "left",
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        letterSpacing: "0.16em",
+                        textTransform: "uppercase",
+                        color: "#1A3A52",
+                        whiteSpace: "nowrap",
+                        borderBottom: "1px solid #D0CBC0",
+                      }}
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="eq-tbody">
+                {filteredEquipment.length > 0 ? (
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filteredEquipment.map((eq: any) => (
+                    <tr
+                      key={eq.id}
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/equipment/${categoryId}/detail/${eq.id}`,
+                        )
+                      }
+                    >
+                      <td
+                        style={{
+                          padding: "14px 24px",
+                          whiteSpace: "nowrap",
+                          fontWeight: 600,
+                          color: "#1A3A52",
+                          borderBottom: "1px solid #EAE7DF",
+                          letterSpacing: "0.04em",
+                          fontSize: "12px",
+                        }}
                       >
-                        {eq.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#0052CC] font-bold hover:underline">
-                      View Jobs &rarr;
+                        {eq.code}
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 24px",
+                          whiteSpace: "nowrap",
+                          color: "#1A1A1A",
+                          borderBottom: "1px solid #EAE7DF",
+                        }}
+                      >
+                        {eq.name}
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 24px",
+                          whiteSpace: "nowrap",
+                          color: "#5A6A73",
+                          borderBottom: "1px solid #EAE7DF",
+                        }}
+                      >
+                        {eq.location}
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 24px",
+                          whiteSpace: "nowrap",
+                          borderBottom: "1px solid #EAE7DF",
+                        }}
+                      >
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "3px 10px",
+                            fontSize: "10px",
+                            fontWeight: 600,
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            borderRadius: "2px",
+                            color:
+                              eq.status === "active" ? "#2D6A42" : "#5A6A73",
+                            background:
+                              eq.status === "active"
+                                ? "rgba(74,124,90,0.08)"
+                                : "rgba(90,106,115,0.08)",
+                            border:
+                              eq.status === "active"
+                                ? "1px solid rgba(74,124,90,0.2)"
+                                : "1px solid rgba(90,106,115,0.2)",
+                          }}
+                        >
+                          {eq.status}
+                        </span>
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 24px",
+                          whiteSpace: "nowrap",
+                          borderBottom: "1px solid #EAE7DF",
+                        }}
+                      >
+                        <span className="eq-view-link">View Jobs →</span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        padding: "48px 24px",
+                        textAlign: "center",
+                        fontSize: "12px",
+                        letterSpacing: "0.06em",
+                        color: "#7A8A93",
+                      }}
+                    >
+                      No equipment found. Click "Add Equipment" to create one.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No equipment found. Click "Add Equipment" to create one.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </Card>
+      </div>
 
       <EquipmentModal
         isOpen={isEquipmentModalOpen}
@@ -186,6 +446,6 @@ export default function CategoryPage() {
         onSubmit={handleCreateEquipment}
         categoryId={parseInt(categoryId)}
       />
-    </div>
+    </>
   );
 }

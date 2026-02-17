@@ -32,16 +32,17 @@ model EquipmentCategory {
 }
 
 model Equipment {
-  id                 Int                 @id @default(autoincrement())
-  code               String              @unique
+  id                 Int                  @id @default(autoincrement())
+  code               String               @unique
   name               String
   categoryId         Int
-  category           EquipmentCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category           EquipmentCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   location           String?
   description        String?
-  status             EquipmentStatus     @default(active)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  imageUrl           String?              // Supabase Storage public URL
+  status             EquipmentStatus      @default(active)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   jobs               Job[]
   maintenanceHistory MaintenanceHistory[]
 
@@ -49,26 +50,26 @@ model Equipment {
 }
 
 model Job {
-  id                 Int                 @id @default(autoincrement())
-  jobCode            String              @unique
+  id                 Int                  @id @default(autoincrement())
+  jobCode            String               @unique
   jobName            String
   jobType            String?
   equipmentId        Int
-  equipment          Equipment           @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  category           String?             // Denormalized for easier querying if needed, or derived
+  equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  category           String?
   flag               String?
   dateDone           DateTime
-  hoursWorked        Float               @default(0)
+  hoursWorked        Float                @default(0)
   plannedHours       Float
   frequency          Frequency
   dateDue            DateTime
-  remainingHours     Float               @default(0)
+  remainingHours     Float                @default(0)
   criticality        Criticality
-  overdueDays        Int                 @default(0)
+  overdueDays        Int                  @default(0)
   createdBy          Int
-  creator            User                @relation("JobCreator", fields: [createdBy], references: [id])
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  creator            User                 @relation("JobCreator", fields: [createdBy], references: [id])
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
   maintenanceHistory MaintenanceHistory[]
 
   @@map("jobs")
@@ -102,7 +103,7 @@ enum EquipmentStatus {
 enum Frequency {
   weekly
   monthly
-  quarterly  @map("3-monthly") // Prisma doesn't like numbers starting identifiers directly in some cases, mapping is safer or use underscores
+  quarterly   @map("3-monthly")
   yearly
   five_yearly @map("5-yearly")
 }

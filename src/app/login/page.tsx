@@ -19,9 +19,7 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
@@ -41,399 +39,383 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --blue: #1a3a6b;
-          --blue-mid: #2a52a0;
-          --paste: #e8e4d9;
-          --paste-dark: #d4cfc3;
-          --paste-light: #f2efe8;
-          --ink: #1c1c1c;
-          --muted: #7a7670;
-          --rule: #c8c4b8;
-          --white: #faf9f7;
-          --red: #8b2020;
+          --navy:        #1A3A52;
+          --navy-dark:   #132D40;
+          --navy-hover:  #1F4460;
+          --paste:       #EAE7DF;
+          --paste-light: #F5F3EF;
+          --white:       #FAFAF8;
+          --ink:         #1A1A1A;
+          --muted:       #7A8A93;
+          --rule:        #D0CBC0;
+          --accent:      #8FBED6;
+          --error:       #8B2020;
+          --green:       #4A7C5A;
+          --font:        'DM Sans', 'Helvetica Neue', Arial, sans-serif;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        .login-root {
+        .lr {
           min-height: 100vh;
           display: flex;
-          background-color: var(--paste);
-          font-family: 'DM Mono', monospace;
-          position: relative;
-          overflow: hidden;
+          background: var(--paste-light);
+          font-family: var(--font);
+          -webkit-font-smoothing: antialiased;
         }
 
-        /* Left panel — decorative industrial stripe */
-        .login-sidebar {
-          width: 44%;
-          background-color: var(--blue);
-          position: relative;
+        /* ── Left panel ───────────────────────────── */
+        .lr-left {
+          width: 420px;
+          flex-shrink: 0;
+          background: var(--navy);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding: 48px 40px;
+          padding: 52px 44px;
+          position: relative;
           overflow: hidden;
-          flex-shrink: 0;
         }
 
-        /* Subtle ruled-line texture on sidebar */
-        .login-sidebar::before {
+        /* Subtle horizontal rule texture */
+        .lr-left::after {
           content: '';
           position: absolute;
           inset: 0;
           background-image: repeating-linear-gradient(
             0deg,
             transparent,
-            transparent 39px,
-            rgba(255,255,255,0.04) 39px,
-            rgba(255,255,255,0.04) 40px
+            transparent 47px,
+            rgba(255,255,255,0.035) 47px,
+            rgba(255,255,255,0.035) 48px
           );
           pointer-events: none;
         }
 
-        /* Shipyard background image, low opacity */
-        .sidebar-bg {
+        /* Vertical accent bar */
+        .lr-left::before {
+          content: '';
           position: absolute;
-          inset: 0;
-          background-image: url('/shipyard-bg.jpg');
-          background-size: cover;
-          background-position: center;
-          opacity: 0.08;
-          filter: grayscale(1);
+          top: 0;
+          right: 0;
+          width: 3px;
+          height: 100%;
+          background: var(--accent);
+          opacity: 0.35;
         }
 
-        .sidebar-top {
-          position: relative;
-          z-index: 1;
-        }
+        .lr-left-top { position: relative; z-index: 1; }
+        .lr-left-bot { position: relative; z-index: 1; }
 
-        .sidebar-eyebrow {
-          font-family: 'DM Mono', monospace;
+        .lr-eyebrow {
           font-size: 10px;
+          font-weight: 500;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(232, 228, 217, 0.5);
+          color: var(--accent);
+          opacity: 0.75;
+          margin-bottom: 40px;
+        }
+
+        .lr-brand {
+          font-size: 42px;
+          font-weight: 600;
+          letter-spacing: -0.01em;
+          color: var(--paste-light);
+          line-height: 1.05;
+          margin-bottom: 6px;
+        }
+
+        .lr-brand-sub {
+          font-size: 11px;
+          font-weight: 400;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: rgba(234,231,223,0.45);
+          margin-bottom: 40px;
+        }
+
+        .lr-rule {
+          width: 32px;
+          height: 1px;
+          background: rgba(143,190,214,0.4);
           margin-bottom: 28px;
         }
 
-        .sidebar-title {
-          font-family: 'Libre Baskerville', serif;
-          font-size: 72px;
-          font-weight: 700;
-          color: var(--paste);
-          line-height: 1;
-          letter-spacing: -0.02em;
-          margin-bottom: 12px;
-        }
-
-        .sidebar-title em {
-          font-style: italic;
-          color: rgba(232, 228, 217, 0.6);
-        }
-
-        .sidebar-grit-expand {
-          font-family: 'DM Mono', monospace;
+        .lr-desc {
           font-size: 13px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: rgba(232, 228, 217, 0.45);
-          line-height: 1;
-          white-space: nowrap;
+          font-weight: 300;
+          line-height: 1.8;
+          color: rgba(234,231,223,0.5);
+          max-width: 280px;
         }
 
-        .sidebar-rule {
-          width: 40px;
-          height: 2px;
-          background: rgba(232, 228, 217, 0.3);
-          margin: 32px 0;
-        }
-
-        .sidebar-desc {
-          font-size: 12px;
-          line-height: 1.9;
-          color: rgba(232, 228, 217, 0.5);
-          letter-spacing: 0.02em;
-          max-width: 240px;
-        }
-
-        .sidebar-bottom {
-          position: relative;
-          z-index: 1;
-        }
-
-        .sidebar-system-label {
+        .lr-version {
           font-size: 9px;
-          letter-spacing: 0.2em;
+          font-weight: 400;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: rgba(232, 228, 217, 0.25);
+          color: rgba(234,231,223,0.2);
         }
 
-        /* Right panel — form */
-        .login-form-panel {
+        /* ── Right panel ──────────────────────────── */
+        .lr-right {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 48px 40px;
-          background-color: var(--paste-light);
+          background: var(--paste-light);
         }
 
-        .login-card {
+        .lr-card {
           width: 100%;
-          max-width: 360px;
-          animation: fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-          opacity: 0;
+          max-width: 368px;
+          animation: lr-up 0.5s cubic-bezier(0.22,1,0.36,1) both;
         }
 
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
+        @keyframes lr-up {
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Logo area */
-        .login-logo-wrap {
+        /* Logo row */
+        .lr-logo-row {
           display: flex;
           align-items: center;
           gap: 14px;
-          margin-bottom: 40px;
+          margin-bottom: 36px;
         }
 
-        .login-logo-img {
-          height: 40px;
+        .lr-logo-img {
+          height: 38px;
           width: auto;
           object-fit: contain;
         }
 
-        .login-logo-text {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .login-logo-name {
-          font-family: 'Libre Baskerville', serif;
-          font-size: 20px;
-          font-weight: 700;
-          letter-spacing: 0.04em;
-          color: var(--blue);
+        .lr-logo-name {
+          font-size: 18px;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          color: var(--navy);
           line-height: 1;
         }
 
-        .login-logo-sub {
+        .lr-logo-tag {
           font-size: 9px;
+          font-weight: 500;
           letter-spacing: 0.2em;
           text-transform: uppercase;
           color: var(--muted);
-          margin-top: 4px;
+          margin-top: 5px;
         }
 
-        /* Divider */
-        .login-divider {
+        .lr-divider {
           width: 100%;
           height: 1px;
           background: var(--rule);
           margin-bottom: 36px;
         }
 
-        /* Form heading */
-        .login-heading {
-          font-family: 'Libre Baskerville', serif;
-          font-size: 22px;
-          font-weight: 400;
+        /* Heading */
+        .lr-heading {
+          font-size: 20px;
+          font-weight: 500;
           color: var(--ink);
-          margin-bottom: 6px;
           letter-spacing: -0.01em;
+          margin-bottom: 4px;
         }
 
-        .login-subheading {
-          font-size: 11px;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
+        .lr-subheading {
+          font-size: 12px;
+          font-weight: 400;
+          letter-spacing: 0.04em;
           color: var(--muted);
           margin-bottom: 32px;
         }
 
-        /* Field */
-        .field-group {
+        /* Fields */
+        .lr-field {
           margin-bottom: 20px;
         }
 
-        .field-label {
+        .lr-label {
           display: block;
-          font-size: 9px;
-          font-weight: 500;
-          letter-spacing: 0.2em;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--muted);
-          margin-bottom: 8px;
+          color: var(--navy);
+          opacity: 0.7;
+          margin-bottom: 7px;
         }
 
-        .field-input {
+        .lr-input {
           width: 100%;
-          padding: 12px 14px;
-          font-family: 'DM Mono', monospace;
-          font-size: 13px;
+          padding: 11px 14px;
+          font-family: var(--font);
+          font-size: 14px;
+          font-weight: 400;
           color: var(--ink);
-          background-color: var(--white);
+          background: var(--white);
           border: 1px solid var(--rule);
-          border-radius: 0;
+          border-radius: 2px;
           outline: none;
-          transition: border-color 0.15s ease, background 0.15s ease;
-          letter-spacing: 0.02em;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          -webkit-appearance: none;
         }
 
-        .field-input::placeholder {
+        .lr-input::placeholder {
           color: var(--rule);
-          letter-spacing: 0.05em;
         }
 
-        .field-input:focus {
-          border-color: var(--blue);
-          background-color: #fff;
+        .lr-input:focus {
+          border-color: var(--navy);
+          box-shadow: 0 0 0 3px rgba(26,58,82,0.07);
         }
 
-        .field-input:disabled {
-          opacity: 0.5;
+        .lr-input:disabled {
+          opacity: 0.45;
           cursor: not-allowed;
+          background: var(--paste);
         }
 
         /* Error */
-        .login-error {
+        .lr-error {
           padding: 10px 14px;
-          background: transparent;
-          border-left: 2px solid var(--red);
-          color: var(--red);
-          font-size: 11px;
-          letter-spacing: 0.04em;
+          border-left: 2px solid var(--error);
+          color: var(--error);
+          font-size: 12px;
+          font-weight: 400;
+          letter-spacing: 0.02em;
           margin-bottom: 20px;
-          animation: fadeUp 0.25s ease forwards;
+          background: rgba(139,32,32,0.04);
+          animation: lr-up 0.2s ease both;
         }
 
-        /* Submit button */
-        .login-btn {
-          width: 100%;
-          padding: 13px 20px;
-          font-family: 'DM Mono', monospace;
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: var(--paste);
-          background-color: var(--blue);
-          border: none;
-          border-radius: 0;
-          cursor: pointer;
-          transition: background-color 0.15s ease, opacity 0.15s ease;
-          margin-top: 8px;
+        /* Button override */
+        .lr-btn {
+          display: block !important;
+          width: 100% !important;
+          padding: 12px 20px !important;
+          font-family: var(--font) !important;
+          font-size: 12px !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.16em !important;
+          text-transform: uppercase !important;
+          color: var(--paste-light) !important;
+          background: var(--navy) !important;
+          border: none !important;
+          border-radius: 2px !important;
+          cursor: pointer !important;
+          transition: background 0.15s ease !important;
+          margin-top: 6px !important;
         }
 
-        .login-btn:hover:not(:disabled) {
-          background-color: var(--blue-mid);
+        .lr-btn:hover:not(:disabled) {
+          background: var(--navy-hover) !important;
         }
 
-        .login-btn:active:not(:disabled) {
-          transform: scale(0.995);
+        .lr-btn:active:not(:disabled) {
+          background: var(--navy-dark) !important;
         }
 
-        .login-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
+        .lr-btn:disabled {
+          opacity: 0.55 !important;
+          cursor: not-allowed !important;
         }
 
-        /* Footer meta */
-        .login-meta {
+        /* Footer */
+        .lr-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-top: 32px;
+          margin-top: 28px;
           padding-top: 20px;
           border-top: 1px solid var(--rule);
         }
 
-        .login-meta-item {
-          font-size: 9px;
-          letter-spacing: 0.15em;
+        .lr-footer-item {
+          font-size: 10px;
+          font-weight: 400;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           color: var(--muted);
           opacity: 0.6;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
-        .status-dot {
-          display: inline-block;
+        .lr-dot {
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background: #4a7c5a;
-          margin-right: 6px;
-          vertical-align: middle;
-          position: relative;
-          top: -1px;
+          background: var(--green);
+          flex-shrink: 0;
         }
 
-        /* Responsive collapse */
-        @media (max-width: 720px) {
-          .login-sidebar { display: none; }
-          .login-form-panel { padding: 32px 24px; }
+        /* Responsive */
+        @media (max-width: 700px) {
+          .lr-left { display: none; }
+          .lr-right { padding: 32px 24px; }
         }
       `}</style>
 
-      <div className="login-root">
-        {/* Left Sidebar */}
-        <div className="login-sidebar">
-          <div className="sidebar-bg" />
-
-          <div className="sidebar-top">
-            <p className="sidebar-eyebrow">KR Steel · Ship Recycling Yard</p>
-            <h2 className="sidebar-title">GRIT</h2>
-            <p className="sidebar-grit-expand">
-              Gear Reliability and Intervention Tracker
+      <div className="lr">
+        {/* ── Left Panel ── */}
+        <div className="lr-left">
+          <div className="lr-left-top">
+            <p className="lr-eyebrow">KR Steel · Ship Recycling Facility</p>
+            <h2 className="lr-brand">GRIT</h2>
+            <p className="lr-brand-sub">
+              Gear Reliability & Intervention Tracker
             </p>
-            <div className="sidebar-rule" />
-            <p className="sidebar-desc">
-              Plant maintenance and intervention management platform for
-              industrial operations. Authorized personnel only.
+            <div className="lr-rule" />
+            <p className="lr-desc">
+              Dedicated maintenance management system for KR Steel Ship
+              Recycling Facility. Authorized personnel only.
             </p>
           </div>
-
-          <div className="sidebar-bottom">
-            <p className="sidebar-system-label">
-              Gear Reliability and Intervention Tracker · v1.0.0
+          <div className="lr-left-bot">
+            <p className="lr-version">
+              KR Steel Ship Recycling Facility · GRIT · v1.0.0
             </p>
           </div>
         </div>
 
-        {/* Right Form Panel */}
-        <div className="login-form-panel">
-          <div className="login-card">
+        {/* ── Right Panel ── */}
+        <div className="lr-right">
+          <div className="lr-card">
             {/* Logo */}
-            <div className="login-logo-wrap">
+            <div className="lr-logo-row">
               <img
                 src="/logo.png"
-                alt="KR Steel Logo"
-                className="login-logo-img"
+                alt="KR Steel"
+                className="lr-logo-img"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <div className="login-logo-text">
-                <span className="login-logo-name">KR Steel</span>
-                <span className="login-logo-sub">
-                  GRIT — Maintenance Platform
-                </span>
+              <div>
+                <div className="lr-logo-name">KR Steel</div>
+                <div className="lr-logo-tag">
+                  KR Steel Ship Recycling Facility
+                </div>
               </div>
             </div>
 
-            <div className="login-divider" />
+            <div className="lr-divider" />
 
-            <h1 className="login-heading">Welcome back</h1>
-            <p className="login-subheading">Sign in to continue</p>
+            <h1 className="lr-heading">Sign in</h1>
+            <p className="lr-subheading">Enter your credentials to continue</p>
 
             <form onSubmit={handleLogin}>
-              <div className="field-group">
-                <label className="field-label" htmlFor="username">
+              <div className="lr-field">
+                <label className="lr-label" htmlFor="username">
                   Username
                 </label>
                 <input
@@ -442,14 +424,14 @@ export default function LoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={isLoading}
-                  className="field-input"
-                  placeholder="Enter your ID"
+                  className="lr-input"
+                  placeholder="Your username"
                   autoComplete="username"
                 />
               </div>
 
-              <div className="field-group">
-                <label className="field-label" htmlFor="password">
+              <div className="lr-field">
+                <label className="lr-label" htmlFor="password">
                   Password
                 </label>
                 <input
@@ -458,29 +440,29 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="field-input"
+                  className="lr-input"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
               </div>
 
               {error && (
-                <div className="login-error" role="alert">
+                <div className="lr-error" role="alert">
                   {error}
                 </div>
               )}
 
-              <Button type="submit" disabled={isLoading} className="login-btn">
-                {isLoading ? "Authenticating..." : "Access Dashboard"}
+              <Button type="submit" disabled={isLoading} className="lr-btn">
+                {isLoading ? "Authenticating…" : "Access Dashboard"}
               </Button>
             </form>
 
-            <div className="login-meta">
-              <span className="login-meta-item">
-                <span className="status-dot" />
-                Secure Connection
+            <div className="lr-footer">
+              <span className="lr-footer-item">
+                <span className="lr-dot" />
+                Secure connection
               </span>
-              <span className="login-meta-item">v1.0.0</span>
+              <span className="lr-footer-item">v1.0.0</span>
             </div>
           </div>
         </div>

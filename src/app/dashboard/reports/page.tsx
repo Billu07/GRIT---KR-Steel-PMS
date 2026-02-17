@@ -4,16 +4,13 @@ import React, { useState } from "react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { Download, FileText, Settings, Filter } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { format } from "date-fns";
+import { exportJobReportPdf, exportEquipmentReportPdf } from "@/lib/pdfExport";
 
 export default function ReportsBuilderPage() {
   const [loading, setLoading] = useState(false);
 
-  // Builder State
-  const [reportType, setReportType] = useState("jobs"); // 'jobs' | 'equipment'
-  const [groupBy, setGroupBy] = useState("category"); // 'category' | 'equipment' | 'none'
+  const [reportType, setReportType] = useState("jobs");
+  const [groupBy, setGroupBy] = useState("category");
   const [filterCriticality, setFilterCriticality] = useState("all");
   const [filterOverdue, setFilterOverdue] = useState(false);
 
@@ -36,278 +33,464 @@ export default function ReportsBuilderPage() {
     if (!data) return;
 
     const { jobs, equipment } = data;
-    const doc = new jsPDF();
-    const title =
-      reportType === "jobs"
-        ? "Maintenance Job Report"
-        : "Equipment Registry Report";
-
-    // Header
-    doc.setFontSize(18);
-    doc.text(title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${format(new Date(), "yyyy-MM-dd HH:mm")}`, 14, 28);
-    doc.text(
-      `Filters: Crit=${filterCriticality}, Overdue=${filterOverdue ? "Yes" : "No"}`,
-      14,
-      33,
-    );
-
-    let startY = 40;
 
     if (reportType === "jobs") {
-      // 1. Filter Data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let filteredJobs = jobs.filter((job: any) => {
-        if (filterOverdue && job.overdueDays <= 0) return false;
-        if (
-          filterCriticality !== "all" &&
-          job.criticality !== filterCriticality
-        )
-          return false;
-        return true;
+      exportJobReportPdf({
+        jobs,
+        equipment,
+        groupBy,
+        filterCriticality,
+        filterOverdue,
       });
-
-      // 2. Group Data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const grouped = filteredJobs.reduce((acc: any, job: any) => {
-        let key = "All Jobs";
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const eq = equipment.find((e: any) => e.id === job.equipmentId);
-
-        if (groupBy === "category") {
-          key = eq?.category?.name || "Uncategorized";
-        } else if (groupBy === "equipment") {
-          key = eq ? `${eq.name} (${eq.code})` : "Unknown";
-        }
-
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(job);
-        return acc;
-      }, {});
-
-      // 3. Render Tables
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.entries(grouped).forEach(
-        ([groupName, groupJobs]: [string, any]) => {
-          // Check page break
-          if (startY > 250) {
-            doc.addPage();
-            startY = 20;
-          }
-
-          doc.setFontSize(12);
-          doc.setFont("helvetica", "bold");
-          doc.text(groupName, 14, startY);
-          startY += 5;
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const tableData = groupJobs.map((job: any) => [
-            job.jobCode,
-            job.jobName,
-            format(new Date(job.dateDue), "yyyy-MM-dd"),
-            job.criticality,
-            job.overdueDays > 0 ? `+${job.overdueDays}` : "OK",
-          ]);
-
-          autoTable(doc, {
-            startY: startY,
-            head: [["Code", "Job Name", "Due Date", "Crit", "Overdue"]],
-            body: tableData,
-            theme: "striped",
-            headStyles: { fillColor: [0, 82, 204] },
-            margin: { left: 14, right: 14 },
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          startY = (doc as any).lastAutoTable.finalY + 10;
-        },
-      );
     } else {
-      // EQUIPMENT REPORT
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let filteredEq = equipment; // Add filters if needed for equipment
-
-      // Grouping
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const grouped = filteredEq.reduce((acc: any, eq: any) => {
-        let key = "All Equipment";
-        if (groupBy === "category") {
-          key = eq.category?.name || "Uncategorized";
-        }
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(eq);
-        return acc;
-      }, {});
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.entries(grouped).forEach(([groupName, groupEq]: [string, any]) => {
-        if (startY > 250) {
-          doc.addPage();
-          startY = 20;
-        }
-
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.text(groupName, 14, startY);
-        startY += 5;
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tableData = groupEq.map((eq: any) => [
-          eq.code,
-          eq.name,
-          eq.location,
-          eq.status,
-        ]);
-
-        autoTable(doc, {
-          startY: startY,
-          head: [["Code", "Name", "Location", "Status"]],
-          body: tableData,
-          theme: "grid",
-          headStyles: { fillColor: [0, 82, 204] },
-        });
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        startY = (doc as any).lastAutoTable.finalY + 10;
-      });
+      exportEquipmentReportPdf({ equipment, groupBy });
     }
+  };
 
-    doc.save(`report_${reportType}_${format(new Date(), "yyyyMMdd")}.pdf`);
+  const selectStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "10px 12px",
+    fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+    fontSize: "13px",
+    fontWeight: 400,
+    color: "#1A1A1A",
+    background: "#FAFAF8",
+    border: "1px solid #D0CBC0",
+    borderRadius: "2px",
+    outline: "none",
+    cursor: "pointer",
+    transition: "border-color 0.15s ease",
+    appearance: "none",
+    WebkitAppearance: "none",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A8A93' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 12px center",
+    paddingRight: "32px",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "10px",
+    fontWeight: 600,
+    letterSpacing: "0.16em",
+    textTransform: "uppercase",
+    color: "#1A3A52",
+    opacity: 0.7,
+    marginBottom: "8px",
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Report Builder</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Configure and generate custom PDF reports.
-        </p>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* CONFIG PANEL */}
-        <Card className="lg:col-span-1 h-fit border-t-4 border-t-blue-600">
-          <div className="mb-6 pb-4 border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center">
-              <Settings size={20} className="mr-2 text-blue-600" />
-              Configuration
-            </h2>
-          </div>
+        .rpt-root {
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                1. Report Type
-              </label>
-              <select
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value)}
-                className="w-full border border-gray-300 rounded-sm p-2 focus:ring-2 focus:ring-blue-500"
+        .rpt-select:focus { border-color: #1A3A52 !important; box-shadow: 0 0 0 3px rgba(26,58,82,0.07); }
+
+        .rpt-checkbox {
+          width: 15px; height: 15px;
+          accent-color: #1A3A52;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .rpt-generate-btn {
+          width: 100%;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          padding: 13px 20px;
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          font-size: 11px; font-weight: 600;
+          letter-spacing: 0.18em; text-transform: uppercase;
+          color: #EAE7DF; background: #1A3A52;
+          border: none; border-radius: 2px;
+          cursor: pointer; transition: background 0.15s ease;
+        }
+        .rpt-generate-btn:hover:not(:disabled)  { background: #1F4460; }
+        .rpt-generate-btn:active:not(:disabled) { background: #132D40; }
+        .rpt-generate-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .rpt-preview-chip {
+          background: #FAFAF8;
+          border: 1px solid #D0CBC0;
+          padding: 16px 20px;
+        }
+      `}</style>
+
+      <div className="rpt-root">
+        {/* ── Page header ── */}
+        <div style={{ marginBottom: "32px" }}>
+          <p
+            style={{
+              fontSize: "10px",
+              fontWeight: 600,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "#4A6A7A",
+              marginBottom: "8px",
+            }}
+          >
+            KR Steel · Ship Recycling Facility
+          </p>
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "#1A3A52",
+              margin: 0,
+              lineHeight: 1,
+            }}
+          >
+            Report Builder
+          </h1>
+          <p style={{ fontSize: "13px", color: "#7A8A93", marginTop: "6px" }}>
+            Configure and generate custom PDF reports.
+          </p>
+          <div
+            style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
+          />
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "320px 1fr",
+            gap: "24px",
+            alignItems: "start",
+          }}
+        >
+          {/* ── Config panel ── */}
+          <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
+            {/* Panel header */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderBottom: "1px solid #D0CBC0",
+                background: "#1A3A52",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "#EAE7DF",
+                  margin: 0,
+                }}
               >
-                <option value="jobs">Job History / Maintenance</option>
-                <option value="equipment">Equipment Registry</option>
-              </select>
+                Configuration
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2">
-                2. Group By
-              </label>
-              <select
-                value={groupBy}
-                onChange={(e) => setGroupBy(e.target.value)}
-                className="w-full border border-gray-300 rounded-sm p-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="none">No Grouping (Flat List)</option>
-                <option value="category">Category</option>
-                {reportType === "jobs" && (
-                  <option value="equipment">Equipment</option>
-                )}
-              </select>
-            </div>
-
-            {reportType === "jobs" && (
+            <div
+              style={{
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "24px",
+              }}
+            >
+              {/* Report type */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
-                  3. Filters
-                </label>
-                <div className="space-y-3 p-3 bg-gray-50 rounded-sm border border-gray-200">
-                  <div>
-                    <span className="text-xs font-bold text-gray-500 uppercase">
-                      Criticality
-                    </span>
-                    <select
-                      value={filterCriticality}
-                      onChange={(e) => setFilterCriticality(e.target.value)}
-                      className="w-full mt-1 border border-gray-300 rounded-sm p-1 text-sm"
+                <label style={labelStyle}>1 · Report Type</label>
+                <select
+                  className="rpt-select"
+                  style={selectStyle}
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value)}
+                >
+                  <option value="jobs">Job History / Maintenance</option>
+                  <option value="equipment">Equipment Registry</option>
+                </select>
+              </div>
+
+              {/* Group by */}
+              <div>
+                <label style={labelStyle}>2 · Group By</label>
+                <select
+                  className="rpt-select"
+                  style={selectStyle}
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value)}
+                >
+                  <option value="none">No Grouping (Flat List)</option>
+                  <option value="category">Category</option>
+                  {reportType === "jobs" && (
+                    <option value="equipment">Equipment</option>
+                  )}
+                </select>
+              </div>
+
+              {/* Filters — jobs only */}
+              {reportType === "jobs" && (
+                <div>
+                  <label style={labelStyle}>3 · Filters</label>
+                  <div
+                    style={{
+                      padding: "16px",
+                      background: "#F0EDE6",
+                      border: "1px solid #D0CBC0",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "14px",
+                    }}
+                  >
+                    <div>
+                      <p
+                        style={{
+                          fontSize: "9px",
+                          fontWeight: 600,
+                          letterSpacing: "0.18em",
+                          textTransform: "uppercase",
+                          color: "#7A8A93",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Criticality
+                      </p>
+                      <select
+                        className="rpt-select"
+                        style={{
+                          ...selectStyle,
+                          fontSize: "12px",
+                          padding: "8px 32px 8px 12px",
+                        }}
+                        value={filterCriticality}
+                        onChange={(e) => setFilterCriticality(e.target.value)}
+                      >
+                        <option value="all">All Levels</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
                     >
-                      <option value="all">All</option>
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="overdue"
-                      checked={filterOverdue}
-                      onChange={(e) => setFilterOverdue(e.target.checked)}
-                      className="h-4 w-4 text-blue-600 rounded"
-                    />
-                    <label
-                      htmlFor="overdue"
-                      className="ml-2 text-sm text-gray-700 font-medium"
-                    >
-                      Overdue Jobs Only
-                    </label>
+                      <input
+                        type="checkbox"
+                        id="overdue"
+                        className="rpt-checkbox"
+                        checked={filterOverdue}
+                        onChange={(e) => setFilterOverdue(e.target.checked)}
+                      />
+                      <label
+                        htmlFor="overdue"
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          color: "#1A1A1A",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Overdue jobs only
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <Button
-              onClick={generateReport}
-              disabled={loading}
-              className="w-full mt-4 flex justify-center items-center py-3 bg-blue-700 hover:bg-blue-800"
+              {/* Divider */}
+              <div style={{ height: "1px", background: "#D0CBC0" }} />
+
+              {/* Generate button */}
+              <button
+                className="rpt-generate-btn"
+                onClick={generateReport}
+                disabled={loading}
+              >
+                <Download size={13} />
+                {loading ? "Generating…" : "Download PDF Report"}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Preview panel ── */}
+          <div
+            style={{
+              background: "#F5F3EF",
+              border: "1px solid #D0CBC0",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "64px 48px",
+              minHeight: "400px",
+            }}
+          >
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                background: "#FAFAF8",
+                border: "1px solid #D0CBC0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "20px",
+              }}
             >
-              <Download size={18} className="mr-2" />
-              {loading ? "Generating..." : "Download PDF Report"}
-            </Button>
-          </div>
-        </Card>
+              <FileText size={24} style={{ color: "#8FBED6" }} />
+            </div>
 
-        {/* PREVIEW / INFO PANEL */}
-        <Card className="lg:col-span-2 bg-gray-50 border border-gray-200 flex flex-col justify-center items-center text-center p-12 opacity-75">
-          <div className="p-4 bg-white rounded-full shadow-sm mb-4">
-            <FileText size={48} className="text-blue-300" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-400">Ready to Generate</h3>
-          <p className="text-gray-500 max-w-sm mt-2">
-            Select your parameters on the left to generate a custom PDF report
-            tailored to your needs.
-          </p>
-          <div className="mt-8 grid grid-cols-2 gap-4 text-left w-full max-w-md">
-            <div className="bg-white p-4 rounded-sm border border-gray-200">
-              <span className="block text-xs font-bold text-gray-400 uppercase">
-                Selected Scope
-              </span>
-              <span className="text-lg font-bold text-gray-800 capitalize">
-                {reportType}
-              </span>
+            <h3
+              style={{
+                fontSize: "16px",
+                fontWeight: 600,
+                color: "#1A3A52",
+                margin: 0,
+                marginBottom: "8px",
+              }}
+            >
+              Ready to Generate
+            </h3>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#7A8A93",
+                maxWidth: "320px",
+                lineHeight: 1.7,
+                margin: 0,
+              }}
+            >
+              Configure your parameters on the left, then download a PDF report
+              tailored to your needs.
+            </p>
+
+            {/* Summary chips */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "12px",
+                marginTop: "36px",
+                width: "100%",
+                maxWidth: "360px",
+              }}
+            >
+              <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
+                <p
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#7A8A93",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Scope
+                </p>
+                <p
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "#1A3A52",
+                    textTransform: "capitalize",
+                    margin: 0,
+                  }}
+                >
+                  {reportType}
+                </p>
+              </div>
+              <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
+                <p
+                  style={{
+                    fontSize: "9px",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#7A8A93",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Grouping
+                </p>
+                <p
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: 600,
+                    color: "#1A3A52",
+                    textTransform: "capitalize",
+                    margin: 0,
+                  }}
+                >
+                  {groupBy}
+                </p>
+              </div>
+              {reportType === "jobs" && (
+                <>
+                  <div
+                    className="rpt-preview-chip"
+                    style={{ textAlign: "left" }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "#7A8A93",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Criticality
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        color: "#1A3A52",
+                        textTransform: "capitalize",
+                        margin: 0,
+                      }}
+                    >
+                      {filterCriticality === "all" ? "All" : filterCriticality}
+                    </p>
+                  </div>
+                  <div
+                    className="rpt-preview-chip"
+                    style={{ textAlign: "left" }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "9px",
+                        fontWeight: 600,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "#7A8A93",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Overdue Only
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "15px",
+                        fontWeight: 600,
+                        color: filterOverdue ? "#8B2020" : "#1A3A52",
+                        margin: 0,
+                      }}
+                    >
+                      {filterOverdue ? "Yes" : "No"}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
-            <div className="bg-white p-4 rounded-sm border border-gray-200">
-              <span className="block text-xs font-bold text-gray-400 uppercase">
-                Grouping
-              </span>
-              <span className="text-lg font-bold text-gray-800 capitalize">
-                {groupBy}
-              </span>
-            </div>
           </div>
-        </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

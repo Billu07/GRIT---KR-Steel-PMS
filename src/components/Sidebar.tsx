@@ -1,4 +1,6 @@
 "use client";
+// Add to your layout.tsx or globals.css:
+// @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
@@ -16,81 +18,183 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { CATEGORIES } from "@/lib/mockData";
+import { useSidebar } from "@/context/SidebarContext";
 
 const SidebarContent = () => {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
+  const { isOpen, setIsOpen } = useSidebar();
   const [equipmentOpen, setEquipmentOpen] = useState(true);
 
   const categories = Object.values(CATEGORIES);
 
   return (
     <>
+      {/* Mobile toggle */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 bg-gray-800 text-white rounded-md"
+          style={{
+            padding: "8px",
+            background: "#1A3A52",
+            color: "#fff",
+            border: "none",
+            cursor: "pointer",
+            lineHeight: 0,
+          }}
         >
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      <aside
-        className={clsx(
-          "fixed top-0 left-0 h-screen w-64 bg-[#1A3A52] text-white flex flex-col transition-transform duration-300 z-40",
-          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        )}
+      {/* Desktop collapse toggle — sits outside aside, always visible */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="hidden md:flex"
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: isOpen ? "252px" : "0px",
+          transform: "translateY(-50%)",
+          zIndex: 50,
+          alignItems: "center",
+          justifyContent: "center",
+          width: "18px",
+          height: "48px",
+          background: "#1A3A52",
+          color: "#C8DFE8",
+          border: "none",
+          cursor: "pointer",
+          transition: "left 300ms ease",
+          borderRadius: "0 3px 3px 0",
+        }}
+        aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <div className="p-6 border-b border-gray-700 shrink-0">
-          <h1 className="text-2xl font-extrabold tracking-widest uppercase text-white">
+        {isOpen ? (
+          <ChevronRight size={12} />
+        ) : (
+          <ChevronRight size={12} style={{ transform: "rotate(180deg)" }} />
+        )}
+      </button>
+
+      <aside
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          width: "256px",
+          background: "#1A3A52",
+          display: "flex",
+          flexDirection: "column",
+          zIndex: 40,
+          transition: "transform 300ms ease",
+          transform: isOpen ? "translateX(0)" : "translateX(-256px)",
+          fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+          overflow: "hidden",
+        }}
+      >
+        {/* Brand */}
+        <div
+          style={{
+            padding: "28px 28px 24px",
+            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            flexShrink: 0,
+          }}
+        >
+          <p
+            style={{
+              fontSize: "22px",
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "#FFFFFF",
+              margin: 0,
+              lineHeight: 1,
+              fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+            }}
+          >
             KR Steel
-          </h1>
-          <p className="text-xs text-blue-200 font-medium tracking-wide mt-1 uppercase">
+          </p>
+          <p
+            style={{
+              fontSize: "9px",
+              letterSpacing: "0.28em",
+              textTransform: "uppercase",
+              color: "#A8C8D8",
+              marginTop: "7px",
+              fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+            }}
+          >
             Shipyard PMS
           </p>
         </div>
 
-        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
-          <Link
-            href="/dashboard"
-            className={clsx(
-              "flex items-center p-3 rounded-lg transition-colors hover:bg-blue-600",
-              pathname === "/dashboard" ? "bg-blue-600" : "",
-            )}
-          >
-            <LayoutDashboard size={20} className="mr-3" />
-            <span>Dashboard</span>
-          </Link>
-
-          <Link
+        {/* Nav */}
+        <nav
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "20px 16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+          }}
+        >
+          <NavLink href="/dashboard" pathname={pathname} label="Dashboard" />
+          <NavLink
             href="/dashboard/registry"
-            className={clsx(
-              "flex items-center p-3 rounded-lg transition-colors hover:bg-blue-600",
-              pathname === "/dashboard/registry" ? "bg-blue-600" : "",
-            )}
-          >
-            <List size={20} className="mr-3" />
-            <span>Equipment Registry</span>
-          </Link>
+            pathname={pathname}
+            label="Equipment Registry"
+          />
 
+          {/* Equipment accordion */}
           <div>
             <button
               onClick={() => setEquipmentOpen(!equipmentOpen)}
-              className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-700 transition-colors"
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 12px",
+                background: "transparent",
+                border: "none",
+                color: "#C8DFE8",
+                cursor: "pointer",
+                fontSize: "13px",
+                letterSpacing: "0.06em",
+                fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+                textTransform: "uppercase",
+                transition: "color 150ms ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#C8DFE8")}
             >
-              <div className="flex items-center">
-                <Wrench size={20} className="mr-3" />
-                <span>Equipment</span>
-              </div>
-              {equipmentOpen ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
+              <span>Equipment</span>
+              <span
+                style={{
+                  transition: "transform 200ms ease",
+                  transform: equipmentOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  display: "inline-flex",
+                  color: "#8FBDD0",
+                }}
+              >
+                <ChevronRight size={13} />
+              </span>
             </button>
 
             {equipmentOpen && (
-              <div className="ml-4 pl-4 border-l border-gray-600 space-y-1 mt-1">
+              <div
+                style={{
+                  marginLeft: "12px",
+                  paddingLeft: "14px",
+                  borderLeft: "1px solid rgba(255,255,255,0.1)",
+                  marginTop: "2px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1px",
+                }}
+              >
                 {categories.map((category) => {
                   const href = `/dashboard/equipment/${category.id}`;
                   const isActive = pathname === href;
@@ -99,11 +203,27 @@ const SidebarContent = () => {
                     <Link
                       key={category.id}
                       href={href}
-                      className={clsx(
-                        "block p-2 text-sm rounded-md hover:bg-gray-700 transition-colors truncate",
-                        isActive ? "bg-blue-500 text-white" : "text-gray-300",
-                      )}
                       title={category.name}
+                      style={{
+                        display: "block",
+                        padding: "8px 10px",
+                        fontSize: "12px",
+                        letterSpacing: "0.04em",
+                        color: isActive ? "#fff" : "#A8C4D4",
+                        background: isActive
+                          ? "rgba(255,255,255,0.09)"
+                          : "transparent",
+                        textDecoration: "none",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        borderLeft: isActive
+                          ? "2px solid #8FBED6"
+                          : "2px solid transparent",
+                        transition: "all 150ms ease",
+                        fontFamily:
+                          "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+                      }}
                     >
                       {category.name}
                     </Link>
@@ -113,24 +233,40 @@ const SidebarContent = () => {
             )}
           </div>
 
-          <Link
+          <NavLink
             href="/dashboard/reports"
-            className={clsx(
-              "flex items-center p-3 rounded-lg transition-colors hover:bg-blue-600",
-              pathname === "/dashboard/reports" ? "bg-blue-600" : "",
-            )}
-          >
-            <FileText size={20} className="mr-3" />
-            <span>Reports</span>
-          </Link>
+            pathname={pathname}
+            label="Reports"
+          />
         </nav>
 
-        <div className="p-4 border-t border-gray-700 shrink-0">
+        {/* Footer */}
+        <div
+          style={{
+            padding: "16px",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            flexShrink: 0,
+          }}
+        >
           <Link
             href="/login"
-            className="flex items-center w-full p-2 text-gray-400 hover:text-white transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "10px 12px",
+              color: "#8FBDD0",
+              textDecoration: "none",
+              fontSize: "12px",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#C8DFE8")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "#8FBDD0")}
           >
-            <LogOut size={20} className="mr-3" />
+            <LogOut size={14} />
             <span>Logout</span>
           </Link>
         </div>
@@ -139,13 +275,55 @@ const SidebarContent = () => {
   );
 };
 
+/* ─── Reusable nav link ─────────────────────────────────────────── */
+function NavLink({
+  href,
+  pathname,
+  label,
+}: {
+  href: string;
+  pathname: string;
+  label: string;
+}) {
+  const isActive = pathname === href;
+
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "block",
+        padding: "10px 12px",
+        fontSize: "13px",
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        color: isActive ? "#ffffff" : "#B8CFDE",
+        background: isActive ? "rgba(255,255,255,0.09)" : "transparent",
+        borderLeft: isActive ? "2px solid #8FBED6" : "2px solid transparent",
+        textDecoration: "none",
+        fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+        transition: "all 150ms ease",
+      }}
+    >
+      {label}
+    </Link>
+  );
+}
+
+/* ─── Wrapper ───────────────────────────────────────────────────── */
 const Sidebar = () => {
   return (
     <Suspense
       fallback={
-        <div className="fixed top-0 left-0 h-screen w-64 bg-[#1A3A52] text-white">
-          Loading...
-        </div>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            height: "100vh",
+            width: "256px",
+            background: "#1A3A52",
+          }}
+        />
       }
     >
       <SidebarContent />
