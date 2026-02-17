@@ -10,6 +10,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "KR Steel PMS",
   description: "Shipyard Heavy Asset Reliability Planner",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+    other: {
+      rel: "icon",
+      url: "/favicon-32x32.png",
+    },
+  },
 };
 
 export default function RootLayout({
