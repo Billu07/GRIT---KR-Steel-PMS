@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  email     String?  @unique
+  role      Role     @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobs      Job[]    @relation("JobCreator")
+
+  @@map("users")
+}
+
+model EquipmentCategory {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String?
+  equipment   Equipment[]
+
+  @@map("equipment_categories")
+}
+
+model Equipment {
+  id                 Int                 @id @default(autoincrement())
+  code               String              @unique
+  name               String
+  categoryId         Int
+  category           EquipmentCategory   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  location           String?
+  description        String?
+  status             EquipmentStatus     @default(active)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  jobs               Job[]
+  maintenanceHistory MaintenanceHistory[]
+
+  @@map("equipment")
+}
+
+model Job {
+  id                 Int                 @id @default(autoincrement())
+  jobCode            String              @unique
+  jobName            String
+  jobType            String?
+  equipmentId        Int
+  equipment          Equipment           @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  category           String?             // Denormalized for easier querying if needed, or derived
+  flag               String?
+  dateDone           DateTime
+  hoursWorked        Float               @default(0)
+  plannedHours       Float
+  frequency          Frequency
+  dateDue            DateTime
+  remainingHours     Float               @default(0)
+  criticality        Criticality
+  overdueDays        Int                 @default(0)
+  createdBy          Int
+  creator            User                @relation("JobCreator", fields: [createdBy], references: [id])
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  maintenanceHistory MaintenanceHistory[]
+
+  @@map("jobs")
+}
+
+model MaintenanceHistory {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  jobId       Int?
+  job         Job?      @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  description String?
+  performedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@map("maintenance_history")
+}
+
+enum Role {
+  admin
+  user
+}
+
+enum EquipmentStatus {
+  active
+  inactive
+  maintenance
+  retired
+}
+
+enum Frequency {
+  weekly
+  monthly
+  quarterly  @map("3-monthly") // Prisma doesn't like numbers starting identifiers directly in some cases, mapping is safer or use underscores
+  yearly
+  five_yearly @map("5-yearly")
+}
+
+enum Criticality {
+  low
+  medium
+  high
+}

@@ -1,0 +1,79 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-primary-blue: #0052cc;
+
+  --color-light-blue: #e6f0ff;
+  --color-light-gray: #f8f9fa;
+
+  --color-pastel-mint: #d4f1e8;
+  --color-pastel-peach: #ffe6d5;
+  --color-pastel-yellow: #fff4d6;
+
+  --color-dark-gray: #1a1a1a;
+
+  --color-success-green: #10b981;
+  --color-warning-orange: #f59e0b;
+  --color-danger-red: #ef4444;
+
+  --font-sans: var(--font-inter), sans-serif;
+}
+
+:root {
+  --font-inter: "Inter", sans-serif;
+  --blue: #1a3a6b;
+  --blue-mid: #2a52a0;
+  --blue-light: #e8eef8;
+  --paste: #e8e4d9;
+  --paste-dark: #d4cfc3;
+  --paste-light: #f2efe8;
+  --ink: #1c1c1c;
+  --muted: #7a7670;
+  --rule: #c8c4b8;
+  --white: #faf9f7;
+  --red: #8b2020;
+  --red-light: #fdf0f0;
+  --amber: #92580a;
+  --amber-light: #fdf6e3;
+  --green: #2d6a4f;
+  --green-light: #edf7f2;
+
+  --font-serif: "Libre Baskerville", Georgia, serif;
+  --font-mono: "DM Mono", "Courier New", monospace;
+
+  --sidebar-w: 220px;
+  --sidebar-w-rail: 56px;
+  --topbar-h: 56px;
+}
+
+body {
+  background-color: var(--color-light-gray);
+  color: var(--color-dark-gray);
+  font-family: var(--font-sans);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
