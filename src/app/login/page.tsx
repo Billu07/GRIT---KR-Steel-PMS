@@ -112,11 +112,10 @@ export default function LoginPage() {
 
         .lr-eyebrow {
           font-size: 10px;
-          font-weight: 500;
+          font-weight: 600;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: var(--accent);
-          opacity: 0.75;
+          color: rgba(255,255,255,0.65);
           margin-bottom: 40px;
         }
 
@@ -134,7 +133,7 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.16em;
           text-transform: uppercase;
-          color: rgba(234,231,223,0.45);
+          color: rgba(234,231,223,0.72);
           margin-bottom: 40px;
         }
 
@@ -149,7 +148,7 @@ export default function LoginPage() {
           font-size: 13px;
           font-weight: 300;
           line-height: 1.8;
-          color: rgba(234,231,223,0.5);
+          color: rgba(234,231,223,0.68);
           max-width: 280px;
         }
 
@@ -158,7 +157,7 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: rgba(234,231,223,0.2);
+          color: rgba(234,231,223,0.45);
         }
 
         /* ── Right panel ──────────────────────────── */
@@ -206,10 +205,10 @@ export default function LoginPage() {
 
         .lr-logo-tag {
           font-size: 9px;
-          font-weight: 500;
+          font-weight: 600;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: var(--muted);
+          color: #4A6A7A;
           margin-top: 5px;
         }
 
@@ -233,7 +232,7 @@ export default function LoginPage() {
           font-size: 12px;
           font-weight: 400;
           letter-spacing: 0.04em;
-          color: var(--muted);
+          color: #4A5A62;
           margin-bottom: 32px;
         }
 
@@ -248,8 +247,7 @@ export default function LoginPage() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--navy);
-          opacity: 0.7;
+          color: #1A3A52;
           margin-bottom: 7px;
         }
 
@@ -260,8 +258,8 @@ export default function LoginPage() {
           font-size: 14px;
           font-weight: 400;
           color: var(--ink);
-          background: var(--white);
-          border: 1px solid var(--rule);
+          background: #FFFFFF;
+          border: 1px solid #C8C2B6;
           border-radius: 2px;
           outline: none;
           transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -273,8 +271,9 @@ export default function LoginPage() {
         }
 
         .lr-input:focus {
-          border-color: var(--navy);
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.07);
+          border-color: #1A3A52;
+          box-shadow: 0 0 0 3px rgba(26,58,82,0.06);
+          background: #FFFFFF;
         }
 
         .lr-input:disabled {
@@ -343,8 +342,7 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: var(--muted);
-          opacity: 0.6;
+          color: #5A6A73;
           display: flex;
           align-items: center;
           gap: 6px;

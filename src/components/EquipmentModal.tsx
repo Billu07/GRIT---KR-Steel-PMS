@@ -163,6 +163,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   if (!isOpen) return null;
 
   const isEditing = !!initialData;
+  const isCategoryLocked = !!categoryId && !isEditing;
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
@@ -359,7 +360,13 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                   onChange={handleChange}
                   required
                   className="eq-modal-field"
-                  style={selectStyle}
+                  style={{
+                    ...selectStyle,
+                    opacity: isCategoryLocked ? 0.7 : 1,
+                    pointerEvents: isCategoryLocked ? "none" : "auto",
+                    background: isCategoryLocked ? "#F0EDE6" : "#FAFAF8",
+                  }}
+                  disabled={isCategoryLocked}
                 >
                   <option value="">Select a category</option>
                   {categories.map((cat) => (

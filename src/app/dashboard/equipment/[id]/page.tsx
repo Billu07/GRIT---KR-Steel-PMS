@@ -51,7 +51,10 @@ export default function CategoryPage() {
 
       if (res.ok) {
         const createdEq = await res.json();
-        setEquipment((prev) => [...prev, createdEq]);
+        // Only add to local state if it belongs to this category
+        if (createdEq.categoryId.toString() === categoryId) {
+          setEquipment((prev) => [...prev, createdEq]);
+        }
         setIsEquipmentModalOpen(false);
       } else {
         const err = await res.json();
