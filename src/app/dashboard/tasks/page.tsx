@@ -157,7 +157,7 @@ export default function ScheduledTasksPage() {
           <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: "#4A6A7A", marginBottom: "8px" }}>
             KR Steel · Maintenance Protocols
           </p>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1 style={{ fontSize: "28px", fontWeight: 600, letterSpacing: "-0.02em", color: "#225CA3", margin: 0, lineHeight: 1 }}>
                 Scheduled Tasks
@@ -167,7 +167,7 @@ export default function ScheduledTasksPage() {
               </p>
             </div>
             {!isAdding && (
-                <button className="task-btn task-btn-primary" onClick={() => setIsAdding(true)}>
+                <button className="task-btn task-btn-primary self-start" onClick={() => setIsAdding(true)}>
                     <Plus size={13} /> Add New Task
                 </button>
             )}

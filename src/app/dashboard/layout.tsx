@@ -11,6 +11,7 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <div
+        className="relative"
         style={{
           display: "flex",
           minHeight: "100vh",

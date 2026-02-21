@@ -123,16 +123,19 @@ export default function ReportsBuilderPage() {
 
     setTimeout(() => {
       if (reportType === "tasks") {
-        if (reportFormat === "pdf") exportTaskReportPdf({ tasks: filteredData.tasks || [], equipment: rawData.equipment, groupBy });
-        else exportTaskReportExcel({ tasks: filteredData.tasks || [], equipment: rawData.equipment, groupBy });
+        const tasks = filteredData.tasks || [];
+        if (reportFormat === "pdf") exportTaskReportPdf({ tasks, equipment: rawData.equipment, groupBy });
+        else exportTaskReportExcel({ tasks, equipment: rawData.equipment, groupBy });
       } else if (reportType === "equipment") {
-        if (reportFormat === "pdf") exportEquipmentReportPdf({ equipment: filteredData.equipment || [], groupBy });
-        else exportEquipmentReportExcel({ equipment: filteredData.equipment || [], groupBy });
+        const equipment = filteredData.equipment || [];
+        if (reportFormat === "pdf") exportEquipmentReportPdf({ equipment, groupBy });
+        else exportEquipmentReportExcel({ equipment, groupBy });
       } else if (reportType === "maintenance") {
+         const maintenance = filteredData.maintenance || [];
          if (reportFormat === "pdf") {
-            exportMaintenancePdf({ data: filteredData.maintenance || [], type: maintenanceType as 'corrective' | 'preventive' });
+            exportMaintenancePdf({ data: maintenance, type: maintenanceType as 'corrective' | 'preventive' });
          } else {
-            exportMaintenanceExcel(filteredData.maintenance || [], maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
+            exportMaintenanceExcel(maintenance, maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
          }
       } else if (reportType === "inventory") {
         const inventory = filteredData.inventory || [];
@@ -157,11 +160,11 @@ export default function ReportsBuilderPage() {
     padding: "8px 32px 8px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", color: "#1A1A1A", background: "#FFFFFF",
     border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none", cursor: "pointer", appearance: "none",
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A8A93' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center", minWidth: "160px"
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center", width: "100%"
   };
 
   const inputStyle: React.CSSProperties = {
-    padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none",
+    padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none", width: "100%"
   };
 
   return (
@@ -173,12 +176,12 @@ export default function ReportsBuilderPage() {
         .scroll-custom::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
       `}</style>
 
-      <div className="px-8 py-6 border-b border-[#D0CBC0] bg-white flex items-center justify-between shrink-0">
+      <div className="px-4 sm:px-8 py-6 border-b border-[#D0CBC0] bg-white flex flex-col sm:flex-row sm:items-center justify-between shrink-0 gap-4">
         <div>
            <p className="text-[10px] font-semibold tracking-[0.2em] text-[#4A6A7A] uppercase mb-2">KR Steel · Ship Recycling Facility</p>
            <h1 className="text-2xl font-bold text-[#225CA3] tracking-tight">Report Builder</h1>
         </div>
-        <button onClick={handleDownload} disabled={loading || dataLoading || !filteredData} className="flex items-center gap-2 px-6 py-3 bg-[#225CA3] text-[#EAE7DF] text-[11px] font-bold tracking-widest uppercase rounded hover:bg-[#1B4A82] active:bg-[#133660] disabled:opacity-50 transition-colors">
+        <button onClick={handleDownload} disabled={loading || dataLoading || !filteredData} className="flex items-center justify-center gap-2 px-6 py-3 bg-[#225CA3] text-[#EAE7DF] text-[11px] font-bold tracking-widest uppercase rounded hover:bg-[#1B4A82] active:bg-[#133660] disabled:opacity-50 transition-colors">
            {loading ? "Generating..." : (
                <>
                  {reportFormat === "excel" ? <FileSpreadsheet size={16} /> : <Download size={16} />}
@@ -188,8 +191,8 @@ export default function ReportsBuilderPage() {
         </button>
       </div>
 
-      <div className="px-8 py-4 bg-[#F5F3EF] border-b border-[#D0CBC0] flex flex-wrap items-center gap-6 shrink-0 z-20">
-        <div className="flex flex-col gap-1">
+      <div className="px-4 sm:px-8 py-4 bg-[#F5F3EF] border-b border-[#D0CBC0] flex flex-wrap items-center gap-4 sm:gap-6 shrink-0 z-20">
+        <div className="flex flex-col gap-1 w-full sm:w-auto">
            <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Report Type</label>
            <select style={selectStyle} value={reportType} onChange={(e) => setReportType(e.target.value)}>
              <option value="tasks">Scheduled Tasks</option>
@@ -199,7 +202,7 @@ export default function ReportsBuilderPage() {
            </select>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 w-full sm:w-auto">
         <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Format</label>
         <select style={selectStyle} value={reportFormat} onChange={(e) => setReportFormat(e.target.value)}>
             <option value="pdf">PDF Document</option>
@@ -208,7 +211,7 @@ export default function ReportsBuilderPage() {
         </div>
 
         {reportType !== "maintenance" && reportType !== "inventory" && (
-             <div className="flex flex-col gap-1">
+             <div className="flex flex-col gap-1 w-full sm:w-auto">
              <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Group By</label>
              <select style={selectStyle} value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
                 <option value="category">Category</option>
@@ -219,7 +222,7 @@ export default function ReportsBuilderPage() {
         )}
 
         {reportType === "maintenance" && (
-             <div className="flex flex-col gap-1">
+             <div className="flex flex-col gap-1 w-full sm:w-auto">
              <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Maint. Type</label>
              <select style={selectStyle} value={maintenanceType} onChange={(e) => setMaintenanceType(e.target.value)}>
                  <option value="corrective">Corrective</option>
@@ -229,9 +232,9 @@ export default function ReportsBuilderPage() {
         )}
 
         {reportType === "maintenance" && (
-             <div className="flex flex-col gap-1">
+             <div className="flex flex-col gap-1 w-full sm:w-auto min-w-[200px]">
              <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Date Filter</label>
-             <div className="flex items-center gap-2">
+             <div className="flex flex-col sm:flex-row items-center gap-2">
                 <select style={selectStyle} value={durationFilterType} onChange={(e) => setDurationFilterType(e.target.value)}>
                     <option value="none">All Time</option>
                     <option value="range">Date Range</option>
@@ -239,25 +242,27 @@ export default function ReportsBuilderPage() {
                     <option value="year">Specific Year</option>
                 </select>
                 {durationFilterType === "range" && (
-                    <><input type="date" style={inputStyle} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                    <span className="text-[#7A8A93]">-</span>
-                    <input type="date" style={inputStyle} value={toDate} onChange={(e) => setToDate(e.target.value)} /></>
+                    <div className="flex items-center gap-2 w-full">
+                        <input type="date" style={inputStyle} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                        <span className="text-[#7A8A93]">-</span>
+                        <input type="date" style={inputStyle} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                    </div>
                 )}
                 {durationFilterType === "month" && <input type="month" style={inputStyle} value={month} onChange={(e) => setMonth(e.target.value)} />}
-                {durationFilterType === "year" && <input type="number" placeholder="YYYY" style={inputStyle} value={year} onChange={(e) => setYear(e.target.value)} className="w-20" />}
+                {durationFilterType === "year" && <input type="number" placeholder="YYYY" style={inputStyle} value={year} onChange={(e) => setYear(e.target.value)} />}
              </div>
              </div>
         )}
         
         {reportType !== "inventory" && (
-            <div className="flex flex-col gap-1 relative">
+            <div className="flex flex-col gap-1 relative w-full sm:w-auto">
                 <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Equipment</label>
-                <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)} className="flex items-center justify-between px-3 py-2 bg-white border border-[#D0CBC0] rounded-[2px] w-[200px] text-[13px]">
+                <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)} className="flex items-center justify-between px-3 py-2 bg-white border border-[#D0CBC0] rounded-[2px] w-full sm:w-[200px] text-[13px]">
                     <span className="truncate">{selectedEquipments.length === 0 ? "All Equipment" : `${selectedEquipments.length} Selected`}</span>
                     {showEquipmentFilter ? <ChevronUp size={14} className="text-[#7A8A93]" /> : <ChevronDown size={14} className="text-[#7A8A93]" />}
                 </button>
                 {showEquipmentFilter && rawData && (
-                    <div className="absolute top-full left-0 mt-1 w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
+                    <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
                         <div className="flex items-center justify-between mb-2 px-2">
                             <span className="text-xs font-semibold text-[#225CA3]">Select Equipment</span>
                             <button onClick={() => setSelectedEquipments([])} className="text-[10px] text-[#7A8A93] hover:text-[#225CA3] uppercase tracking-wide">Clear</button>
@@ -274,7 +279,7 @@ export default function ReportsBuilderPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-auto p-8 scroll-custom">
+      <div className="flex-1 overflow-auto p-4 sm:p-8 scroll-custom">
          {dataLoading ? (
              <div className="flex h-full items-center justify-center text-[#7A8A93]">Loading data...</div>
          ) : !filteredData ? (

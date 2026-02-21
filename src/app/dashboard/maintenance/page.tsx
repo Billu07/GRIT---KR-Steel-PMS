@@ -107,6 +107,7 @@ export default function MaintenanceLogPage() {
     borderRadius: "2px",
     outline: "none",
     cursor: "pointer",
+    width: "100%"
   };
 
   return (
@@ -156,7 +157,7 @@ export default function MaintenanceLogPage() {
           >
             KR Steel · Ship Recycling Facility
           </p>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <h1
               style={{
                 fontSize: "28px",
@@ -170,7 +171,7 @@ export default function MaintenanceLogPage() {
               Maintenance Log
             </h1>
             <button
-              className="ml-add-btn"
+              className="ml-add-btn self-start"
               onClick={() => {
                 setEditingLog(null);
                 setIsLogModalOpen(true);
@@ -185,55 +186,42 @@ export default function MaintenanceLogPage() {
 
         {/* Filters */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-            padding: "16px 24px",
-            background: "#FAFAF8",
-            border: "1px solid #D0CBC0",
-            borderRadius: "2px",
-            marginBottom: "24px"
-          }}
+          className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 sm:px-6 sm:py-4 bg-[#FAFAF8] border border-[#D0CBC0] rounded-sm mb-6"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className="flex items-center gap-2 shrink-0">
             <Filter size={16} color="#7A8A93" />
             <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A1A1A" }}>Filters:</span>
           </div>
           
-          <select style={selectStyle} value={filterType} onChange={e => setFilterType(e.target.value)}>
-            <option value="all">All Types</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="predictive">Predictive</option>
-            <option value="corrective">Corrective</option>
-          </select>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+            <select style={selectStyle} value={filterType} onChange={e => setFilterType(e.target.value)}>
+                <option value="all">All Types</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="predictive">Predictive</option>
+                <option value="corrective">Corrective</option>
+            </select>
 
-          <select style={selectStyle} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
-            <option value="all">All Categories</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+            <select style={selectStyle} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
+                <option value="all">All Categories</option>
+                {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+            </select>
 
-          <select style={selectStyle} value={filterEq} onChange={e => setFilterEq(e.target.value)}>
-            <option value="all">All Equipment</option>
-            {equipmentList.filter(e => filterCat === "all" || e.categoryId.toString() === filterCat).map(e => (
-              <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
-            ))}
-          </select>
+            <select style={selectStyle} value={filterEq} onChange={e => setFilterEq(e.target.value)}>
+                <option value="all">All Equipment</option>
+                {equipmentList.filter(e => filterCat === "all" || e.categoryId.toString() === filterCat).map(e => (
+                <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
+                ))}
+            </select>
+          </div>
         </div>
 
         {/* Table */}
         <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 24px",
-              borderBottom: "1px solid #D0CBC0",
-              background: "#225CA3",
-            }}
+            className="flex items-center justify-between p-4 sm:px-6 sm:py-4 border-b border-[#D0CBC0] background-[#225CA3]"
+            style={{ background: "#225CA3" }}
           >
             <p
               style={{

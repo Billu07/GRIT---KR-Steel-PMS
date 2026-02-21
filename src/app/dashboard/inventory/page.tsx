@@ -156,7 +156,7 @@ export default function InventoryPage() {
           <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.22em", textTransform: "uppercase", color: "#4A6A7A", marginBottom: "8px" }}>
             KR Steel · Asset Management
           </p>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1 style={{ fontSize: "28px", fontWeight: 600, letterSpacing: "-0.02em", color: "#225CA3", margin: 0, lineHeight: 1 }}>
                 Inventory Summary
@@ -165,7 +165,7 @@ export default function InventoryPage() {
                 {filteredInventory.length} items found in shipyard inventory
               </p>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button className="inv-btn inv-btn-outline" onClick={handleOpenAdd}>
                 <Plus size={13} /> Add Item
               </button>
@@ -254,7 +254,7 @@ export default function InventoryPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(12, 44, 88, 0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(12, 44, 88, 0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "16px" }}>
           <div style={{ background: "#FFFFFF", width: "100%", maxWidth: "500px", borderRadius: "2px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)", overflow: "hidden" }}>
             <div style={{ padding: "16px 24px", background: "#225CA3", color: "#FFFFFF", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                <h2 style={{ fontSize: "14px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
@@ -269,7 +269,7 @@ export default function InventoryPage() {
                   <label style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", color: "#4A6A7A" }}>Equipment Name *</label>
                   <input required style={inputStyle} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", color: "#4A6A7A" }}>Quantity</label>
                     <input style={inputStyle} value={formData.quantity} onChange={e => setFormData({...formData, quantity: e.target.value})} />

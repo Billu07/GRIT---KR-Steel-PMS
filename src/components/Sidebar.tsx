@@ -42,6 +42,13 @@ const SidebarContent = () => {
       .catch((err) => console.error("Failed to fetch categories:", err));
   }, []);
 
+  const handleLinkClick = () => {
+    // Only close sidebar on mobile (less than md breakpoint 768px)
+    if (window.innerWidth < 768) {
+      setIsOpen(false);
+    }
+  };
+
   return (
     <>
       {/* Mobile toggle */}
@@ -55,11 +62,21 @@ const SidebarContent = () => {
             border: "none",
             cursor: "pointer",
             lineHeight: 0,
+            borderRadius: "4px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
           }}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
+
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* Desktop collapse toggle — sits outside aside, always visible */}
       <button
@@ -113,30 +130,54 @@ const SidebarContent = () => {
             padding: "28px 28px 24px",
             borderBottom: "1px solid rgba(255,255,255,0.08)",
             flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
           }}
         >
-          <p
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "#FFFFFF",
-              margin: 0,
-              lineHeight: 1,
-              fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
-            }}
-          >
-            KR Steel
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
+            <div style={{ 
+              width: "36px", 
+              height: "36px", 
+              background: "#FFFFFF", 
+              borderRadius: "4px", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center", 
+              padding: "4px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+            }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
+                src="/logo.png" 
+                alt="KR Steel Logo" 
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
+            </div>
+            <p
+              style={{
+                fontSize: "22px",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#FFFFFF",
+                margin: 0,
+                lineHeight: 1,
+                fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+              }}
+            >
+              KR Steel
+            </p>
+          </div>
           <p
             style={{
               fontSize: "9px",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               color: "rgba(255,255,255,0.7)",
-              marginTop: "7px",
+              marginTop: "4px",
               fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+              paddingLeft: "4px"
             }}
           >
             Shipyard PMS
@@ -159,30 +200,35 @@ const SidebarContent = () => {
             pathname={pathname}
             label="Dashboard"
             icon={<LayoutDashboard size={18} />}
+            onClick={handleLinkClick}
           />
           <NavLink
             href="/dashboard/registry"
             pathname={pathname}
             label="Equipment Registry"
             icon={<HardHat size={18} />}
+            onClick={handleLinkClick}
           />
           <NavLink
             href="/dashboard/tasks"
             pathname={pathname}
             label="Scheduled Tasks"
             icon={<CalendarCheck size={18} />}
+            onClick={handleLinkClick}
           />
           <NavLink
             href="/dashboard/maintenance"
             pathname={pathname}
             label="Maintenance Log"
             icon={<Wrench size={18} />}
+            onClick={handleLinkClick}
           />
           <NavLink
             href="/dashboard/inventory"
             pathname={pathname}
             label="Inventory"
             icon={<Package size={18} />}
+            onClick={handleLinkClick}
           />
 
           {/* Equipment accordion */}
@@ -249,6 +295,7 @@ const SidebarContent = () => {
                       key={category.id}
                       href={href}
                       title={category.name}
+                      onClick={handleLinkClick}
                       style={{
                         display: "block",
                         padding: "8px 10px",
@@ -283,6 +330,7 @@ const SidebarContent = () => {
             pathname={pathname}
             label="Reports"
             icon={<FileText size={18} />}
+            onClick={handleLinkClick}
           />
         </nav>
 
@@ -330,18 +378,25 @@ function NavLink({
   href,
   pathname,
   label,
+  icon,
+  onClick,
 }: {
   href: string;
   pathname: string;
   label: string;
+  icon?: React.ReactNode;
+  onClick?: () => void;
 }) {
   const isActive = pathname === href;
 
   return (
     <Link
       href={href}
+      onClick={onClick}
       style={{
-        display: "block",
+        display: "flex",
+        alignItems: "center",
+        gap: "12px",
         padding: "10px 12px",
         fontSize: "13px",
         letterSpacing: "0.06em",
@@ -354,7 +409,8 @@ function NavLink({
         transition: "all 150ms ease",
       }}
     >
-      {label}
+      {icon}
+      <span>{label}</span>
     </Link>
   );
 }

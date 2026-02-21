@@ -222,14 +222,7 @@ export default function RegistryPage() {
           >
             KR Steel · Ship Recycling Facility
           </p>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "16px",
-            }}
-          >
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1
                 style={{
@@ -250,7 +243,7 @@ export default function RegistryPage() {
               </p>
             </div>
             <button
-              className="reg-add-btn"
+              className="reg-add-btn self-start"
               onClick={handleOpenCreateModal}
             >
               <Plus size={13} />

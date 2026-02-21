@@ -182,14 +182,7 @@ export default function CategoryPage() {
           >
             KR Steel · Equipment
           </p>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "16px",
-            }}
-          >
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1
                 style={{
@@ -215,7 +208,7 @@ export default function CategoryPage() {
               </p>
             </div>
             <button
-              className="eq-add-btn"
+              className="eq-add-btn self-start"
               onClick={() => setIsEquipmentModalOpen(true)}
             >
               <Plus size={14} />

@@ -372,12 +372,7 @@ export default function EquipmentDetailPage() {
         {/* ── Page header ── */}
         <div style={{ marginBottom: "32px" }}>
           <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: "16px",
-            }}
+            className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-6"
           >
             <div>
               <p
@@ -417,7 +412,7 @@ export default function EquipmentDetailPage() {
             </div>
 
             {/* Equipment Actions */}
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <button
                 className="detail-btn-secondary"
                 onClick={() => setIsEqModalOpen(true)}
@@ -434,38 +429,30 @@ export default function EquipmentDetailPage() {
           </div>
 
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: "16px",
-            }}
+            className="flex flex-wrap items-center justify-start sm:justify-end gap-3 sm:gap-4"
           >
-
             {/* Task Actions */}
-            <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-              <button className="detail-btn-secondary" onClick={exportTasksPDF}>
-                <Download size={13} /> Export PDF
-              </button>
-              <button className="detail-btn-secondary" onClick={exportTasksExcel}>
-                <Download size={13} /> Export Tasks (Excel)
-              </button>
-              <button
-                  className="detail-btn-secondary"
-                  onClick={() => setIsLogMaintenanceModalOpen(true)}
-                  title="Log un-scheduled, predictive, or corrective maintenance"
-                >
-                  <Wrench size={13} /> Log Maintenance
-              </button>
-              {!isAdding && (
-                <button
-                  className="detail-btn-primary"
-                  onClick={() => setIsAdding(true)}
-                >
-                  <Plus size={13} /> New Task
-                </button>
-              )}
-            </div>
+            <button className="detail-btn-secondary" onClick={exportTasksPDF}>
+            <Download size={13} /> Export PDF
+            </button>
+            <button className="detail-btn-secondary" onClick={exportTasksExcel}>
+            <Download size={13} /> Export Tasks (Excel)
+            </button>
+            <button
+                className="detail-btn-secondary"
+                onClick={() => setIsLogMaintenanceModalOpen(true)}
+                title="Log un-scheduled, predictive, or corrective maintenance"
+            >
+                <Wrench size={13} /> Log Maintenance
+            </button>
+            {!isAdding && (
+            <button
+                className="detail-btn-primary"
+                onClick={() => setIsAdding(true)}
+            >
+                <Plus size={13} /> New Task
+            </button>
+            )}
           </div>
 
           <div
@@ -478,21 +465,17 @@ export default function EquipmentDetailPage() {
           
           {/* Equipment Info Cards */}
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr",
-              gap: "16px",
-            }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6"
           >
              {/* Left Column: Specs & Certs */}
-             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+             <div className="lg:col-span-2 flex flex-col gap-4 lg:gap-6">
                 
                 {/* Technical Specs */}
                 <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px" }}>
                    <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#225CA3", marginBottom: "16px", borderBottom: "1px solid #EAE7DF", paddingBottom: "8px" }}>
                       Technical Specifications
                    </p>
-                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 24px" }}>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
                       <div>
                         <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Capacity</p>
                         <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.capacity || "—"}</p>
@@ -521,7 +504,7 @@ export default function EquipmentDetailPage() {
                    <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#225CA3", marginBottom: "16px", borderBottom: "1px solid #EAE7DF", paddingBottom: "8px" }}>
                       Certification & Testing
                    </p>
-                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
                       <div>
                         <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Test Cert No.</p>
                         <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.testCertNumber || "—"}</p>
@@ -540,7 +523,7 @@ export default function EquipmentDetailPage() {
              </div>
 
              {/* Right Column: Status & Description */}
-             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+             <div className="lg:col-span-1 flex flex-col gap-4 lg:gap-6">
                 
                 <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px" }}>
                   <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7A8A93", marginBottom: "8px" }}>

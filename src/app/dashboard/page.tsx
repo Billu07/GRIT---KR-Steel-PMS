@@ -143,7 +143,7 @@ export default function DashboardPage() {
 
       {/* ── Dashboard Header ── */}
       <div className="mb-10">
-        <div className="flex items-end justify-between border-b border-slate-200 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-6 gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="h-0.5 w-6 bg-[#225CA3]" />
@@ -151,11 +151,11 @@ export default function DashboardPage() {
                 KR Ship Recycling Facility
               </p>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               Operations Overview
             </h1>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-[13px] font-medium text-slate-600 mb-0.5">
               {new Date().toLocaleDateString("en-GB", {
                 weekday: "long",
@@ -171,7 +171,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Global Metrics ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10">
         {stats.map((stat, i) => (
           <Link
             href={stat.link}
@@ -212,7 +212,7 @@ export default function DashboardPage() {
 
           <div className="glass-card rounded-sm overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr className="bg-[#F8FAFC] border-b border-slate-200">
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -321,7 +321,7 @@ export default function DashboardPage() {
                 Quick Actions
               </h4>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => setIsLogModalOpen(true)}
                 className="flex items-center justify-center px-4 py-4 bg-[#225CA3] text-white rounded-sm text-[10px] font-bold uppercase tracking-[0.12em] shadow-sm hover:bg-[#1B4A82] transition-colors border border-transparent"
