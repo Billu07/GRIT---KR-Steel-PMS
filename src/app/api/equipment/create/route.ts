@@ -4,7 +4,10 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { code, name, categoryId, location, description, status, imageUrl } = body;
+    const { 
+      code, name, categoryId, location, description, status, imageUrl, safetyMeasures,
+      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
+    } = body;
 
     if (!code || !name || !categoryId) {
       return NextResponse.json({ error: 'Code, Name, and Category ID are required' }, { status: 400 });
@@ -19,6 +22,15 @@ export async function POST(req: NextRequest) {
         description,
         status: status || 'active',
         imageUrl,
+        safetyMeasures,
+        capacity,
+        model,
+        serialNumber,
+        brand,
+        runningHours,
+        testCertNumber,
+        testCertValidity,
+        testCertApplied,
       },
     });
 
@@ -30,6 +42,6 @@ export async function POST(req: NextRequest) {
     if ((error as any).code === 'P2002') {
         return NextResponse.json({ error: 'Equipment code already exists' }, { status: 409 });
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: `Internal server error: ${(error as Error).message}` }, { status: 500 });
   }
 }

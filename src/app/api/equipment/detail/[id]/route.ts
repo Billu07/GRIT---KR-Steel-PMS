@@ -30,7 +30,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const body = await req.json();
-    const { code, name, categoryId, location, description, status, imageUrl } = body;
+    const { 
+      code, name, categoryId, location, description, status, imageUrl, safetyMeasures,
+      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
+    } = body;
 
     const updateData: any = {
       code,
@@ -39,6 +42,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       description,
       status,
       imageUrl,
+      safetyMeasures,
+      capacity,
+      model,
+      serialNumber,
+      brand,
+      runningHours,
+      testCertNumber,
+      testCertValidity,
+      testCertApplied,
     };
 
     if (categoryId) updateData.categoryId = parseInt(categoryId);
@@ -51,6 +63,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json(updatedEquipment);
   } catch (error) {
     console.error('Equipment update error:', error);
-    return NextResponse.json({ error: 'Failed to update equipment' }, { status: 500 });
+    return NextResponse.json({ error: `Failed to update equipment: ${(error as Error).message}` }, { status: 500 });
   }
 }

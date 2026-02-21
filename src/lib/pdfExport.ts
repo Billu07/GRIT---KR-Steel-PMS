@@ -1,506 +1,234 @@
 /**
  * pdfExport.ts
  * Shared branded PDF export utility for GRIT — KR Steel Ship Recycling Facility
- *
- * Usage:
- *   import { createBrandedDoc, savePdf } from '@/lib/pdfExport';
  */
 
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 
-// ─── Design tokens (mirrors the app palette) ──────────────────────────────────
+const LOGO_BASE64 = "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";
+
 const C = {
-  navy: [26, 58, 82] as [number, number, number], // #1A3A52
-  navyDark: [19, 45, 64] as [number, number, number], // #132D40
-  accent: [143, 190, 214] as [number, number, number], // #8FBED6
-  paste: [234, 231, 223] as [number, number, number], // #EAE7DF
-  pasteLight: [245, 243, 239] as [number, number, number], // #F5F3EF
-  rule: [208, 203, 192] as [number, number, number], // #D0CBC0
-  ink: [26, 26, 26] as [number, number, number], // #1A1A1A
-  muted: [122, 138, 147] as [number, number, number], // #7A8A93
-  red: [139, 32, 32] as [number, number, number], // #8B2020
-  amber: [196, 135, 58] as [number, number, number], // #C4873A
-  green: [45, 106, 66] as [number, number, number], // #2D6A42
-  white: [250, 250, 248] as [number, number, number], // #FAFAF8
+  navy: [12, 44, 88] as [number, number, number], 
+  accent: [28, 165, 206] as [number, number, number], 
+  paste: [234, 231, 223] as [number, number, number], 
+  pasteLight: [250, 249, 247] as [number, number, number], 
+  rule: [180, 175, 160] as [number, number, number], 
+  ink: [20, 20, 20] as [number, number, number], 
+  muted: [100, 110, 120] as [number, number, number],
+  white: [255, 255, 255] as [number, number, number],
 };
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 export interface PdfMeta {
-  title: string; // e.g. "Maintenance Job Report"
-  subtitle?: string; // e.g. "Filtered by: High Criticality · Overdue Only"
+  title: string;
+  subtitle?: string;
   orientation?: "p" | "l";
 }
 
-// ─── Header / Footer ──────────────────────────────────────────────────────────
-
-/**
- * Draws the branded page header and returns the Y position to start content.
- */
-function drawHeader(doc: jsPDF, meta: PdfMeta): number {
+function drawHeader(doc: jsPDF, meta: PdfMeta, isFirstPage: boolean = true): number {
   const pw = doc.internal.pageSize.getWidth();
-
-  // Navy header bar
   doc.setFillColor(...C.navy);
-  doc.rect(0, 0, pw, 28, "F");
-
-  // Accent rule at bottom of header bar
+  doc.rect(0, 0, pw, 26, "F");
   doc.setFillColor(...C.accent);
-  doc.rect(0, 27, pw, 1, "F");
+  doc.rect(0, 25, pw, 0.8, "F");
 
-  // Company name — left
+  try {
+    doc.addImage(LOGO_BASE64, "PNG", 14, 4, 16, 16, undefined, 'FAST');
+  } catch (e) {}
+  
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(14);
   doc.setTextColor(...C.white);
-  doc.text("KR STEEL", 14, 11);
-
-  // Sub-label
-  doc.setFont("helvetica", "normal");
+  doc.text("KR STEEL", 34, 12);
   doc.setFontSize(7);
   doc.setTextColor(...C.accent);
-  doc.text("SHIP RECYCLING FACILITY", 14, 17);
+  doc.text("SHIP RECYCLING FACILITY", 34, 17);
 
-  // GRIT label — right-aligned
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(255, 255, 255);
-  doc.text("GRIT", pw - 14, 11, { align: "right" });
-
+  doc.text("GRIT SYSTEM", pw - 14, 11, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6);
   doc.setTextColor(...C.accent);
-  doc.text("Gear Reliability & Intervention Tracker", pw - 14, 17, {
-    align: "right",
-  });
+  doc.text("GEAR RELIABILITY & INTERVENTION TRACKER", pw - 14, 16, { align: "right" });
 
-  // Paste background for title area
+  if (!isFirstPage) return 32;
+
   doc.setFillColor(...C.pasteLight);
-  doc.rect(0, 28, pw, 22, "F");
-
-  // Report title
+  doc.rect(0, 26, pw, 22, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(...C.navy);
-  doc.text(meta.title.toUpperCase(), 14, 40);
+  doc.text(meta.title.toUpperCase(), 14, 38);
 
-  // Subtitle / filter summary
   if (meta.subtitle) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     doc.setTextColor(...C.muted);
-    doc.text(meta.subtitle, 14, 47);
+    doc.text(meta.subtitle, 14, 44);
   }
 
-  // Generation timestamp — right
-  doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
-  doc.setTextColor(...C.muted);
-  doc.text(
-    `Generated: ${format(new Date(), "dd MMM yyyy, HH:mm")}`,
-    pw - 14,
-    47,
-    { align: "right" },
-  );
-
-  // Rule below title area
+  doc.text(`PRINTED: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, pw - 14, 44, { align: "right" });
   doc.setDrawColor(...C.rule);
   doc.setLineWidth(0.3);
-  doc.line(14, 50, pw - 14, 50);
+  doc.line(14, 48, pw - 14, 48);
 
-  return 57; // content starts here
+  return 54; 
 }
 
-/**
- * Draws page footer with page number.
- */
 function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
-
   doc.setDrawColor(...C.rule);
-  doc.setLineWidth(0.3);
-  doc.line(14, ph - 14, pw - 14, ph - 14);
-
+  doc.setLineWidth(0.2);
+  doc.line(14, ph - 12, pw - 14, ph - 12);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(...C.muted);
-  doc.text(
-    "KR Steel Ship Recycling Facility · GRIT v1.0.0 · Confidential",
-    14,
-    ph - 8,
-  );
-  doc.text(`Page ${pageNum} of ${totalPages}`, pw - 14, ph - 8, {
-    align: "right",
-  });
+  doc.text("KR STEEL SRF · ASSET MANAGEMENT · CONFIDENTIAL", 14, ph - 8);
+  doc.text(`PAGE ${pageNum} OF ${totalPages}`, pw - 14, ph - 8, { align: "right" });
 }
 
-// ─── Section heading ──────────────────────────────────────────────────────────
-
-function drawSectionHeading(doc: jsPDF, label: string, y: number): number {
-  const pw = doc.internal.pageSize.getWidth();
-
-  doc.setFillColor(...C.navy);
-  doc.rect(14, y, pw - 28, 8, "F");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.setTextColor(...C.white);
-  doc.text(label.toUpperCase(), 18, y + 5.5);
-
-  return y + 8;
+function drawSignatures(doc: jsPDF, y: number) {
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    if (y > ph - 35) { doc.addPage(); y = 40; }
+    const sigY = y + 15;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(...C.navy);
+    const cols = ["YARD MANAGER", "PRODUCTION IN-CHARGE", "WIRE FOREMAN", "MAINTENANCE IN-CHARGE"];
+    const colWidth = (pw - 28) / 4;
+    cols.forEach((label, i) => {
+        const x = 14 + (i * colWidth) + (colWidth / 2);
+        doc.text("_______________________", x, sigY - 2, { align: "center" });
+        doc.text(label, x, sigY + 2, { align: "center" });
+    });
 }
 
-// ─── autoTable defaults ───────────────────────────────────────────────────────
-
-const tableDefaults = (startY: number) => ({
+const tableDefaults = (startY: number, meta: PdfMeta) => ({
   startY,
-  margin: { left: 14, right: 14 },
-  styles: {
-    font: "helvetica",
-    fontSize: 8,
-    cellPadding: { top: 4, bottom: 4, left: 5, right: 5 },
-    textColor: C.ink,
-    lineColor: C.rule,
-    lineWidth: 0.2,
-  },
-  headStyles: {
-    fillColor: C.paste,
-    textColor: C.navy,
-    fontStyle: "bold" as const,
-    fontSize: 7,
-    cellPadding: { top: 5, bottom: 5, left: 5, right: 5 },
-  },
-  alternateRowStyles: {
-    fillColor: C.pasteLight,
-  },
-  bodyStyles: {
-    fillColor: C.white,
-  },
-  tableLineColor: C.rule,
-  tableLineWidth: 0.2,
+  margin: { left: 14, right: 14, top: 32, bottom: 20 },
+  styles: { font: "helvetica", fontSize: 8, cellPadding: 2.5, textColor: C.ink, lineColor: C.rule, lineWidth: 0.1 },
+  headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: "bold" as const, fontSize: 7.5 },
+  alternateRowStyles: { fillColor: [253, 253, 252] as [number, number, number] },
+  didDrawPage: (data: any) => {
+      drawHeader(data.doc, meta, data.pageNumber === 1);
+  }
 });
 
-// ─── Criticality cell color ───────────────────────────────────────────────────
-
-function critColor(crit: string): [number, number, number] {
-  if (crit === "high") return C.red;
-  if (crit === "medium") return C.amber;
-  return C.green;
-}
-
-// ─── Public API ───────────────────────────────────────────────────────────────
-
-/**
- * Export a branded Job Report PDF.
- */
-export function exportJobReportPdf({
-  jobs,
-  equipment,
-  groupBy,
-  filterCriticality,
-  filterOverdue,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  jobs: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  equipment: any[];
-  groupBy: string;
-  filterCriticality: string;
-  filterOverdue: boolean;
-}) {
+export function exportToPDF(title: string, head: any[][], body: any[][], filename: string = "Report") {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-
-  // Build subtitle
-  const filters: string[] = [];
-  if (filterCriticality !== "all")
-    filters.push(`Criticality: ${filterCriticality}`);
-  if (filterOverdue) filters.push("Overdue jobs only");
-  if (groupBy !== "none") filters.push(`Grouped by: ${groupBy}`);
-
-  const meta: PdfMeta = {
-    title: "Maintenance Job Report",
-    subtitle: filters.length ? filters.join(" · ") : "All jobs",
-    orientation: "l",
-  };
-
-  let startY = drawHeader(doc, meta);
-
-  // Filter
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filteredJobs = jobs.filter((job: any) => {
-    if (filterOverdue && job.overdueDays <= 0) return false;
-    if (filterCriticality !== "all" && job.criticality !== filterCriticality)
-      return false;
-    return true;
-  });
-
-  // Group
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const grouped = filteredJobs.reduce((acc: any, job: any) => {
-    let key = "All Jobs";
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const eq = equipment.find((e: any) => e.id === job.equipmentId);
-    if (groupBy === "category") key = eq?.category?.name || "Uncategorized";
-    else if (groupBy === "equipment")
-      key = eq ? `${eq.name} (${eq.code})` : "Unknown";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(job);
-    return acc;
-  }, {});
-
-  const ph = doc.internal.pageSize.getHeight();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.entries(grouped).forEach(([groupName, groupJobs]: [string, any]) => {
-    if (startY > ph - 40) {
-      doc.addPage();
-      startY = drawHeader(doc, meta);
-    }
-
-    startY = drawSectionHeading(doc, groupName, startY) + 2;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rows = groupJobs.map((job: any) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const eq = equipment.find((e: any) => e.id === job.equipmentId);
-      return [
-        job.jobCode,
-        job.jobName,
-        eq?.name || "—",
-        job.jobType || "—",
-        job.frequency || "—",
-        format(new Date(job.dateDone), "dd MMM yyyy"),
-        format(new Date(job.dateDue), "dd MMM yyyy"),
-        job.hoursWorked,
-        job.plannedHours,
-        job.remainingHours,
-        job.criticality,
-        job.overdueDays > 0 ? `+${job.overdueDays}d` : "OK",
-      ];
-    });
-
-    autoTable(doc, {
-      ...tableDefaults(startY),
-      head: [
-        [
-          "Code",
-          "Job Name",
-          "Equipment",
-          "Type",
-          "Freq.",
-          "Done",
-          "Due",
-          "Hrs Worked",
-          "Planned",
-          "Remaining",
-          "Crit.",
-          "Overdue",
-        ],
-      ],
-      body: rows,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      didParseCell: (data: any) => {
-        if (data.section === "body") {
-          // Criticality column
-          if (data.column.index === 10) {
-            data.cell.styles.textColor = critColor(data.cell.raw as string);
-            data.cell.styles.fontStyle = "bold";
-          }
-          // Overdue column
-          if (data.column.index === 11) {
-            const val = data.cell.raw as string;
-            if (val !== "OK") {
-              data.cell.styles.textColor = C.red;
-              data.cell.styles.fontStyle = "bold";
-            } else {
-              data.cell.styles.textColor = C.green;
-            }
-          }
-        }
-      },
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    startY = (doc as any).lastAutoTable.finalY + 10;
-  });
-
-  // Footers on all pages
+  const meta: PdfMeta = { title, orientation: "l" };
+  const startY = drawHeader(doc, meta, true);
+  autoTable(doc, { ...tableDefaults(startY, meta), head, body });
+  drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
   const total = (doc.internal as any).getNumberOfPages();
-  for (let i = 1; i <= total; i++) {
-    doc.setPage(i);
-    drawFooter(doc, i, total);
-  }
-
-  doc.save(`GRIT_Job_Report_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc, i, total); }
+  doc.save(`${filename}_${format(new Date(), "yyyyMMdd")}.pdf`);
 }
 
-/**
- * Export a branded Equipment Registry PDF.
- */
-export function exportEquipmentReportPdf({
-  equipment,
-  groupBy,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  equipment: any[];
-  groupBy: string;
-}) {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const meta: PdfMeta = { title: "Scheduled Maintenance Tasks", subtitle: `Grouping: ${groupBy}`, orientation: "l" };
+  let startY = drawHeader(doc, meta, true);
+  const grouped = tasks.reduce((acc: any, task: any) => {
+    const eq = equipment.find((e: any) => e.id === task.equipmentId);
+    let key = groupBy === "category" ? eq?.category?.name || "Uncategorized" : (groupBy === "equipment" ? `${eq?.name} (${eq?.code})` : "All Tasks");
+    if (!acc[key]) acc[key] = []; acc[key].push(task); return acc;
+  }, {});
+  Object.entries(grouped).forEach(([groupName, groupTasks]: [string, any], index) => {
+    if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
+    doc.setFillColor(...C.paste); 
+    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 6, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...C.navy); doc.text(groupName.toUpperCase(), 18, startY + 4.2);
+    startY += 8;
+    const rows = groupTasks.map((t: any) => {
+        const eq = equipment.find((e: any) => e.id === t.equipmentId);
+        return [t.taskId, t.taskName, eq?.name || "—", t.frequency?.toUpperCase(), t.taskDetail || "—"];
+    });
+    autoTable(doc, { ...tableDefaults(startY, meta), head: [["ID", "TASK NAME", "EQUIPMENT", "FREQ", "DETAIL"]], body: rows });
+  });
+  drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
+  const total = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc, i, total); }
+  doc.save(`KR_Steel_Tasks_${format(new Date(), "yyyyMMdd")}.pdf`);
+}
 
-  const meta: PdfMeta = {
-    title: "Equipment Registry Report",
-    subtitle: groupBy !== "none" ? `Grouped by: ${groupBy}` : "Full registry",
-  };
-
-  let startY = drawHeader(doc, meta);
-  const ph = doc.internal.pageSize.getHeight();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const meta: PdfMeta = { title: "Shipyard Equipment Registry", subtitle: `Master Asset List · Grouped by ${groupBy}`, orientation: "l" };
+  let startY = drawHeader(doc, meta, true);
   const grouped = equipment.reduce((acc: any, eq: any) => {
-    const key =
-      groupBy === "category"
-        ? eq.category?.name || "Uncategorized"
-        : "All Equipment";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(eq);
-    return acc;
+    const key = groupBy === "category" ? eq.category?.name || "Uncategorized" : "All Equipment";
+    if (!acc[key]) acc[key] = []; acc[key].push(eq); return acc;
   }, {});
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Object.entries(grouped).forEach(([groupName, groupEq]: [string, any]) => {
-    if (startY > ph - 40) {
-      doc.addPage();
-      startY = drawHeader(doc, meta);
-    }
-
-    startY = drawSectionHeading(doc, groupName, startY) + 2;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Object.entries(grouped).forEach(([groupName, groupEq]: [string, any], index) => {
+    if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
+    doc.setFillColor(...C.paste); 
+    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 6, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...C.navy); doc.text(groupName.toUpperCase(), 18, startY + 4.2);
+    startY += 8;
     const rows = groupEq.map((eq: any) => [
-      eq.code,
-      eq.name,
-      eq.category?.name || "—",
-      eq.location || "—",
-      eq.status,
-      eq.description || "—",
+        eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.location || "—", eq.runningHours || "—", eq.status.toUpperCase()
     ]);
-
-    autoTable(doc, {
-      ...tableDefaults(startY),
-      head: [["Code", "Name", "Category", "Location", "Status", "Description"]],
-      body: rows,
-      columnStyles: { 5: { cellWidth: 60 } },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      didParseCell: (data: any) => {
-        if (data.section === "body" && data.column.index === 4) {
-          const val = (data.cell.raw as string).toLowerCase();
-          data.cell.styles.textColor = val === "active" ? C.green : C.muted;
-          data.cell.styles.fontStyle = "bold";
-        }
-      },
+    autoTable(doc, { 
+        ...tableDefaults(startY, meta), 
+        head: [["CODE", "NAME", "BRAND", "MODEL", "SERIAL NO", "CAPACITY", "LOCATION", "HRS", "STATUS"]], 
+        body: rows 
     });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    startY = (doc as any).lastAutoTable.finalY + 10;
   });
-
+  drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
   const total = (doc.internal as any).getNumberOfPages();
-  for (let i = 1; i <= total; i++) {
-    doc.setPage(i);
-    drawFooter(doc, i, total);
-  }
-
-  doc.save(
-    `GRIT_Equipment_Registry_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`,
-  );
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc, i, total); }
+  doc.save(`KR_Steel_Asset_Registry_${format(new Date(), "yyyyMMdd")}.pdf`);
 }
 
-/**
- * Export a branded Job History PDF for a single piece of equipment.
- * Used in EquipmentDetailPage.
- */
-export function exportEquipmentJobsPdf({
-  equipment,
-  jobs,
-}: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  equipment: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  jobs: any[];
-}) {
+export function exportMaintenancePdf({ data, type }: { data: any[], type: "corrective" | "preventive" }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const meta: PdfMeta = { title: `${type === "corrective" ? "Corrective (Breakdown)" : "Preventive (Scheduled)"} Maintenance Report`, subtitle: `KR Steel Ship Recycling Yard · Maintenance Operations Log`, orientation: "l" };
+  const startY = drawHeader(doc, meta, true);
 
-  const meta: PdfMeta = {
-    title: `Job History — ${equipment.name}`,
-    subtitle: `${equipment.code} · ${equipment.location || "—"} · ${jobs.length} record${jobs.length !== 1 ? "s" : ""}`,
-    orientation: "l",
-  };
+  const head = type === "corrective" 
+    ? [["TIMELINE", "EQUIPMENT / SPECS", "JOB SPECS", "OBSERVATIONS", "WORK DONE", "PARTS", "REMARKS"]]
+    : [["DATE", "EQUIPMENT / SPECS", "TASK INFO", "OBSERVATIONS", "WORK DONE", "PARTS", "REMARKS"]];
 
-  let startY = drawHeader(doc, meta);
-  startY =
-    drawSectionHeading(doc, `${equipment.name} (${equipment.code})`, startY) +
-    2;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const rows = jobs.map((job: any) => [
-    job.jobCode,
-    job.jobName,
-    job.jobType || "—",
-    job.flag || "—",
-    job.frequency || "—",
-    format(new Date(job.dateDone), "dd MMM yyyy"),
-    format(new Date(job.dateDue), "dd MMM yyyy"),
-    job.hoursWorked,
-    job.plannedHours,
-    job.remainingHours,
-    job.criticality,
-    job.overdueDays > 0 ? `+${job.overdueDays}d` : "OK",
-  ]);
-
-  autoTable(doc, {
-    ...tableDefaults(startY),
-    head: [
-      [
-        "Code",
-        "Job Name",
-        "Type",
-        "Flag",
-        "Freq.",
-        "Done",
-        "Due",
-        "Hrs Worked",
-        "Planned",
-        "Remaining",
-        "Crit.",
-        "Overdue",
-      ],
-    ],
-    body: rows,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    didParseCell: (data: any) => {
-      if (data.section === "body") {
-        if (data.column.index === 10) {
-          data.cell.styles.textColor = critColor(data.cell.raw as string);
-          data.cell.styles.fontStyle = "bold";
-        }
-        if (data.column.index === 11) {
-          const val = data.cell.raw as string;
-          data.cell.styles.textColor = val !== "OK" ? C.red : C.green;
-          if (val !== "OK") data.cell.styles.fontStyle = "bold";
-        }
-      }
-    },
+  const rows = data.map((item: any) => {
+    const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
+    
+    if (type === "corrective") {
+      const timeline = `Rep: ${item.informationDate ? format(new Date(item.informationDate), 'dd/MM/yy') : '—'}\nSrv: ${item.serviceStartDate ? format(new Date(item.serviceStartDate), 'dd/MM/yy') : '—'}\nEnd: ${item.serviceEndDate ? format(new Date(item.serviceEndDate), 'dd/MM/yy') : '—'}`;
+      const jobSpecs = `${item.problemType?.toUpperCase()}\n${item.workType?.toUpperCase()} JOB`;
+      return [timeline, eqInfo, jobSpecs, item.problemDescription || "—", item.solutionDetails || "—", item.usedParts || "—", item.remarks || "—"];
+    } else {
+      const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yy') : (item.performedAt ? format(new Date(item.performedAt), 'dd/MM/yy') : "—");
+      const taskInfo = `${item.task?.taskId || 'PREV'}\n${item.task?.taskName || 'MAINT'}`;
+      return [date, eqInfo, taskInfo, item.maintenanceDetails || item.problemDescription || "—", item.solutionDetails || "—", item.usedParts || "—", item.remarks || "—"];
+    }
   });
 
-  const total = (doc.internal as any).getNumberOfPages();
-  for (let i = 1; i <= total; i++) {
-    doc.setPage(i);
-    drawFooter(doc, i, total);
-  }
+  autoTable(doc, { 
+    ...tableDefaults(startY, meta), head, body: rows,
+    columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 40 }, 2: { cellWidth: 28 }, 3: { cellWidth: 45 }, 4: { cellWidth: 45 } }
+  });
 
-  doc.save(
-    `GRIT_${equipment.code}_Jobs_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`,
-  );
+  drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
+  const total = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc, i, total); }
+  doc.save(`KR_Steel_${type}_Maintenance_Log_${format(new Date(), "yyyyMMdd")}.pdf`);
+}
+
+export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; tasks: any[]; }) {
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+  const meta: PdfMeta = { title: `Asset Task List: ${equipment.name}`, subtitle: `Code: ${equipment.code} · Location: ${equipment.location}`, orientation: "l" };
+  const startY = drawHeader(doc, meta, true);
+  const rows = tasks.map((t: any) => [t.taskId, t.taskName, t.frequency?.toUpperCase() || "—", t.taskDetail || "—"]);
+  autoTable(doc, { ...tableDefaults(startY, meta), head: [["ID", "TASK NAME", "FREQUENCY", "DETAILS"]], body: rows });
+  drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
+  const total = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= total; i++) { doc.setPage(i); drawFooter(doc, i, total); }
+  doc.save(`KR_Steel_Tasks_${equipment.code}_${format(new Date(), "yyyyMMdd")}.pdf`);
 }

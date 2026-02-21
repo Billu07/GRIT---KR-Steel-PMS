@@ -2,7 +2,7 @@
 // Add to your layout.tsx or globals.css:
 // @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +15,9 @@ import {
   X,
   LogOut,
   List,
+  HardHat,
+  Package,
+  CalendarCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { CATEGORIES } from "@/lib/mockData";
@@ -24,8 +27,20 @@ const SidebarContent = () => {
   const pathname = usePathname();
   const { isOpen, setIsOpen } = useSidebar();
   const [equipmentOpen, setEquipmentOpen] = useState(true);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    [],
+  );
 
-  const categories = Object.values(CATEGORIES);
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
+  }, []);
 
   return (
     <>
@@ -35,7 +50,7 @@ const SidebarContent = () => {
           onClick={() => setIsOpen(!isOpen)}
           style={{
             padding: "8px",
-            background: "#1A3A52",
+            background: "#225CA3",
             color: "#fff",
             border: "none",
             cursor: "pointer",
@@ -52,27 +67,26 @@ const SidebarContent = () => {
         className="hidden md:flex"
         style={{
           position: "fixed",
-          top: "50%",
-          left: isOpen ? "252px" : "0px",
-          transform: "translateY(-50%)",
+          top: "24px",
+          left: isOpen ? "256px" : "0px",
           zIndex: 50,
           alignItems: "center",
           justifyContent: "center",
-          width: "18px",
-          height: "48px",
-          background: "#1A3A52",
-          color: "#C8DFE8",
+          width: "24px",
+          height: "36px",
+          background: "#225CA3",
+          color: "#ffffff",
           border: "none",
           cursor: "pointer",
           transition: "left 300ms ease",
-          borderRadius: "0 3px 3px 0",
+          borderRadius: "0 4px 4px 0",
         }}
         aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
         {isOpen ? (
-          <ChevronRight size={12} />
+          <ChevronRight size={14} />
         ) : (
-          <ChevronRight size={12} style={{ transform: "rotate(180deg)" }} />
+          <ChevronRight size={14} style={{ transform: "rotate(180deg)" }} />
         )}
       </button>
 
@@ -83,7 +97,7 @@ const SidebarContent = () => {
           left: 0,
           height: "100vh",
           width: "256px",
-          background: "#1A3A52",
+          background: "#225CA3",
           display: "flex",
           flexDirection: "column",
           zIndex: 40,
@@ -120,7 +134,7 @@ const SidebarContent = () => {
               fontSize: "9px",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
-              color: "#A8C8D8",
+              color: "rgba(255,255,255,0.7)",
               marginTop: "7px",
               fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
             }}
@@ -140,11 +154,35 @@ const SidebarContent = () => {
             gap: "2px",
           }}
         >
-          <NavLink href="/dashboard" pathname={pathname} label="Dashboard" />
+          <NavLink
+            href="/dashboard"
+            pathname={pathname}
+            label="Dashboard"
+            icon={<LayoutDashboard size={18} />}
+          />
           <NavLink
             href="/dashboard/registry"
             pathname={pathname}
             label="Equipment Registry"
+            icon={<HardHat size={18} />}
+          />
+          <NavLink
+            href="/dashboard/tasks"
+            pathname={pathname}
+            label="Scheduled Tasks"
+            icon={<CalendarCheck size={18} />}
+          />
+          <NavLink
+            href="/dashboard/maintenance"
+            pathname={pathname}
+            label="Maintenance Log"
+            icon={<Wrench size={18} />}
+          />
+          <NavLink
+            href="/dashboard/inventory"
+            pathname={pathname}
+            label="Inventory"
+            icon={<Package size={18} />}
           />
 
           {/* Equipment accordion */}
@@ -159,7 +197,7 @@ const SidebarContent = () => {
                 padding: "10px 12px",
                 background: "transparent",
                 border: "none",
-                color: "#C8DFE8",
+                color: "rgba(255,255,255,0.85)",
                 cursor: "pointer",
                 fontSize: "13px",
                 letterSpacing: "0.06em",
@@ -168,15 +206,22 @@ const SidebarContent = () => {
                 transition: "color 150ms ease",
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#C8DFE8")}
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color = "rgba(255,255,255,0.85)")
+              }
             >
-              <span>Equipment</span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                <List size={18} />
+                <span>Equipment</span>
+              </div>
               <span
                 style={{
                   transition: "transform 200ms ease",
                   transform: equipmentOpen ? "rotate(90deg)" : "rotate(0deg)",
                   display: "inline-flex",
-                  color: "#8FBDD0",
+                  color: "rgba(255, 255, 255, 0.75)",
                 }}
               >
                 <ChevronRight size={13} />
@@ -209,7 +254,7 @@ const SidebarContent = () => {
                         padding: "8px 10px",
                         fontSize: "12px",
                         letterSpacing: "0.04em",
-                        color: isActive ? "#fff" : "#A8C4D4",
+                        color: isActive ? "#fff" : "rgba(255, 255, 255, 0.75)",
                         background: isActive
                           ? "rgba(255,255,255,0.09)"
                           : "transparent",
@@ -218,7 +263,7 @@ const SidebarContent = () => {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         borderLeft: isActive
-                          ? "2px solid #8FBED6"
+                          ? "2px solid #1CA5CE"
                           : "2px solid transparent",
                         transition: "all 150ms ease",
                         fontFamily:
@@ -237,6 +282,7 @@ const SidebarContent = () => {
             href="/dashboard/reports"
             pathname={pathname}
             label="Reports"
+            icon={<FileText size={18} />}
           />
         </nav>
 
@@ -255,7 +301,7 @@ const SidebarContent = () => {
               alignItems: "center",
               gap: "10px",
               padding: "10px 12px",
-              color: "#8FBDD0",
+              color: "rgba(255,255,255,0.65)",
               textDecoration: "none",
               fontSize: "12px",
               letterSpacing: "0.1em",
@@ -263,8 +309,12 @@ const SidebarContent = () => {
               fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
               transition: "color 150ms ease",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#C8DFE8")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#8FBDD0")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,0.85)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "rgba(255,255,255,0.65)")
+            }
           >
             <LogOut size={14} />
             <span>Logout</span>
@@ -296,9 +346,9 @@ function NavLink({
         fontSize: "13px",
         letterSpacing: "0.06em",
         textTransform: "uppercase",
-        color: isActive ? "#ffffff" : "#B8CFDE",
+        color: isActive ? "#ffffff" : "rgba(255, 255, 255, 0.85)",
         background: isActive ? "rgba(255,255,255,0.09)" : "transparent",
-        borderLeft: isActive ? "2px solid #8FBED6" : "2px solid transparent",
+        borderLeft: isActive ? "2px solid #1CA5CE" : "2px solid transparent",
         textDecoration: "none",
         fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
         transition: "all 150ms ease",
@@ -321,7 +371,7 @@ const Sidebar = () => {
             left: 0,
             height: "100vh",
             width: "256px",
-            background: "#1A3A52",
+            background: "#225CA3",
           }}
         />
       }

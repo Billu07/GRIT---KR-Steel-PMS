@@ -1,13 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export async function GET() {
+  try {
+    const logs = await prisma.maintenanceHistory.findMany({
+      include: {
+        equipment: {
+          include: {
+            category: true,
+          }
+        },
+        task: true,
+      },
+      orderBy: {
+        performedAt: 'desc',
+      },
+    });
+
+    const equipment = await prisma.equipment.findMany({
+      include: {
+        category: true,
+      }
+    });
+
+    const categories = await prisma.equipmentCategory.findMany();
+
+    return NextResponse.json({ logs, equipment, categories });
+  } catch (error) {
+    console.error('Maintenance fetch error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { 
       equipmentId, 
+      taskId,
       type, 
-      interventionDate, 
+      informationDate, 
       serviceStartDate, 
       serviceEndDate, 
       problemDescription, 
@@ -15,7 +47,9 @@ export async function POST(req: NextRequest) {
       usedParts, 
       workType, 
       problemType, 
-      remarks 
+      remarks,
+      maintenanceDate,
+      maintenanceDetails
     } = body;
 
     if (!equipmentId || !type) {
@@ -25,8 +59,9 @@ export async function POST(req: NextRequest) {
     const newHistory = await prisma.maintenanceHistory.create({
       data: {
         equipmentId,
+        taskId: taskId ? parseInt(taskId) : null,
         type,
-        interventionDate: interventionDate ? new Date(interventionDate) : null,
+        informationDate: informationDate ? new Date(informationDate) : null,
         serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
         serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
         problemDescription,
@@ -35,6 +70,8 @@ export async function POST(req: NextRequest) {
         workType,
         problemType,
         remarks,
+        maintenanceDate: maintenanceDate ? new Date(maintenanceDate) : null,
+        maintenanceDetails,
         performedAt: new Date(),
       },
     });

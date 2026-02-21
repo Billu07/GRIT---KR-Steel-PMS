@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 
 export default function LoginPage() {
@@ -44,16 +45,16 @@ export default function LoginPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --navy:        #1A3A52;
-          --navy-dark:   #132D40;
-          --navy-hover:  #1F4460;
+          --navy:        #225CA3;
+          --navy-dark:   #133660;
+          --navy-hover:  #1B4A82;
           --paste:       #EAE7DF;
           --paste-light: #F5F3EF;
           --white:       #FAFAF8;
           --ink:         #1A1A1A;
           --muted:       #7A8A93;
           --rule:        #D0CBC0;
-          --accent:      #8FBED6;
+          --accent:      #1CA5CE;
           --error:       #8B2020;
           --green:       #4A7C5A;
           --font:        'DM Sans', 'Helvetica Neue', Arial, sans-serif;
@@ -115,7 +116,7 @@ export default function LoginPage() {
           font-weight: 600;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.65);
+          color: rgba(255,255,255,0.85);
           margin-bottom: 40px;
         }
 
@@ -123,7 +124,7 @@ export default function LoginPage() {
           font-size: 42px;
           font-weight: 600;
           letter-spacing: -0.01em;
-          color: var(--paste-light);
+          color: #ffffff;
           line-height: 1.05;
           margin-bottom: 6px;
         }
@@ -133,14 +134,14 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.16em;
           text-transform: uppercase;
-          color: rgba(234,231,223,0.72);
+          color: rgba(255,255,255,0.9);
           margin-bottom: 40px;
         }
 
         .lr-rule {
           width: 32px;
           height: 1px;
-          background: rgba(143,190,214,0.4);
+          background: rgba(28, 165, 206, 0.4);
           margin-bottom: 28px;
         }
 
@@ -148,7 +149,7 @@ export default function LoginPage() {
           font-size: 13px;
           font-weight: 300;
           line-height: 1.8;
-          color: rgba(234,231,223,0.68);
+          color: rgba(255,255,255,0.85);
           max-width: 280px;
         }
 
@@ -157,7 +158,7 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: rgba(234,231,223,0.45);
+          color: rgba(255,255,255,0.6);
         }
 
         /* ── Right panel ──────────────────────────── */
@@ -190,14 +191,14 @@ export default function LoginPage() {
         }
 
         .lr-logo-img {
-          height: 38px;
+          height: 48px;
           width: auto;
           object-fit: contain;
         }
 
         .lr-logo-name {
-          font-size: 18px;
-          font-weight: 600;
+          font-size: 22px;
+          font-weight: 700;
           letter-spacing: 0.02em;
           color: var(--navy);
           line-height: 1;
@@ -247,7 +248,7 @@ export default function LoginPage() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #1A3A52;
+          color: #225CA3;
           margin-bottom: 7px;
         }
 
@@ -271,8 +272,8 @@ export default function LoginPage() {
         }
 
         .lr-input:focus {
-          border-color: #1A3A52;
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.06);
+          border-color: #225CA3;
+          box-shadow: 0 0 0 3px rgba(34,92,163,0.06);
           background: #FFFFFF;
         }
 

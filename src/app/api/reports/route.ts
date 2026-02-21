@@ -1,41 +1,34 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic and clear cache
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
-    const jobs = await prisma.job.findMany({
-      include: {
-        equipment: true,
-      },
-    });
+    // Basic data fetching
+    const tasks = await prisma.task.findMany({ orderBy: { updatedAt: 'desc' } });
+    const equipment = await prisma.equipment.findMany({ include: { category: true }, orderBy: { code: 'asc' } });
+    const maintenanceHistory = await prisma.maintenanceHistory.findMany({ include: { equipment: true, task: true }, orderBy: { performedAt: 'desc' } });
 
-    const equipment = await prisma.equipment.findMany({
-      include: {
-        category: true,
-      },
-    });
-
-    const maintenanceHistory = await prisma.maintenanceHistory.findMany({
-      include: {
-        equipment: {
-          include: {
-            category: true,
-          }
-        },
-        job: true,
-      },
-      orderBy: {
-        performedAt: 'desc',
-      }
-    });
+    let inventory: any[] = [];
+    
+    // Safely check for inventory model existence
+    const p = prisma as any;
+    if (p['inventory'] && typeof p['inventory'].findMany === 'function') {
+      inventory = await p['inventory'].findMany({ orderBy: { id: 'asc' } });
+    } else {
+      console.warn('Inventory model not yet available in Prisma Client');
+    }
 
     return NextResponse.json({
-      jobs,
+      tasks,
       equipment,
       maintenanceHistory,
+      inventory,
     });
-  } catch (error) {
-    console.error('Reports fetch error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Failed to fetch report data:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

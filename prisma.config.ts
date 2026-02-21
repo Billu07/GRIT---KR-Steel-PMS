@@ -9,8 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
-    // @ts-expect-error - directUrl is required by Prisma 7 but missing from types
-    directUrl: process.env["DIRECT_URL"],
+    url: process.env["DIRECT_URL"],
   },
 });

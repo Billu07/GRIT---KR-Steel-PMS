@@ -113,8 +113,8 @@ export default function CategoryPage() {
         }
 
         .eq-search:focus {
-          border-color: #1A3A52 !important;
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.07) !important;
+          border-color: #225CA3 !important;
+          box-shadow: 0 0 0 3px rgba(34, 92, 163,0.07) !important;
           outline: none;
         }
 
@@ -128,7 +128,7 @@ export default function CategoryPage() {
         }
 
         .eq-view-link {
-          color: #1A3A52;
+          color: #225CA3;
           font-weight: 600;
           font-size: 12px;
           letter-spacing: 0.06em;
@@ -137,7 +137,7 @@ export default function CategoryPage() {
         }
 
         .eq-view-link:hover {
-          color: #8FBED6;
+          color: #1CA5CE;
         }
 
         .eq-add-btn {
@@ -151,7 +151,7 @@ export default function CategoryPage() {
           letter-spacing: 0.16em;
           text-transform: uppercase;
           color: #EAE7DF;
-          background: #1A3A52;
+          background: #225CA3;
           border: none;
           border-radius: 2px;
           cursor: pointer;
@@ -159,12 +159,12 @@ export default function CategoryPage() {
           white-space: nowrap;
         }
 
-        .eq-add-btn:hover { background: #1F4460; }
-        .eq-add-btn:active { background: #132D40; }
+        .eq-add-btn:hover { background: #1B4A82; }
+        .eq-add-btn:active { background: #133660; }
 
         .eq-table-wrap::-webkit-scrollbar { height: 4px; }
         .eq-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
-        .eq-table-wrap::-webkit-scrollbar-thumb { background: #8FBED6; border-radius: 2px; }
+        .eq-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 2px; }
       `}</style>
 
       <div className="eq-root">
@@ -196,7 +196,7 @@ export default function CategoryPage() {
                   fontSize: "28px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#1A3A52",
+                  color: "#225CA3",
                   margin: 0,
                   lineHeight: 1,
                 }}
@@ -271,7 +271,7 @@ export default function CategoryPage() {
               justifyContent: "space-between",
               padding: "16px 24px",
               borderBottom: "1px solid #D0CBC0",
-              background: "#1A3A52",
+              background: "#225CA3",
             }}
           >
             <p
@@ -324,7 +324,7 @@ export default function CategoryPage() {
                         fontWeight: 600,
                         letterSpacing: "0.16em",
                         textTransform: "uppercase",
-                        color: "#1A3A52",
+                        color: "#225CA3",
                         whiteSpace: "nowrap",
                         borderBottom: "1px solid #D0CBC0",
                       }}
@@ -351,7 +351,7 @@ export default function CategoryPage() {
                           padding: "14px 24px",
                           whiteSpace: "nowrap",
                           fontWeight: 600,
-                          color: "#1A3A52",
+                          color: "#225CA3",
                           borderBottom: "1px solid #EAE7DF",
                           letterSpacing: "0.04em",
                           fontSize: "12px",
@@ -417,7 +417,7 @@ export default function CategoryPage() {
                           borderBottom: "1px solid #EAE7DF",
                         }}
                       >
-                        <span className="eq-view-link">View Jobs →</span>
+                        <span className="eq-view-link">View Tasks →</span>
                       </td>
                     </tr>
                   ))

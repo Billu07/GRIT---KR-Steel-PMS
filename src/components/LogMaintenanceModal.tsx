@@ -1,32 +1,109 @@
 "use client";
 
-import React, { useState } from "react";
-import { X } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Calendar, ClipboardCheck, AlertCircle, Package } from "lucide-react";
 
 interface LogMaintenanceModalProps {
   isOpen: boolean;
   onClose: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (data: any) => void;
+  equipmentId?: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tasks?: any[];
+  equipmentName?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialData?: any;
 }
 
 const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  equipmentId: initialEqId,
+  tasks: initialTasks = [],
+  equipmentName: initialEqName = "",
+  initialData,
 }) => {
   const [formData, setFormData] = useState({
     type: "corrective",
-    interventionDate: "",
+    taskId: "",
+    equipmentId: "",
+    informationDate: "",
     serviceStartDate: "",
     serviceEndDate: "",
+    maintenanceDate: "",
     problemDescription: "",
     solutionDetails: "",
     usedParts: "",
-    workType: "mechanical",
+    workType: "new",
     problemType: "minor",
     remarks: "",
   });
+
+  // For global mode: fetch all equipment and tasks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [allEquipment, setAllEquipment] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [allTasks, setAllTasks] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialData) {
+        // Edit mode
+        setFormData({
+            type: initialData.type || "corrective",
+            taskId: initialData.taskId ? String(initialData.taskId) : "",
+            equipmentId: initialData.equipmentId ? String(initialData.equipmentId) : "",
+            informationDate: initialData.informationDate ? new Date(initialData.informationDate).toISOString().slice(0, 16) : "",
+            serviceStartDate: initialData.serviceStartDate ? new Date(initialData.serviceStartDate).toISOString().slice(0, 16) : "",
+            serviceEndDate: initialData.serviceEndDate ? new Date(initialData.serviceEndDate).toISOString().slice(0, 16) : "",
+            maintenanceDate: initialData.maintenanceDate ? new Date(initialData.maintenanceDate).toISOString().slice(0, 16) : "",
+            problemDescription: initialData.problemDescription || "",
+            solutionDetails: initialData.solutionDetails || "",
+            usedParts: initialData.usedParts || "",
+            workType: initialData.workType || "new",
+            problemType: initialData.problemType || "minor",
+            remarks: initialData.remarks || "",
+        });
+      } else {
+        // Create mode
+        const now = new Date().toISOString().slice(0, 16);
+        setFormData(prev => ({
+            ...prev,
+            equipmentId: initialEqId ? String(initialEqId) : "",
+            informationDate: now,
+            maintenanceDate: now,
+            serviceStartDate: now,
+            serviceEndDate: now,
+            taskId: "",
+            type: "corrective",
+            problemDescription: "",
+            solutionDetails: "",
+            usedParts: "",
+            remarks: "",
+        }));
+      }
+
+      // If in global mode (no initialEqId) OR editing, fetch everything to allow changing equipment if needed
+      // Actually, if editing, we might want to fetch everything too to show the correct equipment name in dropdown
+      if (!initialEqId || initialData) {
+        fetch("/api/reports")
+          .then(res => res.json())
+          .then(data => {
+            setAllEquipment(data.equipment || []);
+            setAllTasks(data.tasks || []);
+          })
+          .catch(console.error);
+      }
+    }
+  }, [isOpen, initialEqId, initialData]);
+
+  const filteredTasks = useMemo(() => {
+    if (initialEqId) return initialTasks;
+    if (!formData.equipmentId) return [];
+    return allTasks.filter(t => String(t.equipmentId) === formData.equipmentId);
+  }, [initialEqId, initialTasks, allTasks, formData.equipmentId]);
 
   if (!isOpen) return null;
 
@@ -41,345 +118,167 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    if (!formData.equipmentId) {
+      alert("Please select equipment.");
+      return;
+    }
+
+    const payload = { 
+      ...formData,
+      equipmentId: parseInt(formData.equipmentId),
+      taskId: formData.taskId ? parseInt(formData.taskId) : null
+    };
+    
+    if (formData.type === 'corrective') {
+      payload.taskId = null;
+    }
+
+    onSubmit(payload);
   };
 
   const fieldStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 12px",
-    fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
-    fontSize: "13px",
-    color: "#1A1A1A",
-    background: "#FAFAF8",
-    border: "1px solid #D0CBC0",
-    borderRadius: "2px",
-    outline: "none",
-    transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+    width: "100%", padding: "10px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px",
+    color: "#1A1A1A", background: "#FAFAF8", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none",
   };
 
   const selectStyle: React.CSSProperties = {
-    ...fieldStyle,
-    appearance: "none",
-    WebkitAppearance: "none",
+    ...fieldStyle, appearance: "none",
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A8A93' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 12px center",
-    paddingRight: "32px",
-    cursor: "pointer",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", cursor: "pointer",
   };
 
   const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "10px",
-    fontWeight: 600,
-    letterSpacing: "0.16em",
-    textTransform: "uppercase",
-    color: "#1A3A52",
-    opacity: 0.7,
-    marginBottom: "7px",
+    display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", fontWeight: 700,
+    letterSpacing: "0.12em", textTransform: "uppercase", color: "#225CA3", marginBottom: "7px",
   };
 
+  const isScheduled = formData.type === 'scheduled';
+  const isPredictive = formData.type === 'predictive';
+  const isCorrective = formData.type === 'corrective';
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
-
-        .lm-field:focus {
-          border-color: #1A3A52 !important;
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.07) !important;
-        }
-
-        .lm-cancel {
-          padding: 10px 20px;
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.14em; text-transform: uppercase;
-          color: #1A3A52; background: transparent;
-          border: 1px solid #D0CBC0; border-radius: 2px;
-          cursor: pointer; transition: all 0.15s ease;
-        }
-        .lm-cancel:hover { border-color: #1A3A52; background: rgba(26,58,82,0.04); }
-
-        .lm-submit {
-          padding: 10px 20px;
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.14em; text-transform: uppercase;
-          color: #EAE7DF; background: #1A3A52;
-          border: none; border-radius: 2px;
-          cursor: pointer; transition: background 0.15s ease;
-        }
-        .lm-submit:hover  { background: #1F4460; }
-        .lm-submit:active { background: #132D40; }
-
-        @keyframes lm-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-
-      {/* Backdrop */}
+    <div
+      style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(12, 22, 33, 0.7)", backdropFilter: "blur(4px)", padding: "20px"
+      }}
+      onClick={onClose}
+    >
       <div
         style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 50,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(10,20,30,0.55)",
-          backdropFilter: "blur(2px)",
-          padding: "24px",
+          background: "#FFFFFF", width: "100%", maxWidth: "720px", maxHeight: "95vh",
+          display: "flex", flexDirection: "column", borderRadius: "4px",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.3)", overflow: "hidden"
         }}
-        onClick={onClose}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal */}
-        <div
-          style={{
-            background: "#FAFAF8",
-            width: "100%",
-            maxWidth: "680px",
-            maxHeight: "90vh",
-            display: "flex",
-            flexDirection: "column",
-            border: "1px solid #D0CBC0",
-            fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
-            WebkitFontSmoothing: "antialiased",
-            animation: "lm-in 0.2s cubic-bezier(0.22,1,0.36,1) both",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 24px",
-              flexShrink: 0,
-              background: "#1A3A52",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "#EAE7DF",
-                margin: 0,
-              }}
-            >
-              Log Maintenance
+        <div style={{ padding: "20px 24px", background: "#225CA3", color: "#FFFFFF", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, margin: 0, letterSpacing: "0.02em" }}>{initialData ? "EDIT MAINTENANCE RECORD" : "LOG MAINTENANCE RECORD"}</h2>
+            <p style={{ fontSize: "11px", opacity: 0.8, margin: "4px 0 0", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {initialEqName || (initialData?.equipment?.name) || "Global Maintenance Entry"}
             </p>
-            <button
-              onClick={onClose}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "28px",
-                height: "28px",
-                color: "rgba(234,231,223,0.6)",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                borderRadius: "2px",
-                transition: "color 0.15s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#EAE7DF")}
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "rgba(234,231,223,0.6)")
-              }
-            >
-              <X size={16} />
-            </button>
           </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#FFFFFF", cursor: "pointer", opacity: 0.7 }}><X size={20} /></button>
+        </div>
 
-          {/* Form */}
-          <form
-            onSubmit={handleSubmit}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flex: 1,
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ overflowY: "auto", padding: "24px", flex: 1 }}>
-              
-              <div style={{ marginBottom: "20px" }}>
-                <label style={labelStyle}>Maintenance Type</label>
-                <select
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  className="lm-field"
-                  style={selectStyle}
-                >
-                  <option value="corrective">Corrective (Breakdown/Repair)</option>
-                  <option value="predictive">Predictive (Condition Based)</option>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+          <div style={{ padding: "24px", overflowY: "auto", flex: 1 }}>
+            
+            {/* Equipment Selection (Only if not provided or editing) */}
+            {(!initialEqId || initialData) && (
+              <div style={{ marginBottom: "24px" }}>
+                <label style={labelStyle}><Package size={12}/> Select Equipment</label>
+                <select name="equipmentId" value={formData.equipmentId} onChange={handleChange} style={selectStyle} required>
+                  <option value="">-- Select Asset --</option>
+                  {allEquipment.map(eq => (
+                    <option key={eq.id} value={eq.id}>{eq.name} ({eq.code})</option>
+                  ))}
                 </select>
               </div>
+            )}
 
-              {formData.type === 'corrective' && (
-                <>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "14px",
-                      marginBottom: "20px"
-                    }}
-                  >
-                    <div>
-                      <label style={labelStyle}>Intervention Date</label>
-                      <input
-                        type="datetime-local"
-                        name="interventionDate"
-                        value={formData.interventionDate}
-                        onChange={handleChange}
-                        className="lm-field"
-                        style={fieldStyle}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Service Start</label>
-                      <input
-                        type="datetime-local"
-                        name="serviceStartDate"
-                        value={formData.serviceStartDate}
-                        onChange={handleChange}
-                        className="lm-field"
-                        style={fieldStyle}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Service End</label>
-                      <input
-                        type="datetime-local"
-                        name="serviceEndDate"
-                        value={formData.serviceEndDate}
-                        onChange={handleChange}
-                        className="lm-field"
-                        style={fieldStyle}
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "14px",
-                      marginBottom: "20px"
-                    }}
-                  >
-                    <div>
-                      <label style={labelStyle}>Work Type</label>
-                      <select
-                        name="workType"
-                        value={formData.workType}
-                        onChange={handleChange}
-                        className="lm-field"
-                        style={selectStyle}
-                      >
-                        <option value="mechanical">Mechanical</option>
-                        <option value="electrical">Electrical</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Problem Type</label>
-                      <select
-                        name="problemType"
-                        value={formData.problemType}
-                        onChange={handleChange}
-                        className="lm-field"
-                        style={selectStyle}
-                      >
-                        <option value="minor">Minor</option>
-                        <option value="major">Major</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    <div>
-                      <label style={labelStyle}>Problem Description</label>
-                      <textarea
-                        name="problemDescription"
-                        value={formData.problemDescription}
-                        onChange={handleChange}
-                        rows={2}
-                        className="lm-field"
-                        style={{ ...fieldStyle, resize: "vertical" }}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Solution Details</label>
-                      <textarea
-                        name="solutionDetails"
-                        value={formData.solutionDetails}
-                        onChange={handleChange}
-                        rows={2}
-                        className="lm-field"
-                        style={{ ...fieldStyle, resize: "vertical" }}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>Used Parts</label>
-                      <textarea
-                        name="usedParts"
-                        value={formData.usedParts}
-                        onChange={handleChange}
-                        rows={1}
-                        className="lm-field"
-                        style={{ ...fieldStyle, resize: "vertical" }}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Remarks available for both types */}
-              <div style={{ marginTop: "14px" }}>
-                <label style={labelStyle}>Remarks</label>
-                <textarea
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  rows={2}
-                  className="lm-field"
-                  style={{ ...fieldStyle, resize: "vertical" }}
-                />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+              <div>
+                <label style={labelStyle}><AlertCircle size={12}/> Log Type</label>
+                <select name="type" value={formData.type} onChange={handleChange} style={selectStyle}>
+                  <option value="corrective">Corrective (Breakdown)</option>
+                  <option value="scheduled">Scheduled (Preventive)</option>
+                  <option value="predictive">Predictive (Condition)</option>
+                </select>
               </div>
-
+              <div>
+                <label style={labelStyle}>
+                    <Calendar size={12}/> 
+                    {isScheduled ? 'Maintenance Date' : isPredictive ? 'Observation Date' : 'Breakdown Reported'}
+                </label>
+                <input type="datetime-local" name={isScheduled || isPredictive ? "maintenanceDate" : "informationDate"} value={isScheduled || isPredictive ? formData.maintenanceDate : formData.informationDate} onChange={handleChange} style={fieldStyle} />
+              </div>
             </div>
 
-            {/* Footer */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-                padding: "16px 24px",
-                flexShrink: 0,
-                borderTop: "1px solid #D0CBC0",
-                background: "#F5F3EF",
-              }}
-            >
-              <button type="button" className="lm-cancel" onClick={onClose}>
-                Cancel
-              </button>
-              <button type="submit" className="lm-submit">
-                Save Record
-              </button>
+            {isScheduled && (
+              <div style={{ marginBottom: "24px" }}>
+                <label style={labelStyle}><ClipboardCheck size={12}/> Select Scheduled Task</label>
+                <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} required>
+                  <option value="">-- Select Task --</option>
+                  {filteredTasks.map(t => (
+                    <option key={t.id} value={t.id}>{t.taskId}: {t.taskName} ({t.frequency})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {isCorrective && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+                <div><label style={labelStyle}>Service Start</label><input type="datetime-local" name="serviceStartDate" value={formData.serviceStartDate} onChange={handleChange} style={fieldStyle} /></div>
+                <div><label style={labelStyle}>Service End</label><input type="datetime-local" name="serviceEndDate" value={formData.serviceEndDate} onChange={handleChange} style={fieldStyle} /></div>
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+              <div>
+                <label style={labelStyle}>Problem Type</label>
+                <select name="problemType" value={formData.problemType} onChange={handleChange} style={selectStyle}>
+                  <option value="minor">Minor Issue</option>
+                  <option value="major">Major / Critical</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Work Type</label>
+                <select name="workType" value={formData.workType} onChange={handleChange} style={selectStyle}>
+                  <option value="new">New Job</option>
+                  <option value="rework">Rework / Follow-up</option>
+                </select>
+              </div>
             </div>
-          </form>
-        </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div>
+                <label style={labelStyle}>
+                    {isScheduled ? 'Observations & Details' : isPredictive ? 'Condition Analysis / Findings' : 'Problem Description'}
+                </label>
+                <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                    {isPredictive ? 'Recommended Action' : 'Work Performed / Solution'}
+                </label>
+                <textarea name="solutionDetails" value={formData.solutionDetails} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
+              </div>
+              <div><label style={labelStyle}>Used Parts / Consumables</label><input type="text" name="usedParts" value={formData.usedParts} onChange={handleChange} style={fieldStyle} placeholder="e.g. 2x Filter, Hydraulic Oil 5L" /></div>
+              <div><label style={labelStyle}>General Remarks</label><textarea name="remarks" value={formData.remarks} onChange={handleChange} style={{ ...fieldStyle, minHeight: "40px" }} /></div>
+            </div>
+          </div>
+
+          <div style={{ padding: "16px 24px", background: "#F5F3EF", borderTop: "1px solid #D0CBC0", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+            <button type="button" onClick={onClose} style={{ padding: "10px 20px", border: "1px solid #D0CBC0", background: "transparent", color: "#7A8A93", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
+            <button type="submit" style={{ padding: "10px 24px", background: "#225CA3", color: "#FFFFFF", border: "none", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: "pointer", textTransform: "uppercase", borderRadius: "2px" }}>Save Log Record</button>
+          </div>
+        </form>
       </div>
-    </>
+    </div>
   );
 };
 

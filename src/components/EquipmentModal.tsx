@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 // Supabase client — reads from your .env.local
@@ -38,6 +38,15 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     status: "active",
     selectedCategoryId: categoryId ? String(categoryId) : "",
     imageUrl: "",
+    safetyMeasures: "",
+    capacity: "",
+    model: "",
+    serialNumber: "",
+    brand: "",
+    runningHours: "",
+    testCertNumber: "",
+    testCertValidity: "",
+    testCertApplied: "",
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,6 +55,10 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Section toggle state
+  const [showSpecs, setShowSpecs] = useState(true);
+  const [showCert, setShowCert] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -73,6 +86,15 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             ? String(categoryId)
             : "",
         imageUrl: initialData.imageUrl || "",
+        safetyMeasures: initialData.safetyMeasures || "",
+        capacity: initialData.capacity || "",
+        model: initialData.model || "",
+        serialNumber: initialData.serialNumber || "",
+        brand: initialData.brand || "",
+        runningHours: initialData.runningHours || "",
+        testCertNumber: initialData.testCertNumber || "",
+        testCertValidity: initialData.testCertValidity || "",
+        testCertApplied: initialData.testCertApplied || "",
       });
       setImagePreview(initialData.imageUrl || "");
     } else {
@@ -85,6 +107,15 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         status: "active",
         selectedCategoryId: categoryId ? String(categoryId) : "",
         imageUrl: "",
+        safetyMeasures: "",
+        capacity: "",
+        model: "",
+        serialNumber: "",
+        brand: "",
+        runningHours: "",
+        testCertNumber: "",
+        testCertValidity: "",
+        testCertApplied: "",
       });
       setImagePreview("");
       setImageFile(null);
@@ -195,9 +226,23 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     fontWeight: 600,
     letterSpacing: "0.16em",
     textTransform: "uppercase",
-    color: "#1A3A52",
+    color: "#225CA3",
     opacity: 0.7,
     marginBottom: "7px",
+  };
+
+  const sectionHeaderStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: "12px",
+    fontWeight: 600,
+    color: "#1A1A1A",
+    background: "#EAF1F6",
+    padding: "8px 12px",
+    cursor: "pointer",
+    borderRadius: "2px",
+    margin: "10px 0 10px 0",
   };
 
   return (
@@ -206,8 +251,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
 
         .eq-modal-field:focus {
-          border-color: #1A3A52 !important;
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.07) !important;
+          border-color: #225CA3 !important;
+          box-shadow: 0 0 0 3px rgba(34,92,163,0.07) !important;
         }
         .eq-modal-field::placeholder { color: #C0BAB0; }
 
@@ -216,23 +261,23 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 11px; font-weight: 600;
           letter-spacing: 0.14em; text-transform: uppercase;
-          color: #1A3A52; background: transparent;
+          color: #225CA3; background: transparent;
           border: 1px solid #D0CBC0; border-radius: 2px;
           cursor: pointer; transition: all 0.15s ease;
         }
-        .eq-modal-cancel:hover { border-color: #1A3A52; background: rgba(26,58,82,0.04); }
+        .eq-modal-cancel:hover { border-color: #225CA3; background: rgba(34,92,163,0.04); }
 
         .eq-modal-submit {
           padding: 10px 20px;
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 11px; font-weight: 600;
           letter-spacing: 0.14em; text-transform: uppercase;
-          color: #EAE7DF; background: #1A3A52;
+          color: #EAE7DF; background: #225CA3;
           border: none; border-radius: 2px;
           cursor: pointer; transition: background 0.15s ease;
         }
-        .eq-modal-submit:hover:not(:disabled)  { background: #1F4460; }
-        .eq-modal-submit:active:not(:disabled) { background: #132D40; }
+        .eq-modal-submit:hover:not(:disabled)  { background: #1B4A82; }
+        .eq-modal-submit:active:not(:disabled) { background: #133660; }
         .eq-modal-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
         .eq-upload-zone {
@@ -245,7 +290,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
           transition: border-color 0.15s ease, background 0.15s ease;
         }
         .eq-upload-zone:hover {
-          border-color: #1A3A52;
+          border-color: #225CA3;
           background: #EAF1F6;
         }
 
@@ -275,7 +320,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
           style={{
             background: "#FAFAF8",
             width: "100%",
-            maxWidth: "480px",
+            maxWidth: "600px",
             maxHeight: "90vh",
             display: "flex",
             flexDirection: "column",
@@ -294,7 +339,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
               justifyContent: "space-between",
               padding: "16px 24px",
               flexShrink: 0,
-              background: "#1A3A52",
+              background: "#225CA3",
             }}
           >
             <p
@@ -430,19 +475,132 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                 />
               </div>
 
-              {/* Location */}
-              <div>
-                <label style={labelStyle}>Location</label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  className="eq-modal-field"
-                  style={fieldStyle}
-                  placeholder="e.g. Bay A"
-                />
+              {/* Collapsible Specs Section */}
+              <div onClick={() => setShowSpecs(!showSpecs)} style={sectionHeaderStyle}>
+                 <span>Technical Specifications</span>
+                 {showSpecs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </div>
+              
+              {showSpecs && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", padding: "0 4px" }}>
+                  <div>
+                    <label style={labelStyle}>Capacity</label>
+                    <input
+                      type="text"
+                      name="capacity"
+                      value={formData.capacity}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. 2 Ton"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Model</label>
+                    <input
+                      type="text"
+                      name="model"
+                      value={formData.model}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. SH210-5"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Brand</label>
+                    <input
+                      type="text"
+                      name="brand"
+                      value={formData.brand}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. Kobelco"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Serial Number</label>
+                    <input
+                      type="text"
+                      name="serialNumber"
+                      value={formData.serialNumber}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. SNT210F52..."
+                    />
+                  </div>
+                </div>
+              )}
+
+               {/* Collapsible Certifications Section */}
+               <div onClick={() => setShowCert(!showCert)} style={sectionHeaderStyle}>
+                 <span>Location & Certification</span>
+                 {showCert ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </div>
+
+              {showCert && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", padding: "0 4px" }}>
+                  <div>
+                    <label style={labelStyle}>Location</label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. Secondary Cutting Zone"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Running Hours</label>
+                    <input
+                      type="text"
+                      name="runningHours"
+                      value={formData.runningHours}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. 1200 hrs"
+                    />
+                  </div>
+                   <div>
+                    <label style={labelStyle}>Test Cert. No</label>
+                    <input
+                      type="text"
+                      name="testCertNumber"
+                      value={formData.testCertNumber}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Test Cert. Validity</label>
+                    <input
+                      type="text"
+                      name="testCertValidity"
+                      value={formData.testCertValidity}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                   <div style={{gridColumn: "span 2"}}>
+                    <label style={labelStyle}>Test Cert. Applied</label>
+                    <input
+                      type="text"
+                      name="testCertApplied"
+                      value={formData.testCertApplied}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               <div>
@@ -454,6 +612,20 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                   rows={2}
                   className="eq-modal-field"
                   style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.6 }}
+                />
+              </div>
+
+              {/* Safety Measures */}
+              <div>
+                <label style={labelStyle}>Safety Measures</label>
+                <textarea
+                  name="safetyMeasures"
+                  value={formData.safetyMeasures}
+                  onChange={handleChange}
+                  rows={2}
+                  className="eq-modal-field"
+                  style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.6 }}
+                  placeholder="e.g. Lockout/Tagout procedures, required PPE..."
                 />
               </div>
 
@@ -533,7 +705,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                     className="eq-upload-zone"
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    <Upload size={20} style={{ color: "#8FBED6" }} />
+                    <Upload size={20} style={{ color: "#1CA5CE" }} />
                     <p
                       style={{
                         fontSize: "12px",

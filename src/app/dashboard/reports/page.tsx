@@ -1,703 +1,340 @@
 "use client";
 
-import React, { useState } from "react";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
-import { exportJobReportPdf, exportEquipmentReportPdf } from "@/lib/pdfExport";
-import { exportMaintenanceExcel } from "@/lib/excelExport";
+import React, { useState, useMemo, useEffect } from "react";
+import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { exportTaskReportPdf, exportEquipmentReportPdf, exportMaintenancePdf } from "@/lib/pdfExport";
+import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExcel, exportToExcel } from "@/lib/excelExport";
+import { exportToPDF } from "@/lib/pdfExport";
+import { format } from "date-fns";
 
 export default function ReportsBuilderPage() {
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
-  const [reportType, setReportType] = useState("jobs");
-  const [groupBy, setGroupBy] = useState("category");
-  
-  // Job filters
-  const [filterCriticality, setFilterCriticality] = useState("all");
-  const [filterOverdue, setFilterOverdue] = useState(false);
+  // Configuration State
+  const [reportType, setReportType] = useState("tasks");
+  const [reportFormat, setReportFormat] = useState("pdf");
+  const [groupBy, setGroupBy] = useState("category"); // category, equipment, none
 
-  // Maintenance filters
+  // Maintenance Filters
   const [maintenanceType, setMaintenanceType] = useState("corrective");
-  
   const [durationFilterType, setDurationFilterType] = useState("none");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [singleDate, setSingleDate] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-
+  
+  // Equipment Selection
+  const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
-  const [allEquipments, setAllEquipments] = useState<any[]>([]);
+  
+  // Raw Data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [rawData, setRawData] = useState<{ tasks: any[], equipment: any[], maintenanceHistory: any[], inventory: any[] } | null>(null);
 
-  // Fetch data on mount to populate equipment list
-  React.useEffect(() => {
+  // Fetch data on mount
+  useEffect(() => {
+    setDataLoading(true);
     fetch("/api/reports")
       .then((res) => res.json())
       .then((data) => {
-        if (data.equipment) {
-          setAllEquipments(data.equipment);
-        }
+        setRawData(data);
+        setDataLoading(false);
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        setDataLoading(false);
+      });
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/reports");
-      const data = await res.json();
-      setLoading(false);
-      return data;
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-      return null;
+  // Derived / Filtered Data
+  const filteredData = useMemo(() => {
+    if (!rawData) return null;
+    const { tasks, equipment, maintenanceHistory, inventory } = rawData;
+
+    if (reportType === "tasks") {
+        let filteredTasks = tasks;
+        if (selectedEquipments.length > 0) {
+            filteredTasks = filteredTasks.filter((t: any) => selectedEquipments.includes(String(t.equipmentId)));
+        }
+        return { tasks: filteredTasks, equipment };
+    } 
+    
+    if (reportType === "equipment") {
+        let filteredEq = equipment;
+        if (selectedEquipments.length > 0) {
+            filteredEq = filteredEq.filter((e: any) => selectedEquipments.includes(String(e.id)));
+        }
+        return { equipment: filteredEq };
     }
-  };
 
-  const handleEquipmentToggle = (id: string) => {
-    setSelectedEquipments((prev) => 
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
-  };
+    if (reportType === "maintenance") {
+      if (!maintenanceHistory) return { maintenance: [] };
+      let filtered = maintenanceHistory;
 
-  const generateReport = async () => {
-    const data = await fetchData();
-    if (!data) return;
-
-    const { jobs, equipment, maintenanceHistory } = data;
-
-    if (reportType === "jobs") {
-      exportJobReportPdf({
-        jobs,
-        equipment,
-        groupBy,
-        filterCriticality,
-        filterOverdue,
-      });
-    } else if (reportType === "equipment") {
-      exportEquipmentReportPdf({ equipment, groupBy });
-    } else if (reportType === "maintenance") {
-      if (!maintenanceHistory) return;
-      
-      let filteredData = maintenanceHistory;
-
-      // Filter by Maintenance Type
       if (maintenanceType === "corrective") {
-        filteredData = filteredData.filter((m: any) => m.type === "corrective");
+        filtered = filtered.filter((m: any) => m.type === "corrective");
       } else {
-        filteredData = filteredData.filter((m: any) => m.type === "scheduled" || m.type === "predictive");
+        filtered = filtered.filter((m: any) => m.type === "scheduled" || m.type === "predictive");
       }
 
-      // Filter by Equipment
       if (selectedEquipments.length > 0) {
-        filteredData = filteredData.filter((m: any) => selectedEquipments.includes(String(m.equipmentId)));
+        filtered = filtered.filter((m: any) => selectedEquipments.includes(String(m.equipmentId)));
       }
 
-      // Filter by Duration
       if (durationFilterType !== "none") {
-        filteredData = filteredData.filter((m: any) => {
-          if (!m.performedAt) return false;
-          const performedDate = new Date(m.performedAt);
-          
+        filtered = filtered.filter((m: any) => {
+          let targetDate = m.performedAt ? new Date(m.performedAt) : null;
+          if (m.type === "corrective" && m.informationDate) targetDate = new Date(m.informationDate);
+          else if (m.maintenanceDate) targetDate = new Date(m.maintenanceDate);
+
+          if (!targetDate) return false;
           if (durationFilterType === "range" && fromDate && toDate) {
-            return performedDate >= new Date(fromDate) && performedDate <= new Date(toDate);
+            return targetDate >= new Date(fromDate) && targetDate <= new Date(toDate);
           }
           if (durationFilterType === "date" && singleDate) {
-            return performedDate.toISOString().split("T")[0] === singleDate;
+            return targetDate.toISOString().split("T")[0] === singleDate;
           }
           if (durationFilterType === "month" && month) {
             const [y, mStr] = month.split("-");
-            return performedDate.getFullYear() === parseInt(y) && performedDate.getMonth() + 1 === parseInt(mStr);
+            return targetDate.getFullYear() === parseInt(y) && targetDate.getMonth() + 1 === parseInt(mStr);
           }
           if (durationFilterType === "year" && year) {
-            return performedDate.getFullYear() === parseInt(year);
+            return targetDate.getFullYear() === parseInt(year);
           }
           return true;
         });
       }
-
-      exportMaintenanceExcel(filteredData, maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
+      return { maintenance: filtered };
     }
+
+    if (reportType === "inventory") {
+      return { inventory: inventory || [] };
+    }
+
+    return null;
+  }, [rawData, reportType, maintenanceType, durationFilterType, fromDate, toDate, singleDate, month, year, selectedEquipments]);
+
+
+  const handleDownload = () => {
+    if (!filteredData || !rawData) return;
+    setLoading(true);
+
+    setTimeout(() => {
+      if (reportType === "tasks") {
+        if (reportFormat === "pdf") exportTaskReportPdf({ tasks: filteredData.tasks || [], equipment: rawData.equipment, groupBy });
+        else exportTaskReportExcel({ tasks: filteredData.tasks || [], equipment: rawData.equipment, groupBy });
+      } else if (reportType === "equipment") {
+        if (reportFormat === "pdf") exportEquipmentReportPdf({ equipment: filteredData.equipment || [], groupBy });
+        else exportEquipmentReportExcel({ equipment: filteredData.equipment || [], groupBy });
+      } else if (reportType === "maintenance") {
+         if (reportFormat === "pdf") {
+            exportMaintenancePdf({ data: filteredData.maintenance || [], type: maintenanceType as 'corrective' | 'preventive' });
+         } else {
+            exportMaintenanceExcel(filteredData.maintenance || [], maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
+         }
+      } else if (reportType === "inventory") {
+        const inventory = filteredData.inventory || [];
+        if (reportFormat === "pdf") {
+          const headers = [["SL No.", "Equipment Name", "Quantity", "Description", "SWL", "Certificate Number"]];
+          const data = inventory.map((item: any, idx: number) => [idx + 1, item.name, item.quantity || "—", item.description || "—", item.swl || "—", item.certificateNo || "—"]);
+          exportToPDF("Shipyard Inventory Summary", headers, data, "KR_Steel_Inventory_Report");
+        } else {
+          const data = inventory.map((item: any, idx: number) => ({"SL No.": idx + 1, "Name of Equipment": item.name, "Quantity": item.quantity || "—", "Description": item.description || "—", "SWL": item.swl || "—", "Certificate Number": item.certificateNo || "—"}));
+          exportToExcel(data, "KR_Steel_Inventory_Report");
+        }
+      }
+      setLoading(false);
+    }, 500);
+  };
+
+  const handleEquipmentToggle = (id: string) => {
+    setSelectedEquipments((prev) => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
   };
 
   const selectStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 12px",
-    fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
-    fontSize: "13px",
-    fontWeight: 400,
-    color: "#1A1A1A",
-    background: "#FAFAF8",
-    border: "1px solid #D0CBC0",
-    borderRadius: "2px",
-    outline: "none",
-    cursor: "pointer",
-    transition: "border-color 0.15s ease",
-    appearance: "none",
-    WebkitAppearance: "none",
+    padding: "8px 32px 8px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", color: "#1A1A1A", background: "#FFFFFF",
+    border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none", cursor: "pointer", appearance: "none",
     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237A8A93' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 12px center",
-    paddingRight: "32px",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 10px center", minWidth: "160px"
   };
 
   const inputStyle: React.CSSProperties = {
-    ...selectStyle,
-    backgroundImage: "none",
-    paddingRight: "12px",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "10px",
-    fontWeight: 600,
-    letterSpacing: "0.16em",
-    textTransform: "uppercase",
-    color: "#1A3A52",
-    opacity: 0.7,
-    marginBottom: "8px",
+    padding: "7px 12px", fontFamily: "'DM Sans', sans-serif", fontSize: "13px", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none",
   };
 
   return (
-    <>
-      <style>{`
+    <div className="flex flex-col h-full bg-[#FAFAF8] text-[#1A1A1A] font-sans">
+       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
-
-        .rpt-root {
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          -webkit-font-smoothing: antialiased;
-        }
-
-        .rpt-select:focus, .rpt-input:focus { border-color: #1A3A52 !important; box-shadow: 0 0 0 3px rgba(26,58,82,0.07); }
-
-        .rpt-checkbox {
-          width: 15px; height: 15px;
-          accent-color: #1A3A52;
-          cursor: pointer;
-          flex-shrink: 0;
-        }
-
-        .rpt-generate-btn {
-          width: 100%;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          padding: 13px 20px;
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.18em; text-transform: uppercase;
-          color: #EAE7DF; background: #1A3A52;
-          border: none; border-radius: 2px;
-          cursor: pointer; transition: background 0.15s ease;
-        }
-        .rpt-generate-btn:hover:not(:disabled)  { background: #1F4460; }
-        .rpt-generate-btn:active:not(:disabled) { background: #132D40; }
-        .rpt-generate-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-        .rpt-preview-chip {
-          background: #FAFAF8;
-          border: 1px solid #D0CBC0;
-          padding: 16px 20px;
-        }
-          
-        .equipment-list {
-          max-height: 150px;
-          overflow-y: auto;
-          background: #FAFAF8;
-          border: 1px solid #D0CBC0;
-          border-radius: 2px;
-          padding: 8px;
-        }
+        .scroll-custom::-webkit-scrollbar { width: 8px; height: 8px; }
+        .scroll-custom::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
       `}</style>
 
-      <div className="rpt-root">
-        {/* ── Page header ── */}
-        <div style={{ marginBottom: "32px" }}>
-          <p
-            style={{
-              fontSize: "10px",
-              fontWeight: 600,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "#4A6A7A",
-              marginBottom: "8px",
-            }}
-          >
-            KR Steel · Ship Recycling Facility
-          </p>
-          <h1
-            style={{
-              fontSize: "28px",
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              color: "#1A3A52",
-              margin: 0,
-              lineHeight: 1,
-            }}
-          >
-            Report Builder
-          </h1>
-          <p style={{ fontSize: "13px", color: "#7A8A93", marginTop: "6px" }}>
-            Configure and generate custom PDF and Excel reports.
-          </p>
-          <div
-            style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
-          />
+      <div className="px-8 py-6 border-b border-[#D0CBC0] bg-white flex items-center justify-between shrink-0">
+        <div>
+           <p className="text-[10px] font-semibold tracking-[0.2em] text-[#4A6A7A] uppercase mb-2">KR Steel · Ship Recycling Facility</p>
+           <h1 className="text-2xl font-bold text-[#225CA3] tracking-tight">Report Builder</h1>
         </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "320px 1fr",
-            gap: "24px",
-            alignItems: "start",
-          }}
-        >
-          {/* ── Config panel ── */}
-          <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
-            {/* Panel header */}
-            <div
-              style={{
-                padding: "16px 24px",
-                borderBottom: "1px solid #D0CBC0",
-                background: "#1A3A52",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "#EAE7DF",
-                  margin: 0,
-                }}
-              >
-                Configuration
-              </p>
-            </div>
-
-            <div
-              style={{
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "24px",
-              }}
-            >
-              {/* Report type */}
-              <div>
-                <label style={labelStyle}>1 · Report Type</label>
-                <select
-                  className="rpt-select"
-                  style={selectStyle}
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                >
-                  <option value="jobs">Job History</option>
-                  <option value="equipment">Equipment Registry</option>
-                  <option value="maintenance">Maintenance Reports</option>
-                </select>
-              </div>
-
-              {/* Maintenance Specific Options */}
-              {reportType === "maintenance" && (
-                <>
-                  <div>
-                    <label style={labelStyle}>Maintenance Type</label>
-                    <select
-                      className="rpt-select"
-                      style={selectStyle}
-                      value={maintenanceType}
-                      onChange={(e) => setMaintenanceType(e.target.value)}
-                    >
-                      <option value="preventive">Preventive (Scheduled/Predictive)</option>
-                      <option value="corrective">Corrective</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Duration Filter</label>
-                    <select
-                      className="rpt-select"
-                      style={{...selectStyle, marginBottom: "10px"}}
-                      value={durationFilterType}
-                      onChange={(e) => setDurationFilterType(e.target.value)}
-                    >
-                      <option value="none">All Time</option>
-                      <option value="range">Date Range</option>
-                      <option value="date">Specific Date</option>
-                      <option value="month">Specific Month</option>
-                      <option value="year">Specific Year</option>
-                    </select>
-
-                    {durationFilterType === "range" && (
-                      <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                        <input type="date" className="rpt-input" style={inputStyle} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                        <input type="date" className="rpt-input" style={inputStyle} value={toDate} onChange={(e) => setToDate(e.target.value)} />
-                      </div>
-                    )}
-                    {durationFilterType === "date" && (
-                      <div style={{ marginTop: "8px" }}>
-                        <input type="date" className="rpt-input" style={inputStyle} value={singleDate} onChange={(e) => setSingleDate(e.target.value)} />
-                      </div>
-                    )}
-                    {durationFilterType === "month" && (
-                      <div style={{ marginTop: "8px" }}>
-                        <input type="month" className="rpt-input" style={inputStyle} value={month} onChange={(e) => setMonth(e.target.value)} />
-                      </div>
-                    )}
-                    {durationFilterType === "year" && (
-                      <div style={{ marginTop: "8px" }}>
-                        <input type="number" min="1990" max="2100" placeholder="YYYY" className="rpt-input" style={inputStyle} value={year} onChange={(e) => setYear(e.target.value)} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>Filter by Equipment</label>
-                    <div className="equipment-list">
-                      {allEquipments.map((eq) => (
-                        <div key={eq.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 0" }}>
-                          <input
-                            type="checkbox"
-                            id={`eq-${eq.id}`}
-                            className="rpt-checkbox"
-                            checked={selectedEquipments.includes(String(eq.id))}
-                            onChange={() => handleEquipmentToggle(String(eq.id))}
-                          />
-                          <label htmlFor={`eq-${eq.id}`} style={{ fontSize: "12px", cursor: "pointer" }}>
-                            {eq.name} ({eq.code})
-                          </label>
-                        </div>
-                      ))}
-                      {allEquipments.length === 0 && (
-                        <p style={{ fontSize: "12px", color: "#7A8A93", fontStyle: "italic" }}>Loading equipment...</p>
-                      )}
-                    </div>
-                    <p style={{ fontSize: "11px", color: "#7A8A93", marginTop: "4px" }}>Select one or more. Leave empty for all.</p>
-                  </div>
-                </>
-              )}
-
-              {/* Group by (Not for maintenance) */}
-              {reportType !== "maintenance" && (
-                <div>
-                  <label style={labelStyle}>2 · Group By</label>
-                  <select
-                    className="rpt-select"
-                    style={selectStyle}
-                    value={groupBy}
-                    onChange={(e) => setGroupBy(e.target.value)}
-                  >
-                    <option value="none">No Grouping (Flat List)</option>
-                    <option value="category">Category</option>
-                    {reportType === "jobs" && (
-                      <option value="equipment">Equipment</option>
-                    )}
-                  </select>
-                </div>
-              )}
-
-              {/* Filters — jobs only */}
-              {reportType === "jobs" && (
-                <div>
-                  <label style={labelStyle}>3 · Filters</label>
-                  <div
-                    style={{
-                      padding: "16px",
-                      background: "#F0EDE6",
-                      border: "1px solid #D0CBC0",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "14px",
-                    }}
-                  >
-                    <div>
-                      <p
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 600,
-                          letterSpacing: "0.18em",
-                          textTransform: "uppercase",
-                          color: "#7A8A93",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        Criticality
-                      </p>
-                      <select
-                        className="rpt-select"
-                        style={{
-                          ...selectStyle,
-                          fontSize: "12px",
-                          padding: "8px 32px 8px 12px",
-                        }}
-                        value={filterCriticality}
-                        onChange={(e) => setFilterCriticality(e.target.value)}
-                      >
-                        <option value="all">All Levels</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                      </select>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        id="overdue"
-                        className="rpt-checkbox"
-                        checked={filterOverdue}
-                        onChange={(e) => setFilterOverdue(e.target.checked)}
-                      />
-                      <label
-                        htmlFor="overdue"
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 500,
-                          color: "#1A1A1A",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Overdue jobs only
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Divider */}
-              <div style={{ height: "1px", background: "#D0CBC0" }} />
-
-              {/* Generate button */}
-              <button
-                className="rpt-generate-btn"
-                onClick={generateReport}
-                disabled={loading}
-              >
-                {reportType === "maintenance" ? <FileSpreadsheet size={13} /> : <Download size={13} />}
-                {loading ? "Generating…" : reportType === "maintenance" ? "Download Excel Report" : "Download PDF Report"}
-              </button>
-            </div>
-          </div>
-
-          {/* ── Preview panel ── */}
-          <div
-            style={{
-              background: "#F5F3EF",
-              border: "1px solid #D0CBC0",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              padding: "64px 48px",
-              minHeight: "400px",
-            }}
-          >
-            <div
-              style={{
-                width: "56px",
-                height: "56px",
-                background: "#FAFAF8",
-                border: "1px solid #D0CBC0",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: "20px",
-              }}
-            >
-              {reportType === "maintenance" ? (
-                <FileSpreadsheet size={24} style={{ color: "#2D6A42" }} />
-              ) : (
-                <FileText size={24} style={{ color: "#8FBED6" }} />
-              )}
-            </div>
-
-            <h3
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                color: "#1A3A52",
-                margin: 0,
-                marginBottom: "8px",
-              }}
-            >
-              Ready to Generate
-            </h3>
-            <p
-              style={{
-                fontSize: "13px",
-                color: "#7A8A93",
-                maxWidth: "320px",
-                lineHeight: 1.7,
-                margin: 0,
-              }}
-            >
-              Configure your parameters on the left, then download a {reportType === "maintenance" ? "spreadsheet" : "PDF"} report
-              tailored to your needs.
-            </p>
-
-            {/* Summary chips */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "12px",
-                marginTop: "36px",
-                width: "100%",
-                maxWidth: "360px",
-              }}
-            >
-              <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
-                <p
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "#7A8A93",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Scope
-                </p>
-                <p
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    color: "#1A3A52",
-                    textTransform: "capitalize",
-                    margin: 0,
-                  }}
-                >
-                  {reportType}
-                </p>
-              </div>
-              
-              {reportType === "maintenance" && (
-                <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
-                  <p
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 600,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: "#7A8A93",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Maintenance Type
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      color: "#1A3A52",
-                      textTransform: "capitalize",
-                      margin: 0,
-                    }}
-                  >
-                    {maintenanceType}
-                  </p>
-                </div>
-              )}
-
-              {reportType !== "maintenance" && (
-                <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
-                  <p
-                    style={{
-                      fontSize: "9px",
-                      fontWeight: 600,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: "#7A8A93",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Grouping
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      color: "#1A3A52",
-                      textTransform: "capitalize",
-                      margin: 0,
-                    }}
-                  >
-                    {groupBy}
-                  </p>
-                </div>
-              )}
-
-              {reportType === "jobs" && (
-                <>
-                  <div
-                    className="rpt-preview-chip"
-                    style={{ textAlign: "left" }}
-                  >
-                    <p
-                      style={{
-                        fontSize: "9px",
-                        fontWeight: 600,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: "#7A8A93",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      Criticality
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#1A3A52",
-                        textTransform: "capitalize",
-                        margin: 0,
-                      }}
-                    >
-                      {filterCriticality === "all" ? "All" : filterCriticality}
-                    </p>
-                  </div>
-                  <div
-                    className="rpt-preview-chip"
-                    style={{ textAlign: "left" }}
-                  >
-                    <p
-                      style={{
-                        fontSize: "9px",
-                        fontWeight: 600,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: "#7A8A93",
-                        marginBottom: "6px",
-                      }}
-                    >
-                      Overdue Only
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: filterOverdue ? "#8B2020" : "#1A3A52",
-                        margin: 0,
-                      }}
-                    >
-                      {filterOverdue ? "Yes" : "No"}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <button onClick={handleDownload} disabled={loading || dataLoading || !filteredData} className="flex items-center gap-2 px-6 py-3 bg-[#225CA3] text-[#EAE7DF] text-[11px] font-bold tracking-widest uppercase rounded hover:bg-[#1B4A82] active:bg-[#133660] disabled:opacity-50 transition-colors">
+           {loading ? "Generating..." : (
+               <>
+                 {reportFormat === "excel" ? <FileSpreadsheet size={16} /> : <Download size={16} />}
+                 <span>Download Report</span>
+               </>
+           )}
+        </button>
       </div>
-    </>
+
+      <div className="px-8 py-4 bg-[#F5F3EF] border-b border-[#D0CBC0] flex flex-wrap items-center gap-6 shrink-0 z-20">
+        <div className="flex flex-col gap-1">
+           <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Report Type</label>
+           <select style={selectStyle} value={reportType} onChange={(e) => setReportType(e.target.value)}>
+             <option value="tasks">Scheduled Tasks</option>
+             <option value="equipment">Equipment Registry</option>
+             <option value="maintenance">Maintenance History</option>
+             <option value="inventory">Inventory Summary</option>
+           </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+        <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Format</label>
+        <select style={selectStyle} value={reportFormat} onChange={(e) => setReportFormat(e.target.value)}>
+            <option value="pdf">PDF Document</option>
+            <option value="excel">Excel Spreadsheet</option>
+        </select>
+        </div>
+
+        {reportType !== "maintenance" && reportType !== "inventory" && (
+             <div className="flex flex-col gap-1">
+             <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Group By</label>
+             <select style={selectStyle} value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+                <option value="category">Category</option>
+                {reportType === "tasks" && <option value="equipment">Equipment</option>}
+                <option value="none">No Grouping</option>
+             </select>
+             </div>
+        )}
+
+        {reportType === "maintenance" && (
+             <div className="flex flex-col gap-1">
+             <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Maint. Type</label>
+             <select style={selectStyle} value={maintenanceType} onChange={(e) => setMaintenanceType(e.target.value)}>
+                 <option value="corrective">Corrective</option>
+                 <option value="preventive">Preventive (Sched/Pred)</option>
+             </select>
+             </div>
+        )}
+
+        {reportType === "maintenance" && (
+             <div className="flex flex-col gap-1">
+             <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Date Filter</label>
+             <div className="flex items-center gap-2">
+                <select style={selectStyle} value={durationFilterType} onChange={(e) => setDurationFilterType(e.target.value)}>
+                    <option value="none">All Time</option>
+                    <option value="range">Date Range</option>
+                    <option value="month">Specific Month</option>
+                    <option value="year">Specific Year</option>
+                </select>
+                {durationFilterType === "range" && (
+                    <><input type="date" style={inputStyle} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                    <span className="text-[#7A8A93]">-</span>
+                    <input type="date" style={inputStyle} value={toDate} onChange={(e) => setToDate(e.target.value)} /></>
+                )}
+                {durationFilterType === "month" && <input type="month" style={inputStyle} value={month} onChange={(e) => setMonth(e.target.value)} />}
+                {durationFilterType === "year" && <input type="number" placeholder="YYYY" style={inputStyle} value={year} onChange={(e) => setYear(e.target.value)} className="w-20" />}
+             </div>
+             </div>
+        )}
+        
+        {reportType !== "inventory" && (
+            <div className="flex flex-col gap-1 relative">
+                <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Equipment</label>
+                <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)} className="flex items-center justify-between px-3 py-2 bg-white border border-[#D0CBC0] rounded-[2px] w-[200px] text-[13px]">
+                    <span className="truncate">{selectedEquipments.length === 0 ? "All Equipment" : `${selectedEquipments.length} Selected`}</span>
+                    {showEquipmentFilter ? <ChevronUp size={14} className="text-[#7A8A93]" /> : <ChevronDown size={14} className="text-[#7A8A93]" />}
+                </button>
+                {showEquipmentFilter && rawData && (
+                    <div className="absolute top-full left-0 mt-1 w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
+                        <div className="flex items-center justify-between mb-2 px-2">
+                            <span className="text-xs font-semibold text-[#225CA3]">Select Equipment</span>
+                            <button onClick={() => setSelectedEquipments([])} className="text-[10px] text-[#7A8A93] hover:text-[#225CA3] uppercase tracking-wide">Clear</button>
+                        </div>
+                        {rawData.equipment.map((eq: any) => (
+                            <div key={eq.id} className="flex items-center gap-2 hover:bg-[#F5F3EF] p-1.5 rounded cursor-pointer" onClick={() => handleEquipmentToggle(String(eq.id))}>
+                                <input type="checkbox" checked={selectedEquipments.includes(String(eq.id))} readOnly className="accent-[#225CA3] w-3.5 h-3.5" />
+                                <div className="flex flex-col"><span className="text-[12px] font-medium text-[#1A1A1A]">{eq.name}</span><span className="text-[10px] text-[#7A8A93]">{eq.code}</span></div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-auto p-8 scroll-custom">
+         {dataLoading ? (
+             <div className="flex h-full items-center justify-center text-[#7A8A93]">Loading data...</div>
+         ) : !filteredData ? (
+             <div className="flex h-full items-center justify-center text-[#7A8A93]">No data available.</div>
+         ) : (
+             <div className="bg-white border border-[#D0CBC0] shadow-sm min-h-[400px]">
+                 <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-[#F5F3EF] text-[#225CA3] text-[11px] font-bold uppercase tracking-wider sticky top-0">
+                            <tr>
+                                {reportType === "tasks" && (<><th className="p-4 border-b border-[#D0CBC0]">Task ID</th><th className="p-4 border-b border-[#D0CBC0]">Task Name</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Frequency</th><th className="p-4 border-b border-[#D0CBC0]">Detail</th></>)}
+                                {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
+                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Details/Task</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Remarks</th></>)}
+                                {reportType === "inventory" && (<><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Quantity</th><th className="p-4 border-b border-[#D0CBC0]">Description</th><th className="p-4 border-b border-[#D0CBC0]">SWL</th><th className="p-4 border-b border-[#D0CBC0]">Cert No.</th></>)}
+                            </tr>
+                        </thead>
+                        <tbody className="text-[13px] text-[#1A1A1A]">
+                            {reportType === "tasks" && filteredData.tasks?.map((task: any) => {
+                                const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
+                                return (
+                                    <tr key={task.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                        <td className="p-4">{task.taskId}</td><td className="p-4 font-medium">{task.taskName}</td>
+                                        <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td><td className="p-4 capitalize">{task.frequency}</td>
+                                        <td className="p-4 text-[#4A5568] truncate max-w-[300px]">{task.taskDetail}</td>
+                                    </tr>
+                                );
+                            })}
+                            {reportType === "equipment" && filteredData.equipment?.map((eq: any) => (
+                                <tr key={eq.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                    <td className="p-4 font-medium">{eq.code}</td><td className="p-4">{eq.name}</td><td className="p-4">{eq.category?.name}</td>
+                                    <td className="p-4">{eq.model || '—'}</td><td className="p-4">{eq.serialNumber || '—'}</td><td className="p-4">{eq.location || '—'}</td>
+                                    <td className="p-4"><span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${eq.status === 'active' ? 'bg-[#E6F4EA] text-[#1E4620]' : 'bg-[#F5F3EF] text-[#2D3748]'}`}>{eq.status}</span></td>
+                                </tr>
+                            ))}
+                            {reportType === "maintenance" && filteredData.maintenance?.map((m: any) => {
+                                const date = m.performedAt || m.maintenanceDate || m.informationDate;
+                                return (
+                                    <tr key={m.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                        <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
+                                        <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
+                                        <td className="p-4 truncate max-w-[200px]">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
+                                        <td className="p-4 truncate max-w-[200px]">{m.solutionDetails || '—'}</td>
+                                        <td className="p-4">{m.usedParts || '—'}</td>
+                                        <td className="p-4 text-[#4A5568] truncate max-w-[150px]">{m.remarks || '—'}</td>
+                                    </tr>
+                                );
+                            })}
+                            {reportType === "inventory" && filteredData.inventory?.map((item: any) => (
+                                <tr key={item.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                    <td className="p-4 font-medium">{item.name}</td><td className="p-4">{item.quantity || '—'}</td>
+                                    <td className="p-4 truncate max-w-[300px]">{item.description || '—'}</td><td className="p-4">{item.swl || '—'}</td>
+                                    <td className="p-4 font-mono text-xs">{item.certificateNo || '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                 </div>
+             </div>
+         )}
+      </div>
+    </div>
   );
 }

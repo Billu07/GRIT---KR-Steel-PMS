@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, Download, Trash2, Edit, Save, X, Wrench } from "lucide-react";
-import { format, addDays, differenceInDays } from "date-fns";
-import { exportEquipmentJobsPdf } from "@/lib/pdfExport";
+import { exportEquipmentTasksPdf } from "@/lib/pdfExport";
+import { exportEquipmentTasksExcel } from "@/lib/excelExport";
 import EquipmentModal from "@/components/EquipmentModal";
-import JobModal from "@/components/JobModal";
+import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 
 export default function EquipmentDetailPage() {
@@ -18,71 +18,29 @@ export default function EquipmentDetailPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [equipment, setEquipment] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterCriticality, setFilterCriticality] = useState("All");
 
   // Inline Creation State
   const [isAdding, setIsAdding] = useState(false);
-  const [newJob, setNewJob] = useState({
-    jobCode: "",
-    jobName: "",
-    jobType: "Maintenance",
-    flag: "",
-    dateDone: format(new Date(), "yyyy-MM-dd"),
-    hoursWorked: 0,
-    plannedHours: 0,
+  const [newTask, setNewTask] = useState({
+    taskId: "",
+    taskName: "",
     frequency: "weekly",
-    criticality: "medium",
-  });
-  const [calculated, setCalculated] = useState({
-    dateDue: "",
-    remainingHours: 0,
-    overdueDays: 0,
+    taskDetail: "",
   });
 
   // Modals state
   const [isEqModalOpen, setIsEqModalOpen] = useState(false);
-  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isLogMaintenanceModalOpen, setIsLogMaintenanceModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [editingJob, setEditingJob] = useState<any>(null);
-
-  const frequencyDays: { [key: string]: number } = {
-    daily: 1,
-    weekly: 7,
-    monthly: 30,
-    quarterly: 90,
-    semi_annually: 182,
-    yearly: 365,
-  };
+  const [editingTask, setEditingTask] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, equipmentId]);
-
-  // Effect for inline form calculations
-  useEffect(() => {
-    const daysToAdd = frequencyDays[newJob.frequency] || 0;
-    const dateDone = new Date(newJob.dateDone);
-    const dueDate = addDays(dateDone, daysToAdd);
-    const today = new Date();
-    const overdue = differenceInDays(today, dueDate);
-    const overdueDays = overdue > 0 ? overdue : 0;
-    const remaining = Math.max(0, newJob.plannedHours - newJob.hoursWorked);
-    setCalculated({
-      dateDue: format(dueDate, "yyyy-MM-dd"),
-      overdueDays,
-      remainingHours: remaining,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    newJob.dateDone,
-    newJob.frequency,
-    newJob.plannedHours,
-    newJob.hoursWorked,
-  ]);
 
   const fetchData = () => {
     if (categoryId && equipmentId) {
@@ -98,10 +56,10 @@ export default function EquipmentDetailPage() {
             );
             setEquipment(foundEq);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const eqJobs = data.jobs.filter(
-              (j: any) => j.equipmentId.toString() === equipmentId,
+            const eqTasks = data.tasks.filter(
+              (t: any) => t.equipmentId.toString() === equipmentId,
             );
-            setJobs(eqJobs);
+            setTasks(eqTasks);
           }
           setLoading(false);
         })
@@ -138,7 +96,7 @@ export default function EquipmentDetailPage() {
   const handleDeleteEquipment = async () => {
     if (
       !confirm(
-        "Are you sure you want to delete this equipment? All associated jobs will be deleted.",
+        "Are you sure you want to delete this equipment? All associated tasks will be deleted.",
       )
     )
       return;
@@ -158,29 +116,23 @@ export default function EquipmentDetailPage() {
     }
   };
 
-  // ── JOB ACTIONS ──
+  // ── TASK ACTIONS ──
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    setNewJob((prev) => ({
+    setNewTask((prev) => ({
       ...prev,
-      [name]:
-        name.includes("Hours") || name === "hoursWorked"
-          ? Number(value)
-          : value,
+      [name]: value,
     }));
   };
 
-  const handleCreateJob = async () => {
+  const handleCreateTask = async () => {
     try {
       const payload = {
-        ...newJob,
+        ...newTask,
         equipmentId,
-        dateDue: calculated.dateDue,
-        remainingHours: calculated.remainingHours,
-        overdueDays: calculated.overdueDays,
       };
       const res = await fetch(`/api/equipment/${categoryId}`, {
         method: "POST",
@@ -190,67 +142,65 @@ export default function EquipmentDetailPage() {
       if (res.ok) {
         fetchData();
         setIsAdding(false);
-        setNewJob({
-          jobCode: "",
-          jobName: "",
-          jobType: "Maintenance",
-          flag: "",
-          dateDone: format(new Date(), "yyyy-MM-dd"),
-          hoursWorked: 0,
-          plannedHours: 0,
+        setNewTask({
+          taskId: "",
+          taskName: "",
           frequency: "weekly",
-          criticality: "medium",
+          taskDetail: "",
         });
       } else {
-        alert("Failed to create job");
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to create task");
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating job");
+      alert("Error creating task");
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleUpdateJob = async (jobData: any) => {
+  const handleUpdateTask = async (taskData: any) => {
     try {
-      if (editingJob) {
-        const res = await fetch(`/api/jobs/${editingJob.id}`, {
+      if (editingTask) {
+        const res = await fetch(`/api/tasks/${editingTask.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(jobData),
+          body: JSON.stringify(taskData),
         });
         if (res.ok) {
           fetchData();
-          setIsJobModalOpen(false);
-          setEditingJob(null);
+          setIsTaskModalOpen(false);
+          setEditingTask(null);
         } else {
-          alert("Failed to update job");
+          const data = await res.json().catch(() => ({}));
+          alert(data.error || "Failed to update task");
         }
       }
     } catch (err) {
       console.error(err);
-      alert("Error updating job");
+      alert("Error updating task");
     }
   };
 
-  const handleDeleteJob = async (jobId: number) => {
-    if (!confirm("Are you sure you want to delete this job?")) return;
+  const handleDeleteTask = async (dbId: number) => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
 
     try {
-      const res = await fetch(`/api/jobs/${jobId}`, {
+      const res = await fetch(`/api/tasks/${dbId}`, {
         method: "DELETE",
       });
       if (res.ok) {
         fetchData(); // Refresh list
       } else {
-        alert("Failed to delete job");
+        alert("Failed to delete task");
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting job");
+      alert("Error deleting task");
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleLogMaintenance = async (maintenanceData: any) => {
     try {
       const payload = {
@@ -277,41 +227,17 @@ export default function EquipmentDetailPage() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const openEditJobModal = (job: any) => {
-    setEditingJob(job);
-    setIsJobModalOpen(true);
+  const openEditTaskModal = (task: any) => {
+    setEditingTask(task);
+    setIsTaskModalOpen(true);
   };
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter(
-      (job) =>
-        filterCriticality === "All" ||
-        job.criticality === filterCriticality.toLowerCase(),
-    );
-  }, [jobs, filterCriticality]);
-
-  const exportJobsPDF = () => {
-    exportEquipmentJobsPdf({ equipment, jobs: filteredJobs });
+  const exportTasksPDF = () => {
+    exportEquipmentTasksPdf({ equipment, tasks });
   };
 
-  const criticalityStyle = (c: string) => {
-    if (c === "high")
-      return {
-        color: "#8B2020",
-        bg: "rgba(139,32,32,0.07)",
-        border: "rgba(139,32,32,0.2)",
-      };
-    if (c === "medium")
-      return {
-        color: "#8B5A00",
-        bg: "rgba(196,135,58,0.10)",
-        border: "rgba(196,135,58,0.25)",
-      };
-    return {
-      color: "#2D6A42",
-      bg: "rgba(74,124,90,0.08)",
-      border: "rgba(74,124,90,0.2)",
-    };
+  const exportTasksExcel = () => {
+    exportEquipmentTasksExcel({ equipment, tasks });
   };
 
   if (loading)
@@ -351,7 +277,7 @@ export default function EquipmentDetailPage() {
     fontSize: "12px",
     color: "#1A1A1A",
     background: "#FAFAF8",
-    border: "1px solid #8FBED6",
+    border: "1px solid #1CA5CE",
     borderRadius: "2px",
     outline: "none",
   };
@@ -372,13 +298,13 @@ export default function EquipmentDetailPage() {
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 11px; font-weight: 600;
           letter-spacing: 0.16em; text-transform: uppercase;
-          color: #EAE7DF; background: #1A3A52;
+          color: #EAE7DF; background: #225CA3;
           border: none; border-radius: 2px;
           cursor: pointer; transition: background 0.15s ease;
           white-space: nowrap;
         }
-        .detail-btn-primary:hover { background: #1F4460; }
-        .detail-btn-primary:active { background: #132D40; }
+        .detail-btn-primary:hover { background: #1B4A82; }
+        .detail-btn-primary:active { background: #133660; }
 
         .detail-btn-secondary {
           display: inline-flex; align-items: center; gap: 8px;
@@ -386,12 +312,12 @@ export default function EquipmentDetailPage() {
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 11px; font-weight: 600;
           letter-spacing: 0.16em; text-transform: uppercase;
-          color: #1A3A52; background: transparent;
+          color: #225CA3; background: transparent;
           border: 1px solid #D0CBC0; border-radius: 2px;
           cursor: pointer; transition: all 0.15s ease;
           white-space: nowrap;
         }
-        .detail-btn-secondary:hover { border-color: #1A3A52; background: rgba(26,58,82,0.04); }
+        .detail-btn-secondary:hover { border-color: #225CA3; background: rgba(34, 92, 163,0.04); }
 
         .detail-btn-danger {
             display: inline-flex; align-items: center; gap: 8px;
@@ -405,18 +331,6 @@ export default function EquipmentDetailPage() {
             white-space: nowrap;
         }
         .detail-btn-danger:hover { border-color: #8B2020; background: rgba(139,32,32,0.04); }
-
-        .detail-filter-select {
-          padding: 8px 12px;
-          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
-          font-size: 12px; font-weight: 500;
-          color: #1A3A52; background: #FAFAF8;
-          border: 1px solid #D0CBC0; border-radius: 2px;
-          outline: none; cursor: pointer;
-          letter-spacing: 0.04em;
-          transition: border-color 0.15s ease;
-        }
-        .detail-filter-select:focus { border-color: #1A3A52; }
 
         .detail-tbody tr { transition: background 0.12s ease; }
         .detail-tbody tr:hover td { background: #EAF1F6; }
@@ -445,17 +359,13 @@ export default function EquipmentDetailPage() {
             transition: all 0.15s ease;
         }
         .detail-action-icon.danger:hover {
-            background: rgba(26,58,82,0.1);
-            color: #1A3A52;
-        }
-        .detail-action-icon.danger:hover {
             background: rgba(139,32,32,0.1);
             color: #8B2020;
         }
 
         .detail-table-wrap::-webkit-scrollbar { height: 4px; }
         .detail-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
-        .detail-table-wrap::-webkit-scrollbar-thumb { background: #8FBED6; border-radius: 2px; }
+        .detail-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 2px; }
       `}</style>
 
       <div className="detail-root">
@@ -476,7 +386,7 @@ export default function EquipmentDetailPage() {
                   fontWeight: 600,
                   letterSpacing: "0.22em",
                   textTransform: "uppercase",
-                  color: "#8FBED6",
+                  color: "#1684A6",
                   marginBottom: "8px",
                 }}
               >
@@ -487,7 +397,7 @@ export default function EquipmentDetailPage() {
                   fontSize: "28px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#1A3A52",
+                  color: "#225CA3",
                   margin: 0,
                   lineHeight: 1,
                 }}
@@ -527,58 +437,18 @@ export default function EquipmentDetailPage() {
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
               gap: "16px",
             }}
           >
-            {/* Filter */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                padding: "10px 20px",
-                background: "#FAFAF8",
-                border: "1px solid #D0CBC0",
-                borderRadius: "2px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "#1A3A52",
-                  margin: 0,
-                }}
-              >
-                Criticality
-              </p>
-              <div
-                style={{ width: "1px", height: "16px", background: "#D0CBC0" }}
-              />
-              <select
-                className="detail-filter-select"
-                value={filterCriticality}
-                onChange={(e) => setFilterCriticality(e.target.value)}
-                style={{
-                  border: "none",
-                  padding: "0",
-                  background: "transparent",
-                }}
-              >
-                <option value="All">All Levels</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
 
-            {/* Job Actions */}
+            {/* Task Actions */}
             <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
-              <button className="detail-btn-secondary" onClick={exportJobsPDF}>
+              <button className="detail-btn-secondary" onClick={exportTasksPDF}>
                 <Download size={13} /> Export PDF
+              </button>
+              <button className="detail-btn-secondary" onClick={exportTasksExcel}>
+                <Download size={13} /> Export Tasks (Excel)
               </button>
               <button
                   className="detail-btn-secondary"
@@ -592,420 +462,337 @@ export default function EquipmentDetailPage() {
                   className="detail-btn-primary"
                   onClick={() => setIsAdding(true)}
                 >
-                  <Plus size={13} /> New Job
+                  <Plus size={13} /> New Task
                 </button>
               )}
             </div>
           </div>
+
           <div
-            style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
+            style={{ height: "1px", background: "#D0CBC0", marginTop: "24px" }}
           />
         </div>
 
-        {/* ── Jobs table ── */}
-        <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
-          {/* Section header */}
+        {/* ── Main container ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+          
+          {/* Equipment Info Cards */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 24px",
-              borderBottom: "1px solid #D0CBC0",
-              background: "#1A3A52",
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr",
+              gap: "16px",
             }}
           >
-            <p
-              style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "#EAE7DF",
-                margin: 0,
-              }}
-            >
-              Scheduled Jobs
-            </p>
-            <p
-              style={{
-                fontSize: "10px",
-                letterSpacing: "0.1em",
-                color: "rgba(234,231,223,0.45)",
-                margin: 0,
-              }}
-            >
-              {filteredJobs.length} records
-            </p>
+             {/* Left Column: Specs & Certs */}
+             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                
+                {/* Technical Specs */}
+                <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px" }}>
+                   <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#225CA3", marginBottom: "16px", borderBottom: "1px solid #EAE7DF", paddingBottom: "8px" }}>
+                      Technical Specifications
+                   </p>
+                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 24px" }}>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Capacity</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.capacity || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Brand / Make</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.brand || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Model</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.model || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Serial Number</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.serialNumber || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Running Hours</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.runningHours || "—"}</p>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Certifications */}
+                <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px" }}>
+                   <p style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#225CA3", marginBottom: "16px", borderBottom: "1px solid #EAE7DF", paddingBottom: "8px" }}>
+                      Certification & Testing
+                   </p>
+                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Test Cert No.</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.testCertNumber || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Validity</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.testCertValidity || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Applied</p>
+                        <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.testCertApplied || "—"}</p>
+                      </div>
+                   </div>
+                </div>
+
+             </div>
+
+             {/* Right Column: Status & Description */}
+             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                
+                <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px" }}>
+                  <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7A8A93", marginBottom: "8px" }}>
+                    Status
+                  </p>
+                  <p style={{ fontSize: "16px", fontWeight: 600, color: equipment.status === "active" ? "#2D6A42" : "#8B2020", textTransform: "capitalize", margin: 0 }}>
+                    {equipment.status}
+                  </p>
+                </div>
+
+                <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px", flex: 1 }}>
+                  <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7A8A93", marginBottom: "8px" }}>
+                    Description
+                  </p>
+                  <p style={{ fontSize: "13px", color: "#1A1A1A", margin: 0, lineHeight: 1.6 }}>
+                    {equipment.description || "—"}
+                  </p>
+                </div>
+
+                <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0", padding: "20px 24px", flex: 1 }}>
+                  <p style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "#7A8A93", marginBottom: "8px" }}>
+                    Safety Measures
+                  </p>
+                  <p style={{ fontSize: "13px", color: "#1A1A1A", margin: 0, lineHeight: 1.6 }}>
+                    {equipment.safetyMeasures || "—"}
+                  </p>
+                </div>
+
+             </div>
           </div>
 
-          <div className="detail-table-wrap" style={{ overflowX: "auto" }}>
-            <table
+          {/* ── Tasks table ── */}
+          <div style={{ background: "#FAFAF8", border: "1px solid #D0CBC0" }}>
+            <div
               style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "16px 24px",
+                borderBottom: "1px solid #D0CBC0",
+                background: "#225CA3",
               }}
             >
-              <thead>
-                <tr style={{ background: "#EAE7DF" }}>
-                  {[
-                    { label: "Job Code", width: "96px" },
-                    { label: "Job Name", width: "200px" },
-                    { label: "Type", width: "120px" },
-                    { label: "Flag", width: "96px" },
-                    { label: "Criticality", width: "112px" },
-                    { label: "Frequency", width: "112px" },
-                    { label: "Date Done", width: "120px" },
-                    { label: "Due Date", width: "140px" },
-                    { label: "Hrs Worked", width: "90px" },
-                    { label: "Planned Hrs", width: "90px" },
-                    { label: "Hrs Left", width: "80px" },
-                    { label: "Action", width: "80px" },
-                  ].map(({ label, width }) => (
-                    <th
-                      key={label}
-                      style={{
-                        padding: "11px 14px",
-                        textAlign: "left",
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                        color: "#1A3A52",
-                        whiteSpace: "nowrap",
-                        borderBottom: "1px solid #D0CBC0",
-                        width,
-                      }}
-                    >
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="detail-tbody">
-                {/* Inline add row */}
-                {isAdding && (
-                  <tr className="detail-inline-row">
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        name="jobCode"
-                        value={newJob.jobCode}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                        placeholder="Code"
-                        autoFocus
-                      />
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        name="jobName"
-                        value={newJob.jobName}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                        placeholder="Job Name"
-                      />
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <select
-                        name="jobType"
-                        value={newJob.jobType}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                      >
-                        <option>Maintenance</option>
-                        <option>Inspection</option>
-                        <option>Repair</option>
-                        <option>Overhaul</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        name="flag"
-                        value={newJob.flag}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                        placeholder="Flag"
-                      />
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <select
-                        name="criticality"
-                        value={newJob.criticality}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                      >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <select
-                        name="frequency"
-                        value={newJob.frequency}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="quarterly">Quarterly</option>
-                        <option value="semi_annually">Semi-Annually</option>
-                        <option value="yearly">Yearly</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        type="date"
-                        name="dateDone"
-                        value={newJob.dateDone}
-                        onChange={handleInputChange}
-                        style={inlineInput}
-                      />
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px 14px",
-                        fontSize: "12px",
-                        color: "#5A6A73",
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {calculated.dateDue}
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        type="number"
-                        name="hoursWorked"
-                        value={newJob.hoursWorked}
-                        onChange={handleInputChange}
-                        style={{ ...inlineInput, textAlign: "center" }}
-                      />
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <input
-                        type="number"
-                        name="plannedHours"
-                        value={newJob.plannedHours}
-                        onChange={handleInputChange}
-                        style={{ ...inlineInput, textAlign: "center" }}
-                      />
-                    </td>
-                    <td
-                      style={{
-                        padding: "8px 14px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        color: "#1A3A52",
-                        textAlign: "center",
-                      }}
-                    >
-                      {calculated.remainingHours}
-                    </td>
-                    <td style={{ padding: "8px 8px" }}>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <button
-                          className="detail-inline-save"
-                          onClick={handleCreateJob}
-                        >
-                          <Save size={13} />
-                        </button>
-                        <button
-                          className="detail-inline-cancel"
-                          onClick={() => setIsAdding(false)}
-                        >
-                          <X size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )}
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "#EAE7DF",
+                  margin: 0,
+                }}
+              >
+                Scheduled Tasks
+              </p>
+              <p
+                style={{
+                  fontSize: "10px",
+                  letterSpacing: "0.1em",
+                  color: "rgba(234,231,223,0.45)",
+                  margin: 0,
+                }}
+              >
+                {tasks.length} records
+              </p>
+            </div>
 
-                {/* Existing jobs */}
-                {filteredJobs.length > 0
-                  ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    filteredJobs.map((job: any) => {
-                      const crit = criticalityStyle(job.criticality);
-                      const isOverdue = job.overdueDays > 0;
+            <div className="detail-table-wrap" style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  fontSize: "13px",
+                }}
+              >
+                <thead>
+                  <tr style={{ background: "#EAE7DF" }}>
+                    {[
+                      { label: "Task ID", width: "96px" },
+                      { label: "Task Name", width: "200px" },
+                      { label: "Frequency", width: "100px" },
+                      { label: "Detail", width: "auto" },
+                      { label: "Actions", width: "80px" },
+                    ].map((col) => (
+                      <th
+                        key={col.label}
+                        style={{
+                          width: col.width,
+                          padding: "11px 24px",
+                          textAlign: col.label === "Actions" ? "right" : "left",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          letterSpacing: "0.16em",
+                          textTransform: "uppercase",
+                          color: "#225CA3",
+                          whiteSpace: "nowrap",
+                          borderBottom: "1px solid #D0CBC0",
+                        }}
+                      >
+                        {col.label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="detail-tbody">
+                  {/* Inline Creation Row */}
+                  {isAdding && (
+                    <tr className="detail-inline-row">
+                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                        <input
+                          type="text"
+                          name="taskId"
+                          value={newTask.taskId}
+                          onChange={handleInputChange}
+                          style={inlineInput}
+                          placeholder="ID"
+                          autoFocus
+                        />
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                        <input
+                          type="text"
+                          name="taskName"
+                          value={newTask.taskName}
+                          onChange={handleInputChange}
+                          style={inlineInput}
+                          placeholder="Name"
+                        />
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                        <select
+                          name="frequency"
+                          value={newTask.frequency}
+                          onChange={handleInputChange}
+                          style={{ ...inlineInput, cursor: "pointer" }}
+                        >
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="quarterly">Quarterly</option>
+                          <option value="semi_annually">Semi-Annually</option>
+                          <option value="yearly">Yearly</option>
+                        </select>
+                      </td>
+                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                        <input
+                          type="text"
+                          name="taskDetail"
+                          value={newTask.taskDetail}
+                          onChange={handleInputChange}
+                          style={inlineInput}
+                          placeholder="Detail"
+                        />
+                      </td>
+                      <td
+                        style={{
+                          padding: "12px 16px",
+                          borderBottom: "1px solid #D0CBC0",
+                          textAlign: "right",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
+                          <button
+                            className="detail-inline-save"
+                            onClick={handleCreateTask}
+                            title="Save"
+                          >
+                            <Save size={13} />
+                          </button>
+                          <button
+                            className="detail-inline-cancel"
+                            onClick={() => setIsAdding(false)}
+                            title="Cancel"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {tasks.length > 0 || isAdding ? (
+                    tasks.map((task: any) => {
                       return (
-                        <tr key={job.id}>
+                        <tr key={task.id}>
                           <td
                             style={{
-                              padding: "12px 14px",
+                              padding: "14px 24px",
+                              whiteSpace: "nowrap",
                               fontWeight: 600,
-                              color: "#1A3A52",
+                              color: "#225CA3",
                               borderBottom: "1px solid #EAE7DF",
                               letterSpacing: "0.04em",
                               fontSize: "12px",
-                              whiteSpace: "nowrap",
                             }}
                           >
-                            {job.jobCode}
+                            {task.taskId}
                           </td>
                           <td
                             style={{
-                              padding: "12px 14px",
+                              padding: "14px 24px",
+                              whiteSpace: "nowrap",
                               color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
                             }}
                           >
-                            {job.jobName}
+                            {task.taskName}
                           </td>
                           <td
                             style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
+                              padding: "14px 24px",
                               whiteSpace: "nowrap",
-                            }}
-                          >
-                            {job.jobType}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
-                            }}
-                          >
-                            {job.flag}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              borderBottom: "1px solid #EAE7DF",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "3px 10px",
-                                fontSize: "10px",
-                                fontWeight: 600,
-                                letterSpacing: "0.1em",
-                                textTransform: "uppercase",
-                                borderRadius: "2px",
-                                color: crit.color,
-                                background: crit.bg,
-                                border: `1px solid ${crit.border}`,
-                              }}
-                            >
-                              {job.criticality}
-                            </span>
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
                               color: "#5A6A73",
                               borderBottom: "1px solid #EAE7DF",
                               textTransform: "capitalize",
+                            }}
+                          >
+                            {task.frequency}
+                          </td>
+                          <td
+                            style={{
+                              padding: "14px 24px",
+                              whiteSpace: "normal",
+                              color: "#5A6A73",
+                              borderBottom: "1px solid #EAE7DF",
+                            }}
+                          >
+                            {task.taskDetail}
+                          </td>
+                          <td
+                            style={{
+                              padding: "14px 24px",
+                              textAlign: "right",
                               whiteSpace: "nowrap",
-                            }}
-                          >
-                            {job.frequency}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {format(new Date(job.dateDone), "dd MMM yyyy")}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              borderBottom: "1px solid #EAE7DF",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  fontWeight: 600,
-                                  color: isOverdue ? "#8B2020" : "#5A6A73",
-                                }}
-                              >
-                                {format(new Date(job.dateDue), "dd MMM yyyy")}
-                              </span>
-                              {isOverdue && (
-                                <span
-                                  style={{
-                                    fontSize: "9px",
-                                    fontWeight: 600,
-                                    letterSpacing: "0.1em",
-                                    textTransform: "uppercase",
-                                    padding: "2px 6px",
-                                    borderRadius: "2px",
-                                    color: "#8B2020",
-                                    background: "rgba(139,32,32,0.07)",
-                                    border: "1px solid rgba(139,32,32,0.2)",
-                                  }}
-                                >
-                                  Overdue
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
-                              textAlign: "center",
-                            }}
-                          >
-                            {job.hoursWorked}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
-                              textAlign: "center",
-                            }}
-                          >
-                            {job.plannedHours}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
-                              color: "#5A6A73",
-                              borderBottom: "1px solid #EAE7DF",
-                              textAlign: "center",
-                            }}
-                          >
-                            {job.remainingHours}
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 14px",
                               borderBottom: "1px solid #EAE7DF",
                             }}
                           >
-                            <div style={{ display: "flex", gap: "6px" }}>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
                               <button
                                 className="detail-action-icon"
-                                onClick={() => openEditJobModal(job)}
-                                title="Edit Job"
+                                onClick={() => openEditTaskModal(task)}
+                                title="Edit Task"
+                                style={{ background: "transparent", border: "none" }}
                               >
                                 <Edit size={14} />
                               </button>
                               <button
                                 className="detail-action-icon danger"
-                                onClick={() => handleDeleteJob(job.id)}
-                                title="Delete Job"
+                                onClick={() => handleDeleteTask(task.id)}
+                                title="Delete Task"
+                                style={{ background: "transparent", border: "none" }}
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -1014,30 +801,29 @@ export default function EquipmentDetailPage() {
                         </tr>
                       );
                     })
-                  : !isAdding && (
-                      <tr>
-                        <td
-                          colSpan={12}
-                          style={{
-                            padding: "48px 24px",
-                            textAlign: "center",
-                            fontSize: "12px",
-                            letterSpacing: "0.06em",
-                            color: "#7A8A93",
-                          }}
-                        >
-                          No jobs found. Click "New Job" to add a maintenance
-                          record.
-                        </td>
-                      </tr>
-                    )}
-              </tbody>
-            </table>
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        style={{
+                          padding: "48px 24px",
+                          textAlign: "center",
+                          fontSize: "12px",
+                          letterSpacing: "0.06em",
+                          color: "#7A8A93",
+                        }}
+                      >
+                        No tasks configured for this equipment yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Equipment Edit Modal */}
       <EquipmentModal
         isOpen={isEqModalOpen}
         onClose={() => setIsEqModalOpen(false)}
@@ -1046,21 +832,22 @@ export default function EquipmentDetailPage() {
         initialData={equipment}
       />
 
-      {/* Job Edit Modal */}
-      <JobModal
-        isOpen={isJobModalOpen}
-        onClose={() => setIsJobModalOpen(false)}
-        onSubmit={handleUpdateJob}
+      <TaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onSubmit={handleUpdateTask}
         categoryId={categoryId}
-        equipmentList={[equipment]} // Only current equipment
-        initialData={editingJob}
+        equipmentList={[equipment]}
+        initialData={editingTask}
       />
-
-      {/* Log Maintenance Modal */}
+      
       <LogMaintenanceModal
         isOpen={isLogMaintenanceModalOpen}
         onClose={() => setIsLogMaintenanceModalOpen(false)}
         onSubmit={handleLogMaintenance}
+        equipmentId={parseInt(equipmentId)}
+        tasks={tasks}
+        equipmentName={equipment.name}
       />
     </>
   );

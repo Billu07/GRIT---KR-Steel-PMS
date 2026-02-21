@@ -2,66 +2,92 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { startOfDay, startOfMonth } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const today = startOfDay(new Date());
     const thisMonth = startOfMonth(new Date());
 
-    const jobsToday = await prisma.job.count({
+    const logsToday = await prisma.maintenanceHistory.count({
       where: {
-        dateDue: {
+        performedAt: {
           gte: today,
           lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
         },
       },
     });
 
-    const jobsThisMonth = await prisma.job.count({
+    const logsThisMonth = await prisma.maintenanceHistory.count({
       where: {
-        dateDue: {
+        performedAt: {
           gte: thisMonth,
         },
       },
     });
 
-    const dueJobs = await prisma.job.count({
+    const scheduledTasks = await prisma.task.count();
+    const totalAssets = await prisma.equipment.count();
+
+    // Use direct property access as the model is definitely present in the DB
+    // Cast to any to avoid TS errors if the generated client is currently out of sync in the editor
+    const inventoryItems = await (prisma as any).inventory.count();
+
+    const correctiveLogs = await prisma.maintenanceHistory.count({
       where: {
-        dateDue: {
-          gte: today,
-        },
-        overdueDays: 0,
-      },
+        type: 'corrective',
+      }
     });
 
-    const overdueJobs = await prisma.job.count({
-      where: {
-        overdueDays: {
-          gt: 0,
-        },
-      },
-    });
-
-    const recentJobs = await prisma.job.findMany({
+    const recentLogs = await prisma.maintenanceHistory.findMany({
       take: 10,
       orderBy: {
-        createdAt: 'desc',
+        performedAt: 'desc',
       },
       include: {
         equipment: true,
+        task: true,
       },
+    });
+
+    const activeTasks = await prisma.task.findMany({
+      take: 10,
+      orderBy: {
+        updatedAt: 'desc',
+      },
+      include: {
+        equipment: {
+          include: {
+            category: true
+          }
+        }
+      }
+    });
+
+    const equipment = await prisma.equipment.findMany({
+      orderBy: {
+        code: 'asc',
+      },
+      include: {
+        category: true
+      }
     });
 
     return NextResponse.json({
       stats: {
-        jobsToday,
-        jobsThisMonth,
-        dueJobs,
-        overdueJobs,
+        logsToday,
+        logsThisMonth,
+        scheduledTasks,
+        totalAssets,
+        inventoryItems,
+        correctiveLogs,
       },
-      recentJobs,
+      recentLogs,
+      activeTasks,
+      equipment
     });
-  } catch (error) {
-    console.error('Dashboard error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Dashboard API Error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

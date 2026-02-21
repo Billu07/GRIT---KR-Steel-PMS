@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import EquipmentModal from "@/components/EquipmentModal";
-import { Search, Plus, MapPin, Tag, Edit } from "lucide-react";
+import { Search, Plus, MapPin, Tag, Edit, Layers } from "lucide-react";
 
 export default function RegistryPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,10 +20,6 @@ export default function RegistryPage() {
   
   const router = useRouter();
 
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
-
   const fetchEquipment = () => {
     fetch("/api/reports")
       .then((res) => res.json())
@@ -36,6 +32,10 @@ export default function RegistryPage() {
         setLoading(false);
       });
   };
+
+  useEffect(() => {
+    fetchEquipment();
+  }, []);
 
   const handleOpenCreateModal = () => {
     setEditingEquipment(null);
@@ -176,17 +176,17 @@ export default function RegistryPage() {
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 11px; font-weight: 600;
           letter-spacing: 0.16em; text-transform: uppercase;
-          color: #EAE7DF; background: #1A3A52;
+          color: #EAE7DF; background: #225CA3;
           border: none; border-radius: 2px;
           cursor: pointer; transition: background 0.15s ease;
           white-space: nowrap;
         }
-        .reg-add-btn:hover  { background: #1F4460; }
-        .reg-add-btn:active { background: #132D40; }
+        .reg-add-btn:hover  { background: #1B4A82; }
+        .reg-add-btn:active { background: #133660; }
 
         .reg-search:focus {
-          border-color: #1A3A52 !important;
-          box-shadow: 0 0 0 3px rgba(26,58,82,0.07) !important;
+          border-color: #225CA3 !important;
+          box-shadow: 0 0 0 3px rgba(34,92,163,0.07) !important;
           outline: none;
         }
         .reg-search::placeholder { color: #B8B0A6; }
@@ -195,7 +195,7 @@ export default function RegistryPage() {
           padding: 9px 28px 9px 12px;
           font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
           font-size: 12px; font-weight: 500;
-          color: #1A3A52; background: #FAFAF8;
+          color: #225CA3; background: #FAFAF8;
           border: 1px solid #D0CBC0; border-radius: 2px;
           outline: none; cursor: pointer;
           appearance: none; -webkit-appearance: none;
@@ -204,7 +204,7 @@ export default function RegistryPage() {
           background-position: right 8px center;
           transition: border-color 0.15s ease;
         }
-        .reg-filter-select:focus { border-color: #1A3A52; outline: none; }
+        .reg-filter-select:focus { border-color: #225CA3; outline: none; }
       `}</style>
 
       <div className="reg-root">
@@ -236,7 +236,7 @@ export default function RegistryPage() {
                   fontSize: "28px",
                   fontWeight: 600,
                   letterSpacing: "-0.02em",
-                  color: "#1A3A52",
+                  color: "#225CA3",
                   margin: 0,
                   lineHeight: 1,
                 }}
@@ -337,9 +337,9 @@ export default function RegistryPage() {
           </select>
         </div>
 
-        {/* ── Gallery Grid (New Better Design) ── */}
+        {/* ── Gallery Grid ── */}
         {filteredEquipment.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {filteredEquipment.map((eq: any) => {
               const status = statusConfig[eq.status] ?? statusConfig.inactive;
@@ -351,80 +351,66 @@ export default function RegistryPage() {
                       `/dashboard/equipment/${eq.category?.id}/detail/${eq.id}`,
                     )
                   }
-                  className="group relative flex cursor-pointer flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:border-[#8FBED6] hover:shadow-lg"
+                  className="group relative flex cursor-pointer flex-col overflow-hidden rounded-sm border border-slate-200 bg-white transition-all hover:border-[#225CA3] hover:shadow-md"
                 >
-                  {/* Image Section */}
-                  <div className="relative h-48 w-full shrink-0 overflow-hidden bg-slate-100">
-                    {eq.imageUrl ? (
-                      <img
-                        src={eq.imageUrl}
-                        alt={eq.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                        }}
-                      />
-                    ) : null}
-                    {/* Fallback Placeholder (hidden if image loads) */}
-                    <div className={`absolute inset-0 flex flex-col items-center justify-center bg-slate-100 ${eq.imageUrl ? 'hidden' : ''}`}>
-                      <div className="mb-2 rounded-full bg-slate-200 p-3">
-                         <Tag size={24} className="text-slate-400" />
-                      </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        No Image
-                      </span>
-                    </div>
-                     {/* Status Badge Overlay */}
-                     <div className="absolute right-3 top-3">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm ${status.bg} ${status.color} border ${status.border}`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                          {status.label}
-                        </span>
-                     </div>
-                  </div>
+                  {/* Status Strip */}
+                  <div className={`h-1 w-full ${status.dot}`} />
 
-                  {/* Content Section */}
-                  <div className="flex flex-1 flex-col p-5">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A3A52]/60">
+                  <div className="flex p-4 gap-4">
+                    {/* Compact Image/Icon Section */}
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-slate-50 border border-slate-100 flex items-center justify-center">
+                      {eq.imageUrl ? (
+                        <img
+                          src={eq.imageUrl}
+                          alt={eq.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Tag size={20} className="text-slate-300" />
+                      )}
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="truncate text-[13px] font-bold text-slate-900 group-hover:text-[#225CA3] transition-colors">
+                          {eq.name}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         {eq.code}
                       </span>
-                    </div>
-                    
-                    <h3 className="mb-3 text-lg font-bold leading-tight text-slate-900 group-hover:text-[#1A3A52]">
-                      {eq.name}
-                    </h3>
-
-                    <div className="mt-auto flex flex-col gap-2">
-                      {eq.category && (
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <Tag size={12} className="text-[#8FBED6]" />
-                          <span className="font-medium">{eq.category.name}</span>
-                        </div>
-                      )}
-                      {eq.location && (
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
-                          <MapPin size={12} className="text-[#8FBED6]" />
-                          <span>{eq.location}</span>
-                        </div>
-                      )}
+                      
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                        <span className={`text-[10px] font-bold uppercase tracking-tight ${status.color}`}>
+                          {status.label}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Footer Action */}
-                  <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-5 py-3 transition-colors group-hover:bg-[#EAF1F6]">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#1A3A52]">
-                      View Details
-                    </span>
+                  {/* Metadata Row */}
+                  <div className="flex items-center justify-between border-t border-slate-50 bg-[#FAFAF8] px-4 py-2">
+                    <div className="flex items-center gap-3">
+                        {eq.category && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                <Layers size={10} className="text-[#1CA5CE]" />
+                                <span className="truncate max-w-[80px]">{eq.category.name}</span>
+                            </div>
+                        )}
+                        {eq.location && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                <MapPin size={10} className="text-[#1CA5CE]" />
+                                <span className="truncate max-w-[80px]">{eq.location}</span>
+                            </div>
+                        )}
+                    </div>
                     <button 
                       onClick={(e) => handleOpenEditModal(e, eq)}
-                      className="text-slate-400 hover:text-[#1A3A52] transition-colors p-1"
-                      title="Edit Equipment"
+                      className="text-slate-300 hover:text-[#225CA3] transition-colors p-1"
                     >
-                      <Edit size={14} />
+                      <Edit size={12} />
                     </button>
                   </div>
                 </div>

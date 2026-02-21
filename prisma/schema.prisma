@@ -43,8 +43,8 @@ enum MaintenanceType {
 }
 
 enum WorkType {
-  mechanical
-  electrical
+  new
+  rework
 }
 
 enum ProblemType {
@@ -60,7 +60,7 @@ model User {
   role      Role     @default(user)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  jobs      Job[]    @relation("JobCreator")
+  tasks     Task[]   @relation("TaskCreator")
 
   @@map("users")
 }
@@ -83,51 +83,54 @@ model Equipment {
   location           String?
   description        String?
   imageUrl           String?              // Supabase Storage public URL
+  safetyMeasures     String?
+  
+  // New fields from machinery.csv
+  capacity           String?
+  model              String?
+  serialNumber       String?
+  brand              String?
+  runningHours       String?
+  testCertNumber     String?
+  testCertValidity   String?
+  testCertApplied    String?
+
   status             EquipmentStatus      @default(active)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-  jobs               Job[]
+  tasks              Task[]
   maintenanceHistory MaintenanceHistory[]
 
   @@map("equipment")
 }
 
-model Job {
+model Task {
   id                 Int                  @id @default(autoincrement())
-  jobCode            String               @unique
-  jobName            String
-  jobType            String?
+  taskId             String               @unique
+  taskName           String
+  frequency          Frequency
+  taskDetail         String?
   equipmentId        Int
   equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  category           String?
-  flag               String?
-  dateDone           DateTime
-  hoursWorked        Float                @default(0)
-  plannedHours       Float
-  frequency          Frequency
-  dateDue            DateTime
-  remainingHours     Float                @default(0)
-  criticality        Criticality
-  overdueDays        Int                  @default(0)
   createdBy          Int
-  creator            User                 @relation("JobCreator", fields: [createdBy], references: [id])
+  creator            User                 @relation("TaskCreator", fields: [createdBy], references: [id])
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   maintenanceHistory MaintenanceHistory[]
 
-  @@map("jobs")
+  @@map("tasks")
 }
 
 model MaintenanceHistory {
   id              Int             @id @default(autoincrement())
   equipmentId     Int
   equipment       Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  jobId           Int?
-  job             Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  taskId          Int?
+  task            Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
   type            MaintenanceType @default(scheduled)
   
   // Corrective Maintenance Fields
-  interventionDate DateTime?
+  informationDate  DateTime?
   serviceStartDate DateTime?
   serviceEndDate   DateTime?
   problemDescription String?
@@ -137,8 +140,25 @@ model MaintenanceHistory {
   problemType     ProblemType?
   remarks         String?
   
+  // Preventive Maintenance Fields
+  maintenanceDate DateTime?
+  maintenanceDetails String?
+  
   performedAt     DateTime        @default(now())
   createdAt       DateTime        @default(now())
 
   @@map("maintenance_history")
+}
+
+model Inventory {
+  id              Int      @id @default(autoincrement())
+  name            String
+  quantity        String?
+  description     String?
+  swl             String?
+  certificateNo   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("inventory")
 }
