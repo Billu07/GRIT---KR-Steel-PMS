@@ -44,11 +44,12 @@ const JobModal: React.FC<JobModalProps> = ({
   });
 
   const frequencyDays: { [key: string]: number } = {
+    daily: 1,
     weekly: 7,
     monthly: 30,
-    "3-monthly": 90,
+    quarterly: 90,
+    semi_annually: 182,
     yearly: 365,
-    "5-yearly": 1825,
   };
 
   useEffect(() => {
@@ -439,11 +440,12 @@ const JobModal: React.FC<JobModalProps> = ({
                       className="jm-field"
                       style={selectStyle}
                     >
+                      <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                       <option value="monthly">Monthly</option>
-                      <option value="3-monthly">3-Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="semi_annually">Semi-Annually</option>
                       <option value="yearly">Yearly</option>
-                      <option value="5-yearly">5-Yearly</option>
                     </select>
                   </div>
 

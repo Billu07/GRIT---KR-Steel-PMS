@@ -1,18 +1,44 @@
 "use client";
 
 import React, { useState } from "react";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import { Download, FileText, Settings, Filter } from "lucide-react";
+import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import { exportJobReportPdf, exportEquipmentReportPdf } from "@/lib/pdfExport";
+import { exportMaintenanceExcel } from "@/lib/excelExport";
 
 export default function ReportsBuilderPage() {
   const [loading, setLoading] = useState(false);
 
   const [reportType, setReportType] = useState("jobs");
   const [groupBy, setGroupBy] = useState("category");
+  
+  // Job filters
   const [filterCriticality, setFilterCriticality] = useState("all");
   const [filterOverdue, setFilterOverdue] = useState(false);
+
+  // Maintenance filters
+  const [maintenanceType, setMaintenanceType] = useState("corrective");
+  
+  const [durationFilterType, setDurationFilterType] = useState("none");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [singleDate, setSingleDate] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState("");
+
+  const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [allEquipments, setAllEquipments] = useState<any[]>([]);
+
+  // Fetch data on mount to populate equipment list
+  React.useEffect(() => {
+    fetch("/api/reports")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.equipment) {
+          setAllEquipments(data.equipment);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -28,11 +54,17 @@ export default function ReportsBuilderPage() {
     }
   };
 
+  const handleEquipmentToggle = (id: string) => {
+    setSelectedEquipments((prev) => 
+      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+    );
+  };
+
   const generateReport = async () => {
     const data = await fetchData();
     if (!data) return;
 
-    const { jobs, equipment } = data;
+    const { jobs, equipment, maintenanceHistory } = data;
 
     if (reportType === "jobs") {
       exportJobReportPdf({
@@ -42,8 +74,49 @@ export default function ReportsBuilderPage() {
         filterCriticality,
         filterOverdue,
       });
-    } else {
+    } else if (reportType === "equipment") {
       exportEquipmentReportPdf({ equipment, groupBy });
+    } else if (reportType === "maintenance") {
+      if (!maintenanceHistory) return;
+      
+      let filteredData = maintenanceHistory;
+
+      // Filter by Maintenance Type
+      if (maintenanceType === "corrective") {
+        filteredData = filteredData.filter((m: any) => m.type === "corrective");
+      } else {
+        filteredData = filteredData.filter((m: any) => m.type === "scheduled" || m.type === "predictive");
+      }
+
+      // Filter by Equipment
+      if (selectedEquipments.length > 0) {
+        filteredData = filteredData.filter((m: any) => selectedEquipments.includes(String(m.equipmentId)));
+      }
+
+      // Filter by Duration
+      if (durationFilterType !== "none") {
+        filteredData = filteredData.filter((m: any) => {
+          if (!m.performedAt) return false;
+          const performedDate = new Date(m.performedAt);
+          
+          if (durationFilterType === "range" && fromDate && toDate) {
+            return performedDate >= new Date(fromDate) && performedDate <= new Date(toDate);
+          }
+          if (durationFilterType === "date" && singleDate) {
+            return performedDate.toISOString().split("T")[0] === singleDate;
+          }
+          if (durationFilterType === "month" && month) {
+            const [y, mStr] = month.split("-");
+            return performedDate.getFullYear() === parseInt(y) && performedDate.getMonth() + 1 === parseInt(mStr);
+          }
+          if (durationFilterType === "year" && year) {
+            return performedDate.getFullYear() === parseInt(year);
+          }
+          return true;
+        });
+      }
+
+      exportMaintenanceExcel(filteredData, maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
     }
   };
 
@@ -68,6 +141,12 @@ export default function ReportsBuilderPage() {
     paddingRight: "32px",
   };
 
+  const inputStyle: React.CSSProperties = {
+    ...selectStyle,
+    backgroundImage: "none",
+    paddingRight: "12px",
+  };
+
   const labelStyle: React.CSSProperties = {
     display: "block",
     fontSize: "10px",
@@ -89,7 +168,7 @@ export default function ReportsBuilderPage() {
           -webkit-font-smoothing: antialiased;
         }
 
-        .rpt-select:focus { border-color: #1A3A52 !important; box-shadow: 0 0 0 3px rgba(26,58,82,0.07); }
+        .rpt-select:focus, .rpt-input:focus { border-color: #1A3A52 !important; box-shadow: 0 0 0 3px rgba(26,58,82,0.07); }
 
         .rpt-checkbox {
           width: 15px; height: 15px;
@@ -117,6 +196,15 @@ export default function ReportsBuilderPage() {
           background: #FAFAF8;
           border: 1px solid #D0CBC0;
           padding: 16px 20px;
+        }
+          
+        .equipment-list {
+          max-height: 150px;
+          overflow-y: auto;
+          background: #FAFAF8;
+          border: 1px solid #D0CBC0;
+          border-radius: 2px;
+          padding: 8px;
         }
       `}</style>
 
@@ -148,7 +236,7 @@ export default function ReportsBuilderPage() {
             Report Builder
           </h1>
           <p style={{ fontSize: "13px", color: "#7A8A93", marginTop: "6px" }}>
-            Configure and generate custom PDF reports.
+            Configure and generate custom PDF and Excel reports.
           </p>
           <div
             style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }}
@@ -204,27 +292,110 @@ export default function ReportsBuilderPage() {
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value)}
                 >
-                  <option value="jobs">Job History / Maintenance</option>
+                  <option value="jobs">Job History</option>
                   <option value="equipment">Equipment Registry</option>
+                  <option value="maintenance">Maintenance Reports</option>
                 </select>
               </div>
 
-              {/* Group by */}
-              <div>
-                <label style={labelStyle}>2 · Group By</label>
-                <select
-                  className="rpt-select"
-                  style={selectStyle}
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value)}
-                >
-                  <option value="none">No Grouping (Flat List)</option>
-                  <option value="category">Category</option>
-                  {reportType === "jobs" && (
-                    <option value="equipment">Equipment</option>
-                  )}
-                </select>
-              </div>
+              {/* Maintenance Specific Options */}
+              {reportType === "maintenance" && (
+                <>
+                  <div>
+                    <label style={labelStyle}>Maintenance Type</label>
+                    <select
+                      className="rpt-select"
+                      style={selectStyle}
+                      value={maintenanceType}
+                      onChange={(e) => setMaintenanceType(e.target.value)}
+                    >
+                      <option value="preventive">Preventive (Scheduled/Predictive)</option>
+                      <option value="corrective">Corrective</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Duration Filter</label>
+                    <select
+                      className="rpt-select"
+                      style={{...selectStyle, marginBottom: "10px"}}
+                      value={durationFilterType}
+                      onChange={(e) => setDurationFilterType(e.target.value)}
+                    >
+                      <option value="none">All Time</option>
+                      <option value="range">Date Range</option>
+                      <option value="date">Specific Date</option>
+                      <option value="month">Specific Month</option>
+                      <option value="year">Specific Year</option>
+                    </select>
+
+                    {durationFilterType === "range" && (
+                      <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                        <input type="date" className="rpt-input" style={inputStyle} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                        <input type="date" className="rpt-input" style={inputStyle} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                      </div>
+                    )}
+                    {durationFilterType === "date" && (
+                      <div style={{ marginTop: "8px" }}>
+                        <input type="date" className="rpt-input" style={inputStyle} value={singleDate} onChange={(e) => setSingleDate(e.target.value)} />
+                      </div>
+                    )}
+                    {durationFilterType === "month" && (
+                      <div style={{ marginTop: "8px" }}>
+                        <input type="month" className="rpt-input" style={inputStyle} value={month} onChange={(e) => setMonth(e.target.value)} />
+                      </div>
+                    )}
+                    {durationFilterType === "year" && (
+                      <div style={{ marginTop: "8px" }}>
+                        <input type="number" min="1990" max="2100" placeholder="YYYY" className="rpt-input" style={inputStyle} value={year} onChange={(e) => setYear(e.target.value)} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Filter by Equipment</label>
+                    <div className="equipment-list">
+                      {allEquipments.map((eq) => (
+                        <div key={eq.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 0" }}>
+                          <input
+                            type="checkbox"
+                            id={`eq-${eq.id}`}
+                            className="rpt-checkbox"
+                            checked={selectedEquipments.includes(String(eq.id))}
+                            onChange={() => handleEquipmentToggle(String(eq.id))}
+                          />
+                          <label htmlFor={`eq-${eq.id}`} style={{ fontSize: "12px", cursor: "pointer" }}>
+                            {eq.name} ({eq.code})
+                          </label>
+                        </div>
+                      ))}
+                      {allEquipments.length === 0 && (
+                        <p style={{ fontSize: "12px", color: "#7A8A93", fontStyle: "italic" }}>Loading equipment...</p>
+                      )}
+                    </div>
+                    <p style={{ fontSize: "11px", color: "#7A8A93", marginTop: "4px" }}>Select one or more. Leave empty for all.</p>
+                  </div>
+                </>
+              )}
+
+              {/* Group by (Not for maintenance) */}
+              {reportType !== "maintenance" && (
+                <div>
+                  <label style={labelStyle}>2 · Group By</label>
+                  <select
+                    className="rpt-select"
+                    style={selectStyle}
+                    value={groupBy}
+                    onChange={(e) => setGroupBy(e.target.value)}
+                  >
+                    <option value="none">No Grouping (Flat List)</option>
+                    <option value="category">Category</option>
+                    {reportType === "jobs" && (
+                      <option value="equipment">Equipment</option>
+                    )}
+                  </select>
+                </div>
+              )}
 
               {/* Filters — jobs only */}
               {reportType === "jobs" && (
@@ -308,8 +479,8 @@ export default function ReportsBuilderPage() {
                 onClick={generateReport}
                 disabled={loading}
               >
-                <Download size={13} />
-                {loading ? "Generating…" : "Download PDF Report"}
+                {reportType === "maintenance" ? <FileSpreadsheet size={13} /> : <Download size={13} />}
+                {loading ? "Generating…" : reportType === "maintenance" ? "Download Excel Report" : "Download PDF Report"}
               </button>
             </div>
           </div>
@@ -340,7 +511,11 @@ export default function ReportsBuilderPage() {
                 marginBottom: "20px",
               }}
             >
-              <FileText size={24} style={{ color: "#8FBED6" }} />
+              {reportType === "maintenance" ? (
+                <FileSpreadsheet size={24} style={{ color: "#2D6A42" }} />
+              ) : (
+                <FileText size={24} style={{ color: "#8FBED6" }} />
+              )}
             </div>
 
             <h3
@@ -363,7 +538,7 @@ export default function ReportsBuilderPage() {
                 margin: 0,
               }}
             >
-              Configure your parameters on the left, then download a PDF report
+              Configure your parameters on the left, then download a {reportType === "maintenance" ? "spreadsheet" : "PDF"} report
               tailored to your needs.
             </p>
 
@@ -403,31 +578,63 @@ export default function ReportsBuilderPage() {
                   {reportType}
                 </p>
               </div>
-              <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
-                <p
-                  style={{
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "#7A8A93",
-                    marginBottom: "6px",
-                  }}
-                >
-                  Grouping
-                </p>
-                <p
-                  style={{
-                    fontSize: "15px",
-                    fontWeight: 600,
-                    color: "#1A3A52",
-                    textTransform: "capitalize",
-                    margin: 0,
-                  }}
-                >
-                  {groupBy}
-                </p>
-              </div>
+              
+              {reportType === "maintenance" && (
+                <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
+                  <p
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 600,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      color: "#7A8A93",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Maintenance Type
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#1A3A52",
+                      textTransform: "capitalize",
+                      margin: 0,
+                    }}
+                  >
+                    {maintenanceType}
+                  </p>
+                </div>
+              )}
+
+              {reportType !== "maintenance" && (
+                <div className="rpt-preview-chip" style={{ textAlign: "left" }}>
+                  <p
+                    style={{
+                      fontSize: "9px",
+                      fontWeight: 600,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      color: "#7A8A93",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Grouping
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#1A3A52",
+                      textTransform: "capitalize",
+                      margin: 0,
+                    }}
+                  >
+                    {groupBy}
+                  </p>
+                </div>
+              )}
+
               {reportType === "jobs" && (
                 <>
                   <div

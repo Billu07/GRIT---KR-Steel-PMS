@@ -15,9 +15,24 @@ export async function GET() {
       },
     });
 
+    const maintenanceHistory = await prisma.maintenanceHistory.findMany({
+      include: {
+        equipment: {
+          include: {
+            category: true,
+          }
+        },
+        job: true,
+      },
+      orderBy: {
+        performedAt: 'desc',
+      }
+    });
+
     return NextResponse.json({
       jobs,
       equipment,
+      maintenanceHistory,
     });
   } catch (error) {
     console.error('Reports fetch error:', error);

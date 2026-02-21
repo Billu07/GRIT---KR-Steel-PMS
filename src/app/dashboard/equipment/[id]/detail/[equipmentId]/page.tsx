@@ -2,11 +2,12 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Download, Trash2, Edit, Save, X } from "lucide-react";
+import { Plus, Download, Trash2, Edit, Save, X, Wrench } from "lucide-react";
 import { format, addDays, differenceInDays } from "date-fns";
 import { exportEquipmentJobsPdf } from "@/lib/pdfExport";
 import EquipmentModal from "@/components/EquipmentModal";
 import JobModal from "@/components/JobModal";
+import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 
 export default function EquipmentDetailPage() {
   const params = useParams();
@@ -40,18 +41,20 @@ export default function EquipmentDetailPage() {
     overdueDays: 0,
   });
 
-  // Modals state (JobModal only for editing now)
+  // Modals state
   const [isEqModalOpen, setIsEqModalOpen] = useState(false);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [isLogMaintenanceModalOpen, setIsLogMaintenanceModalOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingJob, setEditingJob] = useState<any>(null);
 
   const frequencyDays: { [key: string]: number } = {
+    daily: 1,
     weekly: 7,
     monthly: 30,
-    "3-monthly": 90,
+    quarterly: 90,
+    semi_annually: 182,
     yearly: 365,
-    "5-yearly": 1825,
   };
 
   useEffect(() => {
@@ -245,6 +248,31 @@ export default function EquipmentDetailPage() {
     } catch (err) {
       console.error(err);
       alert("Error deleting job");
+    }
+  };
+
+  const handleLogMaintenance = async (maintenanceData: any) => {
+    try {
+      const payload = {
+        ...maintenanceData,
+        equipmentId: parseInt(equipmentId),
+      };
+      
+      const res = await fetch('/api/maintenance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      if (res.ok) {
+        alert("Maintenance logged successfully!");
+        setIsLogMaintenanceModalOpen(false);
+      } else {
+        alert("Failed to log maintenance.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error logging maintenance.");
     }
   };
 
@@ -552,6 +580,13 @@ export default function EquipmentDetailPage() {
               <button className="detail-btn-secondary" onClick={exportJobsPDF}>
                 <Download size={13} /> Export PDF
               </button>
+              <button
+                  className="detail-btn-secondary"
+                  onClick={() => setIsLogMaintenanceModalOpen(true)}
+                  title="Log un-scheduled, predictive, or corrective maintenance"
+                >
+                  <Wrench size={13} /> Log Maintenance
+              </button>
               {!isAdding && (
                 <button
                   className="detail-btn-primary"
@@ -590,7 +625,7 @@ export default function EquipmentDetailPage() {
                 margin: 0,
               }}
             >
-              Job History
+              Scheduled Jobs
             </p>
             <p
               style={{
@@ -712,11 +747,12 @@ export default function EquipmentDetailPage() {
                         onChange={handleInputChange}
                         style={inlineInput}
                       >
+                        <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
                         <option value="monthly">Monthly</option>
-                        <option value="3-monthly">3-Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="semi_annually">Semi-Annually</option>
                         <option value="yearly">Yearly</option>
-                        <option value="5-yearly">5-Yearly</option>
                       </select>
                     </td>
                     <td style={{ padding: "8px 8px" }}>
@@ -1018,6 +1054,13 @@ export default function EquipmentDetailPage() {
         categoryId={categoryId}
         equipmentList={[equipment]} // Only current equipment
         initialData={editingJob}
+      />
+
+      {/* Log Maintenance Modal */}
+      <LogMaintenanceModal
+        isOpen={isLogMaintenanceModalOpen}
+        onClose={() => setIsLogMaintenanceModalOpen(false)}
+        onSubmit={handleLogMaintenance}
       />
     </>
   );

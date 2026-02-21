@@ -1,0 +1,47 @@
+The app's current main feature is providing maintenance reports on equipments. The report generation feature needs support for the following options for showing and exporting to excel/word.
+
+1. Filter by duration: Any one option at a time
+   a. From Date and To Date : Records from say 09-Nov-23 to say 10-Nov-24
+   b. Select Date : Records of a selected day
+   c. Select Month : Records of a selected month
+   d. Select Year : Records of a selected year
+
+2. Filter by equipments : One or more equipments can be selected from the list of all equipments
+
+Equipments and maintenance
+
+Each equipment has a list of checkpoints or schedule of standard maintenance. A checkpoint can be either Daily, Weekly, Monthly, Every 3 Months, 6 Months or Yearly.
+
+The maintenance are of 3 types
+a) Predictive maintenance
+b) Scheduled maintenance
+c) Corrective maintenance
+
+Predictive and corrective maintenance do not follow any predefined periods.
+
+Scheduled maintenance follow the checkpoints defined for an equipment and they are done at the dates that follow the frequency of the checkpoint.
+
+Instructions (Unorganized list)
+
+1. Checklist for scheduled maintenance should be exportable into columns (to excel, word).
+
+2. Merging data can happen in vertical approaches like shown instead of excel like structure.
+
+3. Exported reports should include the appropriate date range, date, month or year.
+
+4. Corrective maintenance report view should include the following fields:
+   - Intervention date and time
+   - Service start date and time
+   - Service end date and time
+   - Maintenance time (Difference between service start and end time)
+   - Shutdown time (Difference between service end and intervention time)
+   - Problem description
+   - Solution details
+   - Used parts
+   - Work type (mech, electric)
+   - Problem type (major, minor)
+   - Remarks (an empty column for manual remarks by in-charge)
+
+5. Preventive maintenance report view:
+   - Maintenance type (scheduled, predictive)
+   - Maintenance date

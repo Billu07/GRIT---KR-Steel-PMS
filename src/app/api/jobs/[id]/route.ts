@@ -33,6 +33,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const body = await req.json();
     const { jobCode, jobName, jobType, equipmentId, flag, dateDone, hoursWorked, plannedHours, frequency, criticality } = body;
 
+    // Fetch the current job to compare dateDone
+    const currentJob = await prisma.job.findUnique({ where: { id: jobId } });
+    if (!currentJob) {
+      return NextResponse.json({ error: 'Job not found' }, { status: 404 });
+    }
+
     // Recalculate derived fields if necessary
     const updateData: any = {
       jobCode,
@@ -47,41 +53,59 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     if (equipmentId) updateData.equipmentId = parseInt(equipmentId);
 
+    let createHistory = false;
+    let newDateDoneObj: Date | undefined;
+
     if (dateDone || frequency || plannedHours !== undefined || hoursWorked !== undefined) {
-      const dateDoneObj = dateDone ? new Date(dateDone) : undefined;
+      const dateDoneObj = dateDone ? new Date(dateDone) : currentJob.dateDone;
+      newDateDoneObj = dateDoneObj;
       
-      // We need existing data if some fields are missing for calculation, but simplified:
-      // Assuming all relevant fields are passed or we fetch them. 
-      // For now, let's assume the frontend passes all critical fields for recalculation or we rely on what's passed.
-      
-      if (dateDoneObj && frequency) {
-         let daysToAdd = 7;
-        switch (frequency) {
-          case 'weekly': daysToAdd = 7; break;
-          case 'monthly': daysToAdd = 30; break;
-          case '3-monthly': daysToAdd = 90; break;
-          case 'yearly': daysToAdd = 365; break;
-          case '5-yearly': daysToAdd = 1825; break;
-          default: daysToAdd = 7;
-        }
-        const dueDate = addDays(dateDoneObj, daysToAdd);
-        updateData.dateDone = dateDoneObj;
-        updateData.dateDue = dueDate;
-        
-        const today = new Date();
-        const overdueDays = differenceInDays(today, dueDate) > 0 ? differenceInDays(today, dueDate) : 0;
-        updateData.overdueDays = overdueDays;
+      // Check if dateDone has changed to trigger a history log
+      if (dateDone && new Date(dateDone).getTime() !== new Date(currentJob.dateDone).getTime()) {
+        createHistory = true;
       }
       
-      if (plannedHours !== undefined && hoursWorked !== undefined) {
-        updateData.remainingHours = Math.max(0, plannedHours - hoursWorked);
+      const currentFrequency = frequency || currentJob.frequency;
+      
+      let daysToAdd = 7;
+      switch (currentFrequency) {
+        case 'daily': daysToAdd = 1; break;
+        case 'weekly': daysToAdd = 7; break;
+        case 'monthly': daysToAdd = 30; break;
+        case 'quarterly': daysToAdd = 90; break;
+        case 'semi_annually': daysToAdd = 182; break;
+        case 'yearly': daysToAdd = 365; break;
+        default: daysToAdd = 7;
       }
+      const dueDate = addDays(dateDoneObj, daysToAdd);
+      updateData.dateDone = dateDoneObj;
+      updateData.dateDue = dueDate;
+      
+      const today = new Date();
+      const overdueDays = differenceInDays(today, dueDate) > 0 ? differenceInDays(today, dueDate) : 0;
+      updateData.overdueDays = overdueDays;
+      
+      const currentPlannedHours = plannedHours !== undefined ? plannedHours : currentJob.plannedHours;
+      const currentHoursWorked = hoursWorked !== undefined ? hoursWorked : currentJob.hoursWorked;
+      updateData.remainingHours = Math.max(0, currentPlannedHours - currentHoursWorked);
     }
 
     const updatedJob = await prisma.job.update({
       where: { id: jobId },
       data: updateData,
     });
+
+    if (createHistory && newDateDoneObj) {
+      await prisma.maintenanceHistory.create({
+        data: {
+          equipmentId: updatedJob.equipmentId,
+          jobId: updatedJob.id,
+          type: 'scheduled',
+          performedAt: newDateDoneObj,
+          remarks: `Job completed: ${updatedJob.jobName}`,
+        }
+      });
+    }
 
     return NextResponse.json(updatedJob);
   } catch (error) {

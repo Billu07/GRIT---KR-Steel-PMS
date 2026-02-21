@@ -68,11 +68,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const dateDoneObj = new Date(dateDone);
     let daysToAdd = 7;
     switch (frequency) {
+      case 'daily': daysToAdd = 1; break;
       case 'weekly': daysToAdd = 7; break;
       case 'monthly': daysToAdd = 30; break;
-      case '3-monthly': daysToAdd = 90; break;
+      case 'quarterly': daysToAdd = 90; break;
+      case 'semi_annually': daysToAdd = 182; break;
       case 'yearly': daysToAdd = 365; break;
-      case '5-yearly': daysToAdd = 1825; break;
       default: daysToAdd = 7;
     }
 
@@ -81,24 +82,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const overdueDays = differenceInDays(today, dueDate) > 0 ? differenceInDays(today, dueDate) : 0;
     const remainingHours = Math.max(0, plannedHours - hoursWorked);
 
-    const newJob = await prisma.job.create({
-      data: {
-        jobCode,
-        jobName,
-        jobType,
+    // Create job and maintenance history in a transaction
+    const [newJob] = await prisma.$transaction([
+      prisma.job.create({
+        data: {
+          jobCode,
+          jobName,
+          jobType,
+          equipmentId: parseInt(equipmentId),
+          flag,
+          dateDone: dateDoneObj,
+          hoursWorked,
+          plannedHours,
+          frequency,
+          dateDue: dueDate,
+          remainingHours,
+          criticality,
+          overdueDays,
+          createdBy: 1, // Default to admin for now, ideally fetch from session
+          category: '', // Can be filled if needed or removed
+        },
+      }),
+      prisma.maintenanceHistory.create({
+        data: {
+          equipmentId: parseInt(equipmentId),
+          type: 'scheduled',
+          performedAt: dateDoneObj,
+          remarks: `Initial job creation log: ${jobName}`,
+        }
+      })
+    ]);
+    
+    // Update history with the newly created job ID
+    await prisma.maintenanceHistory.updateMany({
+      where: {
         equipmentId: parseInt(equipmentId),
-        flag,
-        dateDone: dateDoneObj,
-        hoursWorked,
-        plannedHours,
-        frequency,
-        dateDue: dueDate,
-        remainingHours,
-        criticality,
-        overdueDays,
-        createdBy: 1, // Default to admin for now, ideally fetch from session
-        category: '', // Can be filled if needed or removed
+        type: 'scheduled',
+        performedAt: dateDoneObj,
+        jobId: null,
       },
+      data: {
+        jobId: newJob.id,
+      }
     });
 
     return NextResponse.json(newJob, { status: 201 });
