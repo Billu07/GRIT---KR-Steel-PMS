@@ -14,8 +14,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Auto-generate code: EQ-0001 format
-    const count = await prisma.equipment.count();
-    const code = `EQ-${String(count + 1).padStart(4, '0')}`;
+    const equipments = await prisma.equipment.findMany({
+      select: { code: true }
+    });
+    
+    let maxNum = 0;
+    equipments.forEach(eq => {
+      if (eq.code && eq.code.startsWith('EQ-')) {
+        const parts = eq.code.split('-');
+        if (parts.length > 1) {
+          const num = parseInt(parts[1]);
+          if (!isNaN(num) && num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    });
+    
+    const code = `EQ-${String(maxNum + 1).padStart(4, '0')}`;
 
     const newEquipment = await prisma.equipment.create({
       data: {

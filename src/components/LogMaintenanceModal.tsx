@@ -185,7 +185,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                 <label style={labelStyle}><Package size={12}/> Select Equipment</label>
                 <select name="equipmentId" value={formData.equipmentId} onChange={handleChange} style={selectStyle} required>
                   <option value="">-- Select Asset --</option>
-                  {allEquipment.map(eq => (
+                  {allEquipment.map((eq: any) => (
                     <option key={eq.id} value={eq.id}>{eq.name} ({eq.code})</option>
                   ))}
                 </select>
@@ -215,7 +215,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                 <label style={labelStyle}><ClipboardCheck size={12}/> Select Scheduled Task</label>
                 <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} required>
                   <option value="">-- Select Task --</option>
-                  {filteredTasks.map(t => (
+                  {filteredTasks.map((t: any) => (
                     <option key={t.id} value={t.id}>{t.taskId}: {t.taskName} ({t.frequency})</option>
                   ))}
                 </select>

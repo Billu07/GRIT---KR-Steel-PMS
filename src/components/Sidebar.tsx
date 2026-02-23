@@ -284,7 +284,7 @@ const SidebarContent = () => {
                 >
                   All Equipment
                 </Link>
-                {categories.map((category) => {
+                {categories.map((category: any) => {
                   const href = `/dashboard/equipment/${category.id}`;
                   const isActive = pathname === href;
 

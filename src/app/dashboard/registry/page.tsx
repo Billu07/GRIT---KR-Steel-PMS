@@ -151,7 +151,7 @@ export default function RegistryPage() {
     },
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div
         style={{
@@ -317,7 +317,7 @@ export default function RegistryPage() {
             onChange={(e) => setFilterCategory(e.target.value)}
           >
             <option value="all">All Categories</option>
-            {categories.map((cat) => (
+            {categories.map((cat: any) => (
               <option key={cat.id} value={cat.id.toString()}>
                 {cat.name}
               </option>

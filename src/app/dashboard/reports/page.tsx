@@ -198,7 +198,7 @@ export default function ReportsBuilderPage() {
            <p className="text-[10px] font-semibold tracking-[0.2em] text-[#4A6A7A] uppercase mb-2">KR Steel · Ship Recycling Facility</p>
            <h1 className="text-2xl font-bold text-[#225CA3] tracking-tight">Report Builder</h1>
         </div>
-        <button onClick={handleDownload} disabled={loading || dataLoading || !filteredData} className="flex items-center justify-center gap-2 px-6 py-3 bg-[#225CA3] text-[#EAE7DF] text-[11px] font-bold tracking-widest uppercase rounded hover:bg-[#1B4A82] active:bg-[#133660] disabled:opacity-50 transition-colors">
+        <button onClick={handleDownload} disabled={loading || isLoading || !filteredData} className="flex items-center justify-center gap-2 px-6 py-3 bg-[#225CA3] text-[#EAE7DF] text-[11px] font-bold tracking-widest uppercase rounded hover:bg-[#1B4A82] active:bg-[#133660] disabled:opacity-50 transition-colors">
            {loading ? "Generating..." : (
                <>
                  {reportFormat === "excel" ? <FileSpreadsheet size={16} /> : <Download size={16} />}
@@ -309,7 +309,7 @@ export default function ReportsBuilderPage() {
       </div>
 
       <div className="flex-1 overflow-auto p-4 sm:p-8 scroll-custom">
-         {dataLoading ? (
+         {isLoading ? (
              <div className="flex h-full items-center justify-center text-[#7A8A93]">Loading data...</div>
          ) : !filteredData ? (
              <div className="flex h-full items-center justify-center text-[#7A8A93]">No data available.</div>

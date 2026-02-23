@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { calculateNextDueDate } from "@/lib/dateUtils";
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -52,10 +53,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
         });
     }
   }, [isOpen, initialData]);
-
-import { calculateNextDueDate } from "@/lib/dateUtils";
-
-// ... existing code ...
 
   // Auto-calculate next due date
   useEffect(() => {

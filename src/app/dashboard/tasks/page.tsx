@@ -6,6 +6,8 @@ import { fetcher } from "@/lib/fetcher";
 import { Search, Plus, CalendarCheck, Edit, Trash2, Tag, HardHat, Save, X, AlertTriangle, RefreshCw, Wrench } from "lucide-react";
 import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
+import { calculateNextDueDate } from "@/lib/dateUtils";
+import { getTaskStatus } from "@/lib/taskUtils";
 
 export default function PlannedTasksPage() {
   const { data: rawData, error, isLoading, mutate } = useSWR("/api/tasks", fetcher, {
@@ -101,8 +103,6 @@ export default function PlannedTasksPage() {
         setUpdatingHours(null);
     }
   };
-
-import { calculateNextDueDate } from "@/lib/dateUtils";
 
   const handleCreateInline = async () => {
     if (!newTask.taskId || !newTask.taskName || !newTask.equipmentId) {
