@@ -102,6 +102,8 @@ export default function PlannedTasksPage() {
     }
   };
 
+import { calculateNextDueDate } from "@/lib/dateUtils";
+
   const handleCreateInline = async () => {
     if (!newTask.taskId || !newTask.taskName || !newTask.equipmentId) {
       alert("Please fill in ID, Name and select an Equipment.");
@@ -112,18 +114,7 @@ export default function PlannedTasksPage() {
       // Calculate next due date if last completed date is provided
       let nextDueDate = null;
       if (newTask.lastCompletedDate) {
-         const completedDate = new Date(newTask.lastCompletedDate);
-         nextDueDate = new Date(completedDate);
-         switch (newTask.frequency) {
-            case 'hourly': nextDueDate.setHours(nextDueDate.getHours() + 1); break;
-            case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
-            case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
-            case 'fifteen_days': nextDueDate.setDate(nextDueDate.getDate() + 15); break;
-            case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
-            case 'quarterly': nextDueDate.setMonth(nextDueDate.getMonth() + 3); break;
-            case 'semi_annually': nextDueDate.setMonth(nextDueDate.getMonth() + 6); break;
-            case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
-         }
+         nextDueDate = calculateNextDueDate(newTask.lastCompletedDate, newTask.frequency);
       }
 
       const payload = {
@@ -289,7 +280,7 @@ export default function PlannedTasksPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#EAE7DF" }}>
                 <tr>
-                  {["Task ID", "Task Name", "Equipment", "Frequency", "Next Due Date", "Est. Hours", "Running Hours", "Rem. Hours", "Status", "Actions"].map((h) => (
+                  {["Task ID", "Task Name", "Equipment", "Frequency", "Reference Date (Last Done)", "Next Due Date", "Est. Hours", "Running Hours", "Rem. Hours", "Status", "Actions"].map((h) => (
                     <th key={h} style={{ padding: "12px 16px", textAlign: h === "Actions" ? "right" : "left", fontSize: "10px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#225CA3", borderBottom: "1px solid #D0CBC0", whiteSpace: "nowrap" }}>
                       {h}
                     </th>
@@ -329,6 +320,7 @@ export default function PlannedTasksPage() {
                     <td style={{ padding: "8px 12px" }}>
                       <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                     </td>
+                    <td style={{ padding: "8px 12px" }}>—</td>
                     <td style={{ padding: "8px 12px" }}>
                         <input name="estimatedHours" type="number" value={newTask.estimatedHours} onChange={handleInputChange} style={inlineInput} placeholder="Hrs" />
                     </td>
@@ -389,6 +381,9 @@ export default function PlannedTasksPage() {
                               {t.frequency}
                           </span>
                         </td>
+                        <td style={{ padding: "14px 16px", color: "#5A6A73" }}>
+                            {t.lastCompletedDate ? new Date(t.lastCompletedDate).toLocaleDateString() : "NEVER"}
+                        </td>
                         <td style={{ padding: "14px 16px", color: "#1A1A1A" }}>
                           <span className={isOverdue ? "text-overdue" : ""}>
                             {t.nextDueDate ? new Date(t.nextDueDate).toLocaleDateString() : "—"}
@@ -439,7 +434,7 @@ export default function PlannedTasksPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={10} style={{ padding: "60px 24px", textAlign: "center", color: "#7A8A93" }}>
+                    <td colSpan={11} style={{ padding: "60px 24px", textAlign: "center", color: "#7A8A93" }}>
                       No planned tasks found.
                     </td>
                   </tr>

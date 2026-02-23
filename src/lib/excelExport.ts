@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { format, differenceInMinutes } from 'date-fns';
+import { getTaskStatus } from './taskUtils';
 
 export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
   const wsData: any[][] = [];
@@ -58,21 +59,8 @@ export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const dueSoonDate = new Date();
-  dueSoonDate.setDate(today.getDate() + 7);
-
   const sheetData = tasks.map((task) => {
-    const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
-    
-    // Status Logic
-    let statusText = "UP-TO-DATE";
-    const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
-    const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
-    
-    if (isOverdue) statusText = "OVERDUE";
-    else if (isDueSoon) statusText = "DUE";
+    const statusText = getTaskStatus(task);
 
     return {
       'Task ID': task.taskId,
@@ -102,11 +90,6 @@ export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const dueSoonDate = new Date();
-  dueSoonDate.setDate(today.getDate() + 7);
-  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
   
@@ -120,15 +103,7 @@ export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: an
       group = eq ? `${eq.name} (${eq.code})` : "Unknown Equipment";
     }
 
-    const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
-    
-    // Status Logic
-    let statusText = "UP-TO-DATE";
-    const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
-    const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
-    
-    if (isOverdue) statusText = "OVERDUE";
-    else if (isDueSoon) statusText = "DUE";
+    const statusText = getTaskStatus(task);
 
     sheetData.push({
       'Grouping': group,

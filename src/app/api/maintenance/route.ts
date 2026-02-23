@@ -99,18 +99,7 @@ export async function POST(req: NextRequest) {
       if (task) {
         // Use the explicit maintenanceDate if provided, otherwise default to today
         const completedDate = maintenanceDate ? new Date(maintenanceDate) : new Date();
-        const nextDue = new Date(completedDate);
-        
-        switch (task.frequency) {
-          case 'hourly': nextDue.setHours(nextDue.getHours() + 1); break;
-          case 'daily': nextDue.setDate(nextDue.getDate() + 1); break;
-          case 'weekly': nextDue.setDate(nextDue.getDate() + 7); break;
-          case 'fifteen_days': nextDue.setDate(nextDue.getDate() + 15); break;
-          case 'monthly': nextDue.setMonth(nextDue.getMonth() + 1); break;
-          case 'quarterly': nextDue.setMonth(nextDue.getMonth() + 3); break;
-          case 'semi_annually': nextDue.setMonth(nextDue.getMonth() + 6); break;
-          case 'yearly': nextDue.setFullYear(nextDue.getFullYear() + 1); break;
-        }
+        const nextDue = calculateNextDueDate(completedDate, task.frequency);
 
         await prisma.task.update({
           where: { id: task.id },

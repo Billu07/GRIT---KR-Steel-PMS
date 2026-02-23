@@ -53,23 +53,14 @@ const TaskModal: React.FC<TaskModalProps> = ({
     }
   }, [isOpen, initialData]);
 
+import { calculateNextDueDate } from "@/lib/dateUtils";
+
+// ... existing code ...
+
   // Auto-calculate next due date
   useEffect(() => {
     if (formData.lastCompletedDate && formData.frequency) {
-        const completedDate = new Date(formData.lastCompletedDate);
-        const nextDue = new Date(completedDate);
-        
-        switch (formData.frequency) {
-          case 'hourly': nextDue.setHours(nextDue.getHours() + 1); break;
-          case 'daily': nextDue.setDate(nextDue.getDate() + 1); break;
-          case 'weekly': nextDue.setDate(nextDue.getDate() + 7); break;
-          case 'fifteen_days': nextDue.setDate(nextDue.getDate() + 15); break;
-          case 'monthly': nextDue.setMonth(nextDue.getMonth() + 1); break;
-          case 'quarterly': nextDue.setMonth(nextDue.getMonth() + 3); break;
-          case 'semi_annually': nextDue.setMonth(nextDue.getMonth() + 6); break;
-          case 'yearly': nextDue.setFullYear(nextDue.getFullYear() + 1); break;
-        }
-
+        const nextDue = calculateNextDueDate(formData.lastCompletedDate, formData.frequency);
         const nextDueDateStr = nextDue.toISOString().split('T')[0];
         if (nextDueDateStr !== formData.nextDueDate) {
             setFormData(prev => ({ ...prev, nextDueDate: nextDueDateStr }));
@@ -310,7 +301,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label style={labelStyle}>Last Completed Date</label>
+                    <label style={labelStyle}>Reference Date (Last Done / Baseline)</label>
                     <input
                       type="date"
                       name="lastCompletedDate"
@@ -318,6 +309,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       onChange={handleChange}
                       className="jm-field"
                       style={fieldStyle}
+                      title="For new equipment, enter the installation date as the reference baseline."
                     />
                   </div>
                   <div>
@@ -380,14 +372,15 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     </select>
                   </div>
                   <div>
-                    <label style={labelStyle}>Next Due Date</label>
+                    <label style={labelStyle}>Next Due Date (Auto)</label>
                     <input
                       type="date"
                       name="nextDueDate"
                       value={formData.nextDueDate}
-                      onChange={handleChange}
+                      readOnly
                       className="jm-field"
-                      style={fieldStyle}
+                      style={{ ...fieldStyle, background: "#F1F5F9", cursor: "not-allowed", opacity: 0.8 }}
+                      title="Calculated automatically based on Last Completed Date and Frequency"
                     />
                   </div>
                   <div>

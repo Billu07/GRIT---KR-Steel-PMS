@@ -8,6 +8,7 @@ import { exportTaskReportPdf, exportEquipmentReportPdf, exportMaintenancePdf } f
 import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExcel, exportToExcel } from "@/lib/excelExport";
 import { exportToPDF } from "@/lib/pdfExport";
 import { format } from "date-fns";
+import { getTaskStatus } from "@/lib/taskUtils";
 
 export default function ReportsBuilderPage() {
   const { data: rawData, error, isLoading } = useSWR("/api/reports", fetcher, {
@@ -56,13 +57,11 @@ export default function ReportsBuilderPage() {
         // Filter by Status (Overdue logic)
         if (statusFilter !== "all") {
             filteredTasks = filteredTasks.filter((t: any) => {
-                const nextDueDate = t.nextDueDate ? new Date(t.nextDueDate) : null;
-                const isOverdue = (nextDueDate && nextDueDate < today) || (t.estimatedHours && t.runningHours >= t.estimatedHours);
-                const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (t.estimatedHours && t.runningHours >= t.estimatedHours * 0.9 && t.runningHours < t.estimatedHours);
+                const status = getTaskStatus(t);
                 
-                if (statusFilter === "overdue") return isOverdue;
-                if (statusFilter === "due") return isDueSoon;
-                return !isOverdue && !isDueSoon;
+                if (statusFilter === "overdue") return status === "OVERDUE";
+                if (statusFilter === "due") return status === "DUE";
+                return status === "UP-TO-DATE";
             });
         }
 
@@ -340,31 +339,24 @@ export default function ReportsBuilderPage() {
                         <tbody className="text-[13px] text-[#1A1A1A]">
                             {reportType === "tasks" && filteredData.tasks?.map((task: any) => {
                                 const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
-                                const today = new Date(); today.setHours(0,0,0,0);
-                                const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
-                                const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
+                                const status = getTaskStatus(task);
 
                                 // Status Logic
-                                let statusText = "UP-TO-DATE";
+                                let statusText = status;
                                 let statusColor = "bg-green-100 text-green-800";
                                 let rowColor = "";
                                 
-                                const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
-                                const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
-                                
-                                if (isOverdue) {
-                                    statusText = "OVERDUE";
+                                if (status === "OVERDUE") {
                                     statusColor = "bg-red-100 text-red-800";
                                     rowColor = "bg-red-50";
-                                } else if (isDueSoon) {
-                                    statusText = "DUE";
+                                } else if (status === "DUE") {
                                     statusColor = "bg-amber-100 text-amber-800";
                                     rowColor = "bg-amber-50";
                                 }
 
                                 return (
                                     <tr key={task.id} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
-                                        <td className="p-4 flex items-center gap-2">{isOverdue && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
+                                        <td className="p-4 flex items-center gap-2">{status === "OVERDUE" && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
                                         <td className="p-4 font-medium">{task.taskName}</td>
                                         <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td>
                                         <td className="p-4 capitalize">{task.frequency}</td>

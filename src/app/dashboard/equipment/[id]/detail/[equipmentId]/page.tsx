@@ -10,6 +10,8 @@ import { exportEquipmentTasksExcel } from "@/lib/excelExport";
 import EquipmentModal from "@/components/EquipmentModal";
 import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
+import { calculateNextDueDate } from "@/lib/dateUtils";
+import { getTaskStatus } from "@/lib/taskUtils";
 
 export default function EquipmentDetailPage() {
   const params = useParams();
@@ -126,18 +128,7 @@ export default function EquipmentDetailPage() {
     try {
       let nextDueDate = null;
       if (newTask.lastCompletedDate) {
-         const completedDate = new Date(newTask.lastCompletedDate);
-         nextDueDate = new Date(completedDate);
-         switch (newTask.frequency) {
-            case 'hourly': nextDueDate.setHours(nextDueDate.getHours() + 1); break;
-            case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
-            case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
-            case 'fifteen_days': nextDueDate.setDate(nextDueDate.getDate() + 15); break;
-            case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
-            case 'quarterly': nextDueDate.setMonth(nextDueDate.getMonth() + 3); break;
-            case 'semi_annually': nextDueDate.setMonth(nextDueDate.getMonth() + 6); break;
-            case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
-         }
+         nextDueDate = calculateNextDueDate(newTask.lastCompletedDate, newTask.frequency);
       }
 
       const payload = {
@@ -649,6 +640,7 @@ export default function EquipmentDetailPage() {
                       { label: "Task ID", width: "80px" },
                       { label: "Task Name", width: "130px" },
                       { label: "Frequency", width: "80px" },
+                      { label: "Last Completed", width: "90px" },
                       { label: "Next Due", width: "90px" },
                       { label: "Est. Hrs", width: "70px" },
                       { label: "Run. Hrs", width: "90px" },
@@ -721,6 +713,7 @@ export default function EquipmentDetailPage() {
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                         <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                       </td>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                          <input name="estimatedHours" type="number" value={newTask.estimatedHours} onChange={handleInputChange} style={inlineInput} placeholder="Hrs" />
                       </td>
@@ -757,23 +750,16 @@ export default function EquipmentDetailPage() {
 
                   {tasks.length > 0 ? (
                     tasks.map((task: any) => {
-                      const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
-                      if (nextDueDate) nextDueDate.setHours(0, 0, 0, 0);
-                      const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
+                      const status = getTaskStatus(task);
                       
-                      let statusText = "UP-TO-DATE";
+                      let statusText = status;
                       let statusBg = "#DEF7EC";
                       let statusColor = "#03543F";
                       
-                      const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
-                      const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
-
-                      if (isOverdue) {
-                          statusText = "OVERDUE";
+                      if (status === "OVERDUE") {
                           statusBg = "#FDE8E8";
                           statusColor = "#9B1C1C";
-                      } else if (isDueSoon) {
-                          statusText = "DUE";
+                      } else if (status === "DUE") {
                           statusBg = "#FEF3C7";
                           statusColor = "#92400E";
                       }
@@ -781,7 +767,7 @@ export default function EquipmentDetailPage() {
                       const remainingHours = task.estimatedHours ? task.estimatedHours - task.runningHours : null;
 
                       return (
-                        <tr key={task.id} className={isOverdue ? "row-overdue" : isDueSoon ? "bg-amber-50" : ""}>
+                        <tr key={task.id} className={status === "OVERDUE" ? "row-overdue" : status === "DUE" ? "bg-amber-50" : ""}>
                           <td
                             style={{
                               padding: "12px 16px",
@@ -793,7 +779,7 @@ export default function EquipmentDetailPage() {
                             }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                {isOverdue && <AlertTriangle size={14} className="text-overdue" />}
+                                {status === "OVERDUE" && <AlertTriangle size={14} className="text-overdue" />}
                                 {task.taskId}
                             </div>
                           </td>
@@ -823,11 +809,21 @@ export default function EquipmentDetailPage() {
                             style={{
                               padding: "12px 16px",
                               whiteSpace: "nowrap",
+                              color: "#5A6A73",
+                              borderBottom: "1px solid #EAE7DF",
+                            }}
+                          >
+                            {task.lastCompletedDate ? new Date(task.lastCompletedDate).toLocaleDateString() : "NEVER"}
+                          </td>
+                          <td
+                            style={{
+                              padding: "12px 16px",
+                              whiteSpace: "nowrap",
                               color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
                             }}
                           >
-                            <span className={isOverdue ? "text-overdue" : ""}>
+                            <span className={status === "OVERDUE" ? "text-overdue" : ""}>
                               {task.nextDueDate ? new Date(task.nextDueDate).toLocaleDateString() : "—"}
                             </span>
                           </td>
@@ -891,7 +887,7 @@ export default function EquipmentDetailPage() {
                   ) : (
                     <tr>
                       <td
-                        colSpan={9}
+                        colSpan={10}
                         style={{
                           padding: "48px 24px",
                           textAlign: "center",

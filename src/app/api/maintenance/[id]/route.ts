@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { calculateNextDueDate } from '@/lib/dateUtils';
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -75,6 +76,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { id: maintenanceId },
       data: updateData,
     });
+
+    // If this maintenance record is linked to a task, update the task's next due date
+    const linkedTaskId = updatedRecord.taskId;
+    if (linkedTaskId && updatedRecord.maintenanceDate) {
+      const task = await prisma.task.findUnique({ where: { id: linkedTaskId } });
+      if (task) {
+        const completedDate = new Date(updatedRecord.maintenanceDate);
+        const nextDue = calculateNextDueDate(completedDate, task.frequency);
+
+        await prisma.task.update({
+          where: { id: linkedTaskId },
+          data: {
+            lastCompletedDate: completedDate,
+            nextDueDate: nextDue,
+            // We might optionally reset runningHours here, but it's tricky on edit. 
+            // Usually runningHours is reset on NEW maintenance. On edit, it's ambiguous.
+            // Let's stick to dates for now as requested.
+          }
+        });
+      }
+    }
 
     return NextResponse.json(updatedRecord);
   } catch (error) {
