@@ -28,6 +28,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
     frequency: "weekly",
     taskDetail: "",
     equipmentId: "",
+    lastCompletedDate: "",
+    nextDueDate: "",
+    estimatedHours: "",
+    runningHours: "0",
+    criticality: "medium",
   });
 
   useEffect(() => {
@@ -39,9 +44,38 @@ const TaskModal: React.FC<TaskModalProps> = ({
             frequency: initialData?.frequency || "weekly",
             taskDetail: initialData?.taskDetail || "",
             equipmentId: initialData?.equipmentId ? initialData.equipmentId.toString() : "",
+            lastCompletedDate: initialData?.lastCompletedDate ? new Date(initialData.lastCompletedDate).toISOString().split('T')[0] : "",
+            nextDueDate: initialData?.nextDueDate ? new Date(initialData.nextDueDate).toISOString().split('T')[0] : "",
+            estimatedHours: initialData?.estimatedHours ? initialData.estimatedHours.toString() : "",
+            runningHours: initialData?.runningHours ? initialData.runningHours.toString() : "0",
+            criticality: initialData?.criticality || "medium",
         });
     }
   }, [isOpen, initialData]);
+
+  // Auto-calculate next due date
+  useEffect(() => {
+    if (formData.lastCompletedDate && formData.frequency) {
+        const completedDate = new Date(formData.lastCompletedDate);
+        const nextDue = new Date(completedDate);
+        
+        switch (formData.frequency) {
+          case 'hourly': nextDue.setHours(nextDue.getHours() + 1); break;
+          case 'daily': nextDue.setDate(nextDue.getDate() + 1); break;
+          case 'weekly': nextDue.setDate(nextDue.getDate() + 7); break;
+          case 'fifteen_days': nextDue.setDate(nextDue.getDate() + 15); break;
+          case 'monthly': nextDue.setMonth(nextDue.getMonth() + 1); break;
+          case 'quarterly': nextDue.setMonth(nextDue.getMonth() + 3); break;
+          case 'semi_annually': nextDue.setMonth(nextDue.getMonth() + 6); break;
+          case 'yearly': nextDue.setFullYear(nextDue.getFullYear() + 1); break;
+        }
+
+        const nextDueDateStr = nextDue.toISOString().split('T')[0];
+        if (nextDueDateStr !== formData.nextDueDate) {
+            setFormData(prev => ({ ...prev, nextDueDate: nextDueDateStr }));
+        }
+    }
+  }, [formData.lastCompletedDate, formData.frequency, formData.nextDueDate]);
 
   if (!isOpen) return null;
 
@@ -61,7 +95,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ ...formData });
+    onSubmit({ 
+        ...formData,
+        estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : null,
+        runningHours: parseInt(formData.runningHours || "0")
+    });
   };
 
   const fieldStyle: React.CSSProperties = {
@@ -271,6 +309,29 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       placeholder="e.g. Monthly Inspection"
                     />
                   </div>
+                  <div>
+                    <label style={labelStyle}>Last Completed Date</label>
+                    <input
+                      type="date"
+                      name="lastCompletedDate"
+                      value={formData.lastCompletedDate}
+                      onChange={handleChange}
+                      className="jm-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Running Hours (Logged)</label>
+                    <input
+                      type="number"
+                      name="runningHours"
+                      value={formData.runningHours}
+                      onChange={handleChange}
+                      className="jm-field"
+                      style={fieldStyle}
+                      placeholder="Accumulated hours..."
+                    />
+                  </div>
                 </div>
 
                 {/* Right column */}
@@ -308,12 +369,51 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       className="jm-field"
                       style={selectStyle}
                     >
+                      <option value="hourly">Hourly</option>
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
+                      <option value="fifteen_days">15 Days</option>
                       <option value="monthly">Monthly</option>
                       <option value="quarterly">Quarterly</option>
                       <option value="semi_annually">Semi-Annually</option>
                       <option value="yearly">Yearly</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Next Due Date</label>
+                    <input
+                      type="date"
+                      name="nextDueDate"
+                      value={formData.nextDueDate}
+                      onChange={handleChange}
+                      className="jm-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Estimated Hours (Interval)</label>
+                    <input
+                      type="number"
+                      name="estimatedHours"
+                      value={formData.estimatedHours}
+                      onChange={handleChange}
+                      className="jm-field"
+                      style={fieldStyle}
+                      placeholder="e.g. 250"
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Criticality</label>
+                    <select
+                    name="criticality"
+                    value={formData.criticality}
+                    onChange={handleChange}
+                    className="jm-field"
+                    style={selectStyle}
+                    >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
                     </select>
                   </div>
                 </div>

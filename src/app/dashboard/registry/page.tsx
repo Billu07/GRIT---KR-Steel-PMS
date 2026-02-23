@@ -234,7 +234,7 @@ export default function RegistryPage() {
                   lineHeight: 1,
                 }}
               >
-                Equipment Registry
+                All Equipment
               </h1>
               <p
                 style={{ fontSize: "13px", color: "#7A8A93", marginTop: "6px" }}

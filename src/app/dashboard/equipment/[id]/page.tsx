@@ -170,18 +170,31 @@ export default function CategoryPage() {
       <div className="eq-root">
         {/* ── Page header ── */}
         <div style={{ marginBottom: "32px" }}>
-          <p
-            style={{
-              fontSize: "10px",
-              fontWeight: 600,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "#4A6A7A",
-              marginBottom: "8px",
-            }}
-          >
-            KR Steel · Equipment
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <button 
+              onClick={() => router.push('/dashboard/registry')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '4px 8px', background: 'transparent', border: '1px solid #D0CBC0',
+                borderRadius: '2px', cursor: 'pointer', fontSize: '10px', fontWeight: 600,
+                color: '#7A8A93', textTransform: 'uppercase', letterSpacing: '0.1em'
+              }}
+            >
+              ← Back
+            </button>
+            <p
+              style={{
+                fontSize: "10px",
+                fontWeight: 600,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#4A6A7A",
+                margin: 0,
+              }}
+            >
+              KR Steel · Equipment
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div>
               <h1
@@ -291,7 +304,7 @@ export default function CategoryPage() {
             </p>
           </div>
 
-          <div className="eq-table-wrap" style={{ overflowX: "auto" }}>
+          <div className="eq-table-wrap" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 220px)" }}>
             <table
               style={{
                 width: "100%",
@@ -299,8 +312,8 @@ export default function CategoryPage() {
                 fontSize: "13px",
               }}
             >
-              <thead>
-                <tr style={{ background: "#EAE7DF" }}>
+              <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#EAE7DF" }}>
+                <tr>
                   {[
                     "Equipment Code",
                     "Equipment Name",

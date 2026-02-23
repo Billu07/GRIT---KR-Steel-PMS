@@ -1,55 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-}
-
-enum Role {
-  admin
-  user
-}
-
-enum EquipmentStatus {
-  active
-  inactive
-  maintenance
-  retired
-}
-
-enum Frequency {
-  daily
-  weekly
-  monthly
-  quarterly   @map("3-monthly")
-  semi_annually @map("6-monthly")
-  yearly
-}
-
-enum Criticality {
-  low
-  medium
-  high
-}
-
-enum MaintenanceType {
-  scheduled
-  predictive
-  corrective
-}
-
-enum WorkType {
-  new
-  rework
-}
-
-enum ProblemType {
-  major
-  minor
 }
 
 model User {
@@ -79,27 +33,25 @@ model Equipment {
   code               String               @unique
   name               String
   categoryId         Int
-  category           EquipmentCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   location           String?
   description        String?
-  imageUrl           String?              // Supabase Storage public URL
-  safetyMeasures     String?
-  
-  // New fields from machinery.csv
-  capacity           String?
-  model              String?
-  serialNumber       String?
-  brand              String?
-  runningHours       String?
-  testCertNumber     String?
-  testCertValidity   String?
-  testCertApplied    String?
-
   status             EquipmentStatus      @default(active)
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
-  tasks              Task[]
+  imageUrl           String?
+  safetyMeasures     String?
+  brand              String?
+  capacity           String?
+  model              String?
+  runningHours       String?
+  serialNumber       String?
+  testCertApplied    String?
+  testCertNumber     String?
+  testCertValidity   String?
+  serviceReportUrl   String?
+  category           EquipmentCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   maintenanceHistory MaintenanceHistory[]
+  tasks              Task[]
 
   @@map("equipment")
 }
@@ -111,54 +63,103 @@ model Task {
   frequency          Frequency
   taskDetail         String?
   equipmentId        Int
-  equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   createdBy          Int
-  creator            User                 @relation("TaskCreator", fields: [createdBy], references: [id])
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
+  criticality        Criticality          @default(medium)
+  lastCompletedDate  DateTime?
+  nextDueDate        DateTime?
+  estimatedHours     Int?
+  runningHours       Int                  @default(0)
   maintenanceHistory MaintenanceHistory[]
+  creator            User                 @relation("TaskCreator", fields: [createdBy], references: [id])
+  equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 
   @@map("tasks")
 }
 
 model MaintenanceHistory {
-  id              Int             @id @default(autoincrement())
-  equipmentId     Int
-  equipment       Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  taskId          Int?
-  task            Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  type            MaintenanceType @default(scheduled)
-  
-  // Corrective Maintenance Fields
-  informationDate  DateTime?
-  serviceStartDate DateTime?
-  serviceEndDate   DateTime?
-  problemDescription String?
-  solutionDetails  String?
-  usedParts       String?
-  workType        WorkType?
-  problemType     ProblemType?
-  remarks         String?
-  
-  // Preventive Maintenance Fields
-  maintenanceDate DateTime?
+  id                 Int             @id @default(autoincrement())
+  equipmentId        Int
+  performedAt        DateTime        @default(now())
+  createdAt          DateTime        @default(now())
+  informationDate    DateTime?
+  maintenanceDate    DateTime?
   maintenanceDetails String?
-  
-  performedAt     DateTime        @default(now())
-  createdAt       DateTime        @default(now())
+  problemDescription String?
+  problemType        ProblemType?
+  remarks            String?
+  serviceEndDate     DateTime?
+  serviceStartDate   DateTime?
+  solutionDetails    String?
+  type               MaintenanceType @default(scheduled)
+  usedParts          String?
+  workType           WorkType?
+  taskId             Int?
+  estimatedHours     Int?
+  runningHours       Int?
+  targetDate         DateTime?
+  targetHours        Int?
+  equipment          Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  task               Task?           @relation(fields: [taskId], references: [id])
 
   @@map("maintenance_history")
 }
 
 model Inventory {
-  id              Int      @id @default(autoincrement())
-  name            String
-  quantity        String?
-  description     String?
-  swl             String?
-  certificateNo   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  name          String
+  quantity      String?
+  description   String?
+  swl           String?
+  certificateNo String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("inventory")
+}
+
+enum Role {
+  admin
+  user
+}
+
+enum EquipmentStatus {
+  active
+  inactive
+  maintenance
+  retired
+}
+
+enum Frequency {
+  daily
+  weekly
+  monthly
+  quarterly     @map("3-monthly")
+  semi_annually @map("6-monthly")
+  yearly
+  hourly
+  fifteen_days  @map("15-days")
+}
+
+enum Criticality {
+  low
+  medium
+  high
+}
+
+enum MaintenanceType {
+  scheduled
+  predictive
+  corrective
+}
+
+enum WorkType {
+  new
+  rework
+}
+
+enum ProblemType {
+  major
+  minor
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, Download, Trash2, Edit, Save, X, Wrench } from "lucide-react";
+import { Plus, Download, Trash2, Edit, Save, X, Wrench, AlertTriangle, RefreshCw } from "lucide-react";
 import { exportEquipmentTasksPdf } from "@/lib/pdfExport";
 import { exportEquipmentTasksExcel } from "@/lib/excelExport";
 import EquipmentModal from "@/components/EquipmentModal";
@@ -20,6 +20,7 @@ export default function EquipmentDetailPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingHours, setUpdatingHours] = useState<number | null>(null);
 
   // Inline Creation State
   const [isAdding, setIsAdding] = useState(false);
@@ -28,6 +29,9 @@ export default function EquipmentDetailPage() {
     taskName: "",
     frequency: "weekly",
     taskDetail: "",
+    criticality: "medium",
+    lastCompletedDate: "",
+    estimatedHours: ""
   });
 
   // Modals state
@@ -128,12 +132,52 @@ export default function EquipmentDetailPage() {
     }));
   };
 
+  const handleUpdateHours = async (taskId: number, newHours: string) => {
+    const hours = parseInt(newHours);
+    if (isNaN(hours)) return;
+
+    setUpdatingHours(taskId);
+    try {
+        const res = await fetch(`/api/tasks/${taskId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ runningHours: hours }),
+        });
+        if (res.ok) {
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, runningHours: hours } : t));
+        }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setUpdatingHours(null);
+    }
+  };
+
   const handleCreateTask = async () => {
     try {
+      let nextDueDate = null;
+      if (newTask.lastCompletedDate) {
+         const completedDate = new Date(newTask.lastCompletedDate);
+         nextDueDate = new Date(completedDate);
+         switch (newTask.frequency) {
+            case 'hourly': nextDueDate.setHours(nextDueDate.getHours() + 1); break;
+            case 'daily': nextDueDate.setDate(nextDueDate.getDate() + 1); break;
+            case 'weekly': nextDueDate.setDate(nextDueDate.getDate() + 7); break;
+            case 'fifteen_days': nextDueDate.setDate(nextDueDate.getDate() + 15); break;
+            case 'monthly': nextDueDate.setMonth(nextDueDate.getMonth() + 1); break;
+            case 'quarterly': nextDueDate.setMonth(nextDueDate.getMonth() + 3); break;
+            case 'semi_annually': nextDueDate.setMonth(nextDueDate.getMonth() + 6); break;
+            case 'yearly': nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); break;
+         }
+      }
+
       const payload = {
         ...newTask,
         equipmentId,
+        nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
+        estimatedHours: newTask.estimatedHours ? parseInt(newTask.estimatedHours) : null
       };
+      
       const res = await fetch(`/api/equipment/${categoryId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,6 +191,9 @@ export default function EquipmentDetailPage() {
           taskName: "",
           frequency: "weekly",
           taskDetail: "",
+          criticality: "medium",
+          lastCompletedDate: "",
+          estimatedHours: ""
         });
       } else {
         const data = await res.json().catch(() => ({}));
@@ -216,6 +263,7 @@ export default function EquipmentDetailPage() {
       
       if (res.ok) {
         alert("Maintenance logged successfully!");
+        fetchData(); // Important: Refresh to see updated hours/dates
         setIsLogMaintenanceModalOpen(false);
       } else {
         alert("Failed to log maintenance.");
@@ -281,6 +329,9 @@ export default function EquipmentDetailPage() {
     borderRadius: "2px",
     outline: "none",
   };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   return (
     <>
@@ -366,6 +417,11 @@ export default function EquipmentDetailPage() {
         .detail-table-wrap::-webkit-scrollbar { height: 4px; }
         .detail-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
         .detail-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 2px; }
+
+        .row-overdue { background-color: #FEF2F2 !important; }
+        .row-overdue:hover td { background-color: #FEE2E2 !important; }
+        .text-overdue { color: #DC2626 !important; font-weight: 700 !important; }
+        .hours-input { border: 1px solid #D0CBC0; background: #FFF; padding: 2px 4px; width: 60px; border-radius: 2px; font-size: 11px; }
       `}</style>
 
       <div className="detail-root">
@@ -375,18 +431,31 @@ export default function EquipmentDetailPage() {
             className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-6"
           >
             <div>
-              <p
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  letterSpacing: "0.22em",
-                  textTransform: "uppercase",
-                  color: "#1684A6",
-                  marginBottom: "8px",
-                }}
-              >
-                KR Steel · Equipment Detail
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <button 
+                  onClick={() => router.push(`/dashboard/equipment/${categoryId}`)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                    padding: '4px 8px', background: 'transparent', border: '1px solid #D0CBC0',
+                    borderRadius: '2px', cursor: 'pointer', fontSize: '10px', fontWeight: 600,
+                    color: '#7A8A93', textTransform: 'uppercase', letterSpacing: '0.1em'
+                  }}
+                >
+                  ← Back
+                </button>
+                <p
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase",
+                    color: "#1684A6",
+                    margin: 0,
+                  }}
+                >
+                  KR Steel · Equipment Detail
+                </p>
+              </div>
               <h1
                 style={{
                   fontSize: "28px",
@@ -596,27 +665,31 @@ export default function EquipmentDetailPage() {
                 style={{
                   width: "100%",
                   borderCollapse: "collapse",
-                  fontSize: "13px",
+                  fontSize: "11px",
                 }}
               >
                 <thead>
                   <tr style={{ background: "#EAE7DF" }}>
                     {[
-                      { label: "Task ID", width: "96px" },
-                      { label: "Task Name", width: "200px" },
-                      { label: "Frequency", width: "100px" },
-                      { label: "Detail", width: "auto" },
+                      { label: "Task ID", width: "80px" },
+                      { label: "Task Name", width: "130px" },
+                      { label: "Frequency", width: "80px" },
+                      { label: "Next Due", width: "90px" },
+                      { label: "Est. Hrs", width: "70px" },
+                      { label: "Run. Hrs", width: "90px" },
+                      { label: "Rem. Hrs", width: "70px" },
+                      { label: "Status", width: "80px" },
                       { label: "Actions", width: "80px" },
                     ].map((col) => (
                       <th
                         key={col.label}
                         style={{
                           width: col.width,
-                          padding: "11px 24px",
+                          padding: "10px 16px",
                           textAlign: col.label === "Actions" ? "right" : "left",
-                          fontSize: "10px",
+                          fontSize: "9px",
                           fontWeight: 600,
-                          letterSpacing: "0.16em",
+                          letterSpacing: "0.14em",
                           textTransform: "uppercase",
                           color: "#225CA3",
                           whiteSpace: "nowrap",
@@ -632,7 +705,7 @@ export default function EquipmentDetailPage() {
                   {/* Inline Creation Row */}
                   {isAdding && (
                     <tr className="detail-inline-row">
-                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                         <input
                           type="text"
                           name="taskId"
@@ -643,7 +716,7 @@ export default function EquipmentDetailPage() {
                           autoFocus
                         />
                       </td>
-                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                         <input
                           type="text"
                           name="taskName"
@@ -653,34 +726,35 @@ export default function EquipmentDetailPage() {
                           placeholder="Name"
                         />
                       </td>
-                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                         <select
                           name="frequency"
                           value={newTask.frequency}
                           onChange={handleInputChange}
                           style={{ ...inlineInput, cursor: "pointer" }}
                         >
+                          <option value="hourly">Hourly</option>
                           <option value="daily">Daily</option>
                           <option value="weekly">Weekly</option>
+                          <option value="fifteen_days">15 Days</option>
                           <option value="monthly">Monthly</option>
                           <option value="quarterly">Quarterly</option>
                           <option value="semi_annually">Semi-Annually</option>
                           <option value="yearly">Yearly</option>
                         </select>
                       </td>
-                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #D0CBC0" }}>
-                        <input
-                          type="text"
-                          name="taskDetail"
-                          value={newTask.taskDetail}
-                          onChange={handleInputChange}
-                          style={inlineInput}
-                          placeholder="Detail"
-                        />
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
+                        <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                       </td>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
+                         <input name="estimatedHours" type="number" value={newTask.estimatedHours} onChange={handleInputChange} style={inlineInput} placeholder="Hrs" />
+                      </td>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>0</td>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
+                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
                       <td
                         style={{
-                          padding: "12px 16px",
+                          padding: "8px 12px",
                           borderBottom: "1px solid #D0CBC0",
                           textAlign: "right",
                           whiteSpace: "nowrap",
@@ -706,36 +780,62 @@ export default function EquipmentDetailPage() {
                     </tr>
                   )}
 
-                  {tasks.length > 0 || isAdding ? (
+                  {tasks.length > 0 ? (
                     tasks.map((task: any) => {
+                      const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
+                      if (nextDueDate) nextDueDate.setHours(0, 0, 0, 0);
+                      const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
+                      
+                      let statusText = "UP-TO-DATE";
+                      let statusBg = "#DEF7EC";
+                      let statusColor = "#03543F";
+                      
+                      const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
+                      const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
+
+                      if (isOverdue) {
+                          statusText = "OVERDUE";
+                          statusBg = "#FDE8E8";
+                          statusColor = "#9B1C1C";
+                      } else if (isDueSoon) {
+                          statusText = "DUE";
+                          statusBg = "#FEF3C7";
+                          statusColor = "#92400E";
+                      }
+
+                      const remainingHours = task.estimatedHours ? task.estimatedHours - task.runningHours : null;
+
                       return (
-                        <tr key={task.id}>
+                        <tr key={task.id} className={isOverdue ? "row-overdue" : isDueSoon ? "bg-amber-50" : ""}>
                           <td
                             style={{
-                              padding: "14px 24px",
+                              padding: "12px 16px",
                               whiteSpace: "nowrap",
                               fontWeight: 600,
                               color: "#225CA3",
                               borderBottom: "1px solid #EAE7DF",
                               letterSpacing: "0.04em",
-                              fontSize: "12px",
                             }}
                           >
-                            {task.taskId}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {isOverdue && <AlertTriangle size={14} className="text-overdue" />}
+                                {task.taskId}
+                            </div>
                           </td>
                           <td
                             style={{
-                              padding: "14px 24px",
+                              padding: "12px 16px",
                               whiteSpace: "nowrap",
                               color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
+                              fontWeight: 500
                             }}
                           >
                             {task.taskName}
                           </td>
                           <td
                             style={{
-                              padding: "14px 24px",
+                              padding: "12px 16px",
                               whiteSpace: "nowrap",
                               color: "#5A6A73",
                               borderBottom: "1px solid #EAE7DF",
@@ -746,17 +846,46 @@ export default function EquipmentDetailPage() {
                           </td>
                           <td
                             style={{
-                              padding: "14px 24px",
-                              whiteSpace: "normal",
-                              color: "#5A6A73",
+                              padding: "12px 16px",
+                              whiteSpace: "nowrap",
+                              color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
                             }}
                           >
-                            {task.taskDetail}
+                            <span className={isOverdue ? "text-overdue" : ""}>
+                              {task.nextDueDate ? new Date(task.nextDueDate).toLocaleDateString() : "—"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 16px", color: "#5A6A73", borderBottom: "1px solid #EAE7DF" }}>
+                            {task.estimatedHours || "—"}
+                          </td>
+                          <td style={{ padding: "12px 16px", borderBottom: "1px solid #EAE7DF" }}>
+                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <input 
+                                    type="number" 
+                                    defaultValue={task.runningHours} 
+                                    onBlur={(e) => handleUpdateHours(task.id, e.target.value)}
+                                    className="hours-input"
+                                    disabled={updatingHours === task.id}
+                                />
+                                {updatingHours === task.id && <RefreshCw size={10} className="animate-spin text-blue-500" />}
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 16px", color: remainingHours !== null && remainingHours <= 0 ? "#DC2626" : "#5A6A73", fontWeight: remainingHours !== null && remainingHours <= 0 ? 700 : 400, borderBottom: "1px solid #EAE7DF" }}>
+                            {remainingHours !== null ? remainingHours : "—"}
+                          </td>
+                          <td style={{ padding: "12px 16px", borderBottom: "1px solid #EAE7DF" }}>
+                             <span style={{ 
+                                padding: "2px 8px", 
+                                background: statusBg,
+                                color: statusColor,
+                                borderRadius: "10px", fontSize: "9px", fontWeight: 700, textTransform: "uppercase" }}>
+                                {statusText}
+                            </span>
                           </td>
                           <td
                             style={{
-                              padding: "14px 24px",
+                              padding: "12px 16px",
                               textAlign: "right",
                               whiteSpace: "nowrap",
                               borderBottom: "1px solid #EAE7DF",
@@ -787,7 +916,7 @@ export default function EquipmentDetailPage() {
                   ) : (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={9}
                         style={{
                           padding: "48px 24px",
                           textAlign: "center",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { exportTaskReportPdf, exportEquipmentReportPdf, exportMaintenancePdf } from "@/lib/pdfExport";
 import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExcel, exportToExcel } from "@/lib/excelExport";
 import { exportToPDF } from "@/lib/pdfExport";
@@ -15,6 +15,7 @@ export default function ReportsBuilderPage() {
   const [reportType, setReportType] = useState("tasks");
   const [reportFormat, setReportFormat] = useState("pdf");
   const [groupBy, setGroupBy] = useState("category"); // category, equipment, none
+  const [statusFilter, setStatusFilter] = useState("all"); // all, overdue, due, healthy
 
   // Maintenance Filters
   const [maintenanceType, setMaintenanceType] = useState("corrective");
@@ -52,12 +53,32 @@ export default function ReportsBuilderPage() {
   const filteredData = useMemo(() => {
     if (!rawData) return null;
     const { tasks, equipment, maintenanceHistory, inventory } = rawData;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const dueSoonDate = new Date();
+    dueSoonDate.setDate(today.getDate() + 7);
 
     if (reportType === "tasks") {
         let filteredTasks = tasks;
+        
+        // Filter by Equipment
         if (selectedEquipments.length > 0) {
             filteredTasks = filteredTasks.filter((t: any) => selectedEquipments.includes(String(t.equipmentId)));
         }
+
+        // Filter by Status (Overdue logic)
+        if (statusFilter !== "all") {
+            filteredTasks = filteredTasks.filter((t: any) => {
+                const nextDueDate = t.nextDueDate ? new Date(t.nextDueDate) : null;
+                const isOverdue = (nextDueDate && nextDueDate < today) || (t.estimatedHours && t.runningHours >= t.estimatedHours);
+                const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (t.estimatedHours && t.runningHours >= t.estimatedHours * 0.9 && t.runningHours < t.estimatedHours);
+                
+                if (statusFilter === "overdue") return isOverdue;
+                if (statusFilter === "due") return isDueSoon;
+                return !isOverdue && !isDueSoon;
+            });
+        }
+
         return { tasks: filteredTasks, equipment };
     } 
     
@@ -81,6 +102,16 @@ export default function ReportsBuilderPage() {
 
       if (selectedEquipments.length > 0) {
         filtered = filtered.filter((m: any) => selectedEquipments.includes(String(m.equipmentId)));
+      }
+
+      // Overdue context for historical logs
+      if (statusFilter !== "all") {
+          filtered = filtered.filter((m: any) => {
+             const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
+             const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
+             const wasOverdueAtCompletion = wasDateOverdue || wasHoursOverdue;
+             return statusFilter === "overdue" ? wasOverdueAtCompletion : !wasOverdueAtCompletion;
+          });
       }
 
       if (durationFilterType !== "none") {
@@ -114,7 +145,7 @@ export default function ReportsBuilderPage() {
     }
 
     return null;
-  }, [rawData, reportType, maintenanceType, durationFilterType, fromDate, toDate, singleDate, month, year, selectedEquipments]);
+  }, [rawData, reportType, maintenanceType, durationFilterType, fromDate, toDate, singleDate, month, year, selectedEquipments, statusFilter]);
 
 
   const handleDownload = () => {
@@ -210,6 +241,18 @@ export default function ReportsBuilderPage() {
         </select>
         </div>
 
+        {reportType !== "inventory" && reportType !== "equipment" && (
+             <div className="flex flex-col gap-1 w-full sm:w-auto">
+             <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Status Filter</label>
+             <select style={selectStyle} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">All Records</option>
+                <option value="overdue">Overdue / Late Only</option>
+                <option value="due">Due Soon Only</option>
+                <option value="healthy">Up-to-date / Healthy</option>
+             </select>
+             </div>
+        )}
+
         {reportType !== "maintenance" && reportType !== "inventory" && (
              <div className="flex flex-col gap-1 w-full sm:w-auto">
              <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Group By</label>
@@ -290,20 +333,62 @@ export default function ReportsBuilderPage() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-[#F5F3EF] text-[#225CA3] text-[11px] font-bold uppercase tracking-wider sticky top-0">
                             <tr>
-                                {reportType === "tasks" && (<><th className="p-4 border-b border-[#D0CBC0]">Task ID</th><th className="p-4 border-b border-[#D0CBC0]">Task Name</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Frequency</th><th className="p-4 border-b border-[#D0CBC0]">Detail</th></>)}
+                                {reportType === "tasks" && (
+                                    <>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Task ID</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Task Name</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Equipment</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Frequency</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Last Done</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Next Due</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Running Hrs</th>
+                                        <th className="p-4 border-b border-[#D0CBC0]">Status</th>
+                                    </>
+                                )}
                                 {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
-                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Details/Task</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Remarks</th></>)}
+                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Details/Task</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
                                 {reportType === "inventory" && (<><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Quantity</th><th className="p-4 border-b border-[#D0CBC0]">Description</th><th className="p-4 border-b border-[#D0CBC0]">SWL</th><th className="p-4 border-b border-[#D0CBC0]">Cert No.</th></>)}
                             </tr>
                         </thead>
                         <tbody className="text-[13px] text-[#1A1A1A]">
                             {reportType === "tasks" && filteredData.tasks?.map((task: any) => {
                                 const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
+                                const today = new Date(); today.setHours(0,0,0,0);
+                                const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
+                                const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
+
+                                // Status Logic
+                                let statusText = "UP-TO-DATE";
+                                let statusColor = "bg-green-100 text-green-800";
+                                let rowColor = "";
+                                
+                                const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
+                                const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
+                                
+                                if (isOverdue) {
+                                    statusText = "OVERDUE";
+                                    statusColor = "bg-red-100 text-red-800";
+                                    rowColor = "bg-red-50";
+                                } else if (isDueSoon) {
+                                    statusText = "DUE";
+                                    statusColor = "bg-amber-100 text-amber-800";
+                                    rowColor = "bg-amber-50";
+                                }
+
                                 return (
-                                    <tr key={task.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
-                                        <td className="p-4">{task.taskId}</td><td className="p-4 font-medium">{task.taskName}</td>
-                                        <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td><td className="p-4 capitalize">{task.frequency}</td>
-                                        <td className="p-4 text-[#4A5568] truncate max-w-[300px]">{task.taskDetail}</td>
+                                    <tr key={task.id} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
+                                        <td className="p-4 flex items-center gap-2">{isOverdue && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
+                                        <td className="p-4 font-medium">{task.taskName}</td>
+                                        <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td>
+                                        <td className="p-4 capitalize">{task.frequency}</td>
+                                        <td className="p-4">{task.lastCompletedDate ? format(new Date(task.lastCompletedDate), "dd MMM yyyy") : 'NEVER'}</td>
+                                        <td className="p-4">{task.nextDueDate ? format(new Date(task.nextDueDate), "dd MMM yyyy") : '—'}</td>
+                                        <td className="p-4">{task.runningHours || 0} / {task.estimatedHours || '—'}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${statusColor}`}>
+                                                {statusText}
+                                            </span>
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -316,6 +401,10 @@ export default function ReportsBuilderPage() {
                             ))}
                             {reportType === "maintenance" && filteredData.maintenance?.map((m: any) => {
                                 const date = m.performedAt || m.maintenanceDate || m.informationDate;
+                                const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
+                                const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
+                                const wasLate = wasDateOverdue || wasHoursOverdue;
+
                                 return (
                                     <tr key={m.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                         <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
@@ -323,7 +412,11 @@ export default function ReportsBuilderPage() {
                                         <td className="p-4 truncate max-w-[200px]">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
                                         <td className="p-4 truncate max-w-[200px]">{m.solutionDetails || '—'}</td>
                                         <td className="p-4">{m.usedParts || '—'}</td>
-                                        <td className="p-4 text-[#4A5568] truncate max-w-[150px]">{m.remarks || '—'}</td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
+                                                {wasLate ? 'Performed Late' : 'On-Time'}
+                                            </span>
+                                        </td>
                                     </tr>
                                 );
                             })}

@@ -255,7 +255,7 @@ export default function MaintenanceLogPage() {
                 style={{
                   width: "100%",
                   borderCollapse: "collapse",
-                  fontSize: "13px",
+                  fontSize: "12px",
                 }}
               >
                 <thead>
@@ -264,11 +264,11 @@ export default function MaintenanceLogPage() {
                       "Timeline / Dates",
                       "Type",
                       "Equipment",
-                      "Job Specs",
+                      "Task Info",
+                      "Usage Info",
                       "Observations",
-                      "Solution/Work",
+                      "Work Done",
                       "Parts",
-                      "Remarks",
                       "Actions"
                     ].map((col) => (
                       <th
@@ -301,7 +301,7 @@ export default function MaintenanceLogPage() {
                               whiteSpace: "nowrap",
                               color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
-                              fontSize: "12px",
+                              fontSize: "11px",
                               fontWeight: 500,
                               minWidth: "120px"
                             }}
@@ -324,7 +324,7 @@ export default function MaintenanceLogPage() {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                     <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>MAINTENANCE DATE:</span>
-                                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A1A' }}>
+                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#1A1A1A' }}>
                                         {log.maintenanceDate ? format(new Date(log.maintenanceDate), 'dd MMM yyyy') : '—'}
                                     </span>
                                 </div>
@@ -335,7 +335,7 @@ export default function MaintenanceLogPage() {
                               padding: "14px 16px",
                               whiteSpace: "nowrap",
                               fontWeight: 700,
-                              fontSize: "10px",
+                              fontSize: "9px",
                               color: log.type === 'corrective' ? "#8B2020" : "#2D6A42",
                               borderBottom: "1px solid #EAE7DF",
                               textTransform: "uppercase",
@@ -354,7 +354,7 @@ export default function MaintenanceLogPage() {
                             }}
                           >
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '13px' }}>{log.equipment?.name || "—"}</span>
+                                <span style={{ fontSize: '12px' }}>{log.equipment?.name || "—"}</span>
                                 <span style={{ fontSize: '10px', color: '#4A5568', letterSpacing: '0.02em' }}>{log.equipment?.code}</span>
                             </div>
                           </td>
@@ -374,7 +374,7 @@ export default function MaintenanceLogPage() {
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                     <span style={{ color: '#2D6A42', fontWeight: 700 }}>{log.task?.taskId || 'PREV'}</span>
-                                    <span style={{ color: '#5A6A73', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>
+                                    <span style={{ color: '#5A6A73', fontSize: '10px' }}>
                                         {log.task?.taskName || 'MAINTENANCE'}
                                     </span>
                                 </div>
@@ -383,10 +383,26 @@ export default function MaintenanceLogPage() {
                           <td
                             style={{
                               padding: "14px 16px",
+                              color: "#1A1A1A",
+                              borderBottom: "1px solid #EAE7DF",
+                              fontSize: "11px",
+                              fontWeight: 600
+                            }}
+                          >
+                            {log.runningHours !== null ? (
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span>{log.runningHours} HRS</span>
+                                    <span style={{ fontSize: '9px', color: '#7A8A93', fontWeight: 400 }}>TAR: {log.estimatedHours || '—'}</span>
+                                </div>
+                            ) : '—'}
+                          </td>
+                          <td
+                            style={{
+                              padding: "14px 16px",
                               color: "#2D3748",
                               borderBottom: "1px solid #EAE7DF",
                               maxWidth: "180px",
-                              fontSize: "12px",
+                              fontSize: "11px",
                               lineHeight: "1.4"
                             }}
                           >
@@ -398,7 +414,7 @@ export default function MaintenanceLogPage() {
                               color: "#1A1A1A",
                               borderBottom: "1px solid #EAE7DF",
                               maxWidth: "180px",
-                              fontSize: "12px",
+                              fontSize: "11px",
                               lineHeight: "1.4",
                               fontWeight: 500
                             }}
@@ -414,18 +430,6 @@ export default function MaintenanceLogPage() {
                             }}
                           >
                             {log.usedParts || "—"}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#7A8A93",
-                              borderBottom: "1px solid #EAE7DF",
-                              maxWidth: "120px",
-                              fontSize: "11px",
-                              fontStyle: "italic"
-                            }}
-                          >
-                            {log.remarks || "—"}
                           </td>
                           <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap", borderBottom: "1px solid #EAE7DF" }}>
                             <button onClick={() => handleEdit(log)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease" }} title="Edit Log">

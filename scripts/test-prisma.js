@@ -1,28 +1,51 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { Pool } = require('pg');
+const { PrismaPg } = require('@prisma/adapter-pg');
+require('dotenv').config();
 
-async function main() {
+async function test() {
+  const connectionString = process.env.DATABASE_URL || '';
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
+
   try {
-    const e = await prisma.equipment.create({
-      data: {
-        code: 'EQ-TEST',
-        name: 'Test Equipment',
-        categoryId: 1, // Ensure category 1 exists or this will fail!
-        location: '',
-        description: '',
-        status: 'active',
-        imageUrl: '',
-        safetyMeasures: ''
-      }
+    console.log('Testing Dashboard API logic...');
+    
+    const logsToday = await prisma.maintenanceHistory.count();
+    console.log('logsToday:', logsToday);
+
+    const scheduledTasks = await prisma.task.count();
+    console.log('scheduledTasks:', scheduledTasks);
+
+    const totalAssets = await prisma.equipment.count();
+    console.log('totalAssets:', totalAssets);
+
+    // Try both lowercase and PascalCase if necessary, but prisma usually does lowercase
+    let inventoryItems = 0;
+    try {
+        inventoryItems = await prisma.inventory.count();
+        console.log('inventoryItems (lowercase):', inventoryItems);
+    } catch (e) {
+        console.log('inventoryItems (lowercase) failed:', e.message);
+    }
+
+    const recentLogs = await prisma.maintenanceHistory.findMany({
+      take: 10,
+      include: {
+        equipment: true,
+        task: true,
+      },
     });
-    console.log("Success:", e);
-    // clean up
-    await prisma.equipment.delete({ where: { id: e.id } });
-  } catch (error) {
-    console.error("Prisma error:", error);
+    console.log('recentLogs count:', recentLogs.length);
+
+    console.log('API Logic Test PASSED');
+  } catch (err) {
+    console.error('API Logic Test FAILED:', err);
   } finally {
     await prisma.$disconnect();
+    await pool.end();
   }
 }
 
-main();
+test();

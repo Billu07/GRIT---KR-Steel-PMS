@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const body = await req.json();
     const { 
-      code, name, categoryId, location, description, status, imageUrl, safetyMeasures,
+      code, name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
       capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
     } = body;
 
@@ -42,6 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       description,
       status,
       imageUrl,
+      serviceReportUrl,
       safetyMeasures,
       capacity,
       model,

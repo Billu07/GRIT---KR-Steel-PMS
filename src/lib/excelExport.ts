@@ -58,12 +58,35 @@ export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
-  const sheetData = tasks.map((task) => ({
-    'Task ID': task.taskId,
-    'Task Name': task.taskName,
-    'Frequency': task.frequency || '—',
-    'Task Detail': task.taskDetail || '—',
-  }));
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const dueSoonDate = new Date();
+  dueSoonDate.setDate(today.getDate() + 7);
+
+  const sheetData = tasks.map((task) => {
+    const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
+    
+    // Status Logic
+    let statusText = "UP-TO-DATE";
+    const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
+    const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
+    
+    if (isOverdue) statusText = "OVERDUE";
+    else if (isDueSoon) statusText = "DUE";
+
+    return {
+      'Task ID': task.taskId,
+      'Task Name': task.taskName,
+      'Frequency': task.frequency?.toUpperCase() || '—',
+      'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
+      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
+      'Criticality': task.criticality?.toUpperCase() || '—',
+      'Running Hours': task.runningHours || 0,
+      'Estimated Hours': task.estimatedHours || '—',
+      'Status': statusText,
+      'Task Detail': task.taskDetail || '—',
+    };
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(sheetData);
   const workbook = XLSX.utils.book_new();
@@ -79,6 +102,11 @@ export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const dueSoonDate = new Date();
+  dueSoonDate.setDate(today.getDate() + 7);
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
   
@@ -92,13 +120,29 @@ export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: an
       group = eq ? `${eq.name} (${eq.code})` : "Unknown Equipment";
     }
 
+    const nextDueDate = task.nextDueDate ? new Date(task.nextDueDate) : null;
+    
+    // Status Logic
+    let statusText = "UP-TO-DATE";
+    const isOverdue = (nextDueDate && nextDueDate < today) || (task.estimatedHours && task.runningHours >= task.estimatedHours);
+    const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (task.estimatedHours && task.runningHours >= task.estimatedHours * 0.9 && task.runningHours < task.estimatedHours);
+    
+    if (isOverdue) statusText = "OVERDUE";
+    else if (isDueSoon) statusText = "DUE";
+
     sheetData.push({
       'Grouping': group,
       'Equipment Code': eq?.code || '—',
       'Equipment Name': eq?.name || '—',
       'Task ID': task.taskId,
       'Task Name': task.taskName,
-      'Frequency': task.frequency || '—',
+      'Frequency': task.frequency?.toUpperCase() || '—',
+      'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
+      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
+      'Criticality': task.criticality?.toUpperCase() || '—',
+      'Running Hours': task.runningHours || 0,
+      'Estimated Hours': task.estimatedHours || '—',
+      'Status': statusText,
       'Task Detail': task.taskDetail || '—',
     });
   });
@@ -232,20 +276,27 @@ export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preven
     sheetData = data.map((item) => {
       const date = item.maintenanceDate ? new Date(item.maintenanceDate) : 
                    item.performedAt ? new Date(item.performedAt) : null;
+      
+      const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
+      const wasHoursOverdue = item.targetHours && item.runningHours && item.runningHours >= item.targetHours;
+      const performanceStatus = (wasDateOverdue || wasHoursOverdue) ? "LATE / OVER" : "ON-TIME";
 
       return {
-        'Equipment Code': item.equipment?.code || '—',
-        'Equipment Name': item.equipment?.name || '—',
-        'Category': item.equipment?.category?.name || '—',
-        'Model': item.equipment?.model || '—',
-        'Serial Number': item.equipment?.serialNumber || '—',
+        'Log ID': item.id,
+        'Asset Code': item.equipment?.code || '—',
+        'Asset Name': item.equipment?.name || '—',
         'Maintenance Date': date ? format(date, 'dd MMM yyyy') : '—',
         'Maintenance Type': item.type?.toUpperCase(),
+        'Task ID': item.task?.taskId || '—',
         'Task Name': item.task?.taskName || '—',
-        'Task Frequency': item.task?.frequency?.toUpperCase() || '—',
-        'Details/Observations': item.maintenanceDetails || item.problemDescription || '—',
-        'Parts Used': item.usedParts || '—',
+        'Interval': item.task?.frequency?.toUpperCase() || '—',
+        'Target Date': item.targetDate ? format(new Date(item.targetDate), 'dd MMM yyyy') : '—',
+        'Target Hours': item.targetHours || '—',
+        'Hours at Completion': item.runningHours !== null ? item.runningHours : '—',
+        'Performance Status': performanceStatus,
+        'Observations': item.maintenanceDetails || item.problemDescription || '—',
         'Work Performed': item.solutionDetails || '—',
+        'Parts Used': item.usedParts || '—',
         'Remarks': item.remarks || '',
       };
     });

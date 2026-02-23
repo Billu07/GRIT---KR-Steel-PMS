@@ -32,14 +32,22 @@ export default function DashboardPage() {
   const fetchDashboardData = () => {
     setLoading(true);
     fetch("/api/dashboard")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return res.json().then(err => { throw new Error(err.error || "Failed to fetch data") });
+        return res.json();
+      })
       .then((data) => {
-        setData(data);
+        if (data && data.stats) {
+          setData(data);
+        } else {
+          console.error("Malformed dashboard data:", data);
+        }
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
+        // Optionally show an error state to the user
       });
   };
 

@@ -9,35 +9,35 @@ export async function GET() {
     const today = startOfDay(new Date());
     const thisMonth = startOfMonth(new Date());
 
-    const logsToday = await prisma.maintenanceHistory.count({
-      where: {
-        performedAt: {
-          gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+    console.log('Dashboard API: Fetching stats...');
+
+    const [logsToday, logsThisMonth, scheduledTasks, totalAssets, inventoryItems, correctiveLogs] = await Promise.all([
+      prisma.maintenanceHistory.count({
+        where: {
+          performedAt: {
+            gte: today,
+            lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+          },
         },
-      },
-    });
-
-    const logsThisMonth = await prisma.maintenanceHistory.count({
-      where: {
-        performedAt: {
-          gte: thisMonth,
+      }),
+      prisma.maintenanceHistory.count({
+        where: {
+          performedAt: {
+            gte: thisMonth,
+          },
         },
-      },
-    });
+      }),
+      prisma.task.count(),
+      prisma.equipment.count(),
+      (prisma as any).inventory.count(),
+      prisma.maintenanceHistory.count({
+        where: {
+          type: 'corrective',
+        }
+      })
+    ]);
 
-    const scheduledTasks = await prisma.task.count();
-    const totalAssets = await prisma.equipment.count();
-
-    // Use direct property access as the model is definitely present in the DB
-    // Cast to any to avoid TS errors if the generated client is currently out of sync in the editor
-    const inventoryItems = await (prisma as any).inventory.count();
-
-    const correctiveLogs = await prisma.maintenanceHistory.count({
-      where: {
-        type: 'corrective',
-      }
-    });
+    console.log('Dashboard API: Fetching recent activity...');
 
     const recentLogs = await prisma.maintenanceHistory.findMany({
       take: 10,
@@ -87,7 +87,14 @@ export async function GET() {
       equipment
     });
   } catch (error: any) {
-    console.error('Dashboard API Error:', error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Dashboard API Error Details:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+    });
+    return NextResponse.json({ 
+        error: 'Failed to load dashboard data', 
+        details: error.message 
+    }, { status: 500 });
   }
 }

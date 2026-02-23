@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { X, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Upload, ChevronDown, ChevronUp, FileText } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 // Supabase client — reads from your .env.local
@@ -38,6 +38,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     status: "active",
     selectedCategoryId: categoryId ? String(categoryId) : "",
     imageUrl: "",
+    serviceReportUrl: "",
     safetyMeasures: "",
     capacity: "",
     model: "",
@@ -53,8 +54,10 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   const [categories, setCategories] = useState<any[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [reportFile, setReportFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const reportInputRef = useRef<HTMLInputElement>(null);
   
   // Section toggle state
   const [showSpecs, setShowSpecs] = useState(true);
@@ -86,6 +89,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
             ? String(categoryId)
             : "",
         imageUrl: initialData.imageUrl || "",
+        serviceReportUrl: initialData.serviceReportUrl || "",
         safetyMeasures: initialData.safetyMeasures || "",
         capacity: initialData.capacity || "",
         model: initialData.model || "",
@@ -97,6 +101,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         testCertApplied: initialData.testCertApplied || "",
       });
       setImagePreview(initialData.imageUrl || "");
+      setReportFile(null);
     } else {
       // Reset for new entry
       setFormData({
@@ -107,6 +112,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         status: "active",
         selectedCategoryId: categoryId ? String(categoryId) : "",
         imageUrl: "",
+        serviceReportUrl: "",
         safetyMeasures: "",
         capacity: "",
         model: "",
@@ -119,6 +125,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
       });
       setImagePreview("");
       setImageFile(null);
+      setReportFile(null);
     }
   }, [initialData, categoryId, isOpen]);
 
@@ -147,6 +154,20 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const handleReportSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      alert("Please upload a PDF document for the service report.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("PDF must be under 10MB.");
+      return;
+    }
+    setReportFile(file);
+  };
+
   const removeImage = () => {
     setImageFile(null);
     setImagePreview("");
@@ -154,14 +175,19 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const uploadImage = async (code: string): Promise<string> => {
-    if (!imageFile) return "";
-    const ext = imageFile.name.split(".").pop();
-    const path = `${code}_${Date.now()}.${ext}`;
+  const removeReport = () => {
+    setReportFile(null);
+    setFormData((prev) => ({ ...prev, serviceReportUrl: "" }));
+    if (reportInputRef.current) reportInputRef.current.value = "";
+  };
+
+  const uploadFileToSupabase = async (file: File, prefix: string, code: string): Promise<string> => {
+    const ext = file.name.split(".").pop();
+    const path = `${prefix}_${code}_${Date.now()}.${ext}`;
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(path, imageFile, { upsert: true });
-    if (error) throw new Error("Image upload failed");
+      .upload(path, file, { upsert: true });
+    if (error) throw new Error(`${prefix} upload failed`);
     const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
     return data.publicUrl;
   };
@@ -175,17 +201,24 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     setUploading(true);
     try {
       let imageUrl = formData.imageUrl;
+      let serviceReportUrl = formData.serviceReportUrl;
+      
       if (imageFile) {
-        imageUrl = await uploadImage(formData.code || "eq");
+        imageUrl = await uploadFileToSupabase(imageFile, "eq", formData.code || "eq");
       }
+      if (reportFile) {
+        serviceReportUrl = await uploadFileToSupabase(reportFile, "report", formData.code || "eq");
+      }
+      
       onSubmit({
         ...formData,
         categoryId: parseInt(formData.selectedCategoryId),
         imageUrl,
+        serviceReportUrl
       });
       // Don't auto-close here, let parent handle success/close
     } catch {
-      alert("Failed to upload image. Please try again.");
+      alert("Failed to upload files. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -422,25 +455,25 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                 </select>
               </div>
 
-              {/* Code + Status */}
+              {/* Name + Status */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "2fr 1fr",
                   gap: "14px",
                 }}
               >
                 <div>
-                  <label style={labelStyle}>Equipment Code</label>
+                  <label style={labelStyle}>Name</label>
                   <input
                     type="text"
-                    name="code"
-                    value={formData.code}
+                    name="name"
+                    value={formData.name}
                     onChange={handleChange}
                     required
                     className="eq-modal-field"
                     style={fieldStyle}
-                    placeholder="e.g. EQ-001"
+                    placeholder="e.g. Overhead Crane"
                   />
                 </div>
                 <div>
@@ -460,20 +493,18 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                 </div>
               </div>
 
-              {/* Name */}
-              <div>
-                <label style={labelStyle}>Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="eq-modal-field"
-                  style={fieldStyle}
-                  placeholder="e.g. Overhead Crane"
-                />
-              </div>
+              {/* Readonly Code when editing */}
+              {isEditing && (
+                <div>
+                    <label style={labelStyle}>Equipment Code</label>
+                    <input
+                      type="text"
+                      value={formData.code}
+                      readOnly
+                      style={{ ...fieldStyle, background: "#F0EDE6", cursor: "not-allowed" }}
+                    />
+                </div>
+              )}
 
               {/* Collapsible Specs Section */}
               <div onClick={() => setShowSpecs(!showSpecs)} style={sectionHeaderStyle}>
@@ -629,114 +660,209 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                 />
               </div>
 
-              {/* Image upload */}
-              <div>
-                <label style={labelStyle}>
-                  Equipment Image{" "}
-                  <span
-                    style={{ opacity: 0.5, fontWeight: 400, letterSpacing: 0 }}
-                  >
-                    (optional)
-                  </span>
-                </label>
+              {/* File Uploads Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                  {/* Image upload */}
+                  <div>
+                    <label style={labelStyle}>
+                      Equipment Image{" "}
+                      <span
+                        style={{ opacity: 0.5, fontWeight: 400, letterSpacing: 0 }}
+                      >
+                        (optional)
+                      </span>
+                    </label>
 
-                {imagePreview ? (
-                  <div
-                    style={{
-                      position: "relative",
-                      border: "1px solid #D0CBC0",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
+                    {imagePreview ? (
+                      <div
+                        style={{
+                          position: "relative",
+                          border: "1px solid #D0CBC0",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{
+                            width: "100%",
+                            height: "160px",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          style={{
+                            position: "absolute",
+                            top: "8px",
+                            right: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "28px",
+                            height: "28px",
+                            background: "rgba(10,20,30,0.72)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "2px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <X size={13} />
+                        </button>
+                        {/* File name strip */}
+                        <div
+                          style={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: "6px 12px",
+                            background: "rgba(10,20,30,0.6)",
+                            fontSize: "11px",
+                            color: "rgba(255,255,255,0.75)",
+                            letterSpacing: "0.02em",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {imageFile?.name || "Existing Image"}
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="eq-upload-zone"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload size={20} style={{ color: "#1CA5CE" }} />
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            color: "#5A6A73",
+                            margin: 0,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          Upload Image
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            color: "#7A8A93",
+                            margin: 0,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          JPG, PNG, WEBP (Max 5MB)
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageSelect}
+                      style={{ display: "none" }}
                     />
-                    {/* Remove button */}
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      style={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "28px",
-                        height: "28px",
-                        background: "rgba(10,20,30,0.72)",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "2px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <X size={13} />
-                    </button>
-                    {/* File name strip */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        padding: "6px 12px",
-                        background: "rgba(10,20,30,0.6)",
-                        fontSize: "11px",
-                        color: "rgba(255,255,255,0.75)",
-                        letterSpacing: "0.02em",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {imageFile?.name || "Existing Image"}
-                    </div>
                   </div>
-                ) : (
-                  <div
-                    className="eq-upload-zone"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload size={20} style={{ color: "#1CA5CE" }} />
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#5A6A73",
-                        margin: 0,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Click to upload an image
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "10px",
-                        color: "#7A8A93",
-                        margin: 0,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      JPG · PNG · WebP &nbsp;·&nbsp; Max 5MB
-                    </p>
-                  </div>
-                )}
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleImageSelect}
-                  style={{ display: "none" }}
-                />
+                  {/* Service Report upload */}
+                  <div>
+                    <label style={labelStyle}>
+                      Previous Service Report{" "}
+                      <span
+                        style={{ opacity: 0.5, fontWeight: 400, letterSpacing: 0 }}
+                      >
+                        (optional PDF)
+                      </span>
+                    </label>
+
+                    {reportFile || formData.serviceReportUrl ? (
+                      <div
+                        style={{
+                          position: "relative",
+                          border: "1px solid #D0CBC0",
+                          overflow: "hidden",
+                          height: "160px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "#EAF1F6"
+                        }}
+                      >
+                        <div style={{ textAlign: "center", padding: "10px" }}>
+                            <FileText size={32} style={{ color: "#225CA3", margin: "0 auto 8px" }} />
+                            <p style={{ fontSize: "11px", color: "#1A1A1A", wordBreak: "break-all" }}>
+                                {reportFile?.name || "Service_Report.pdf"}
+                            </p>
+                        </div>
+                        {/* Remove button */}
+                        <button
+                          type="button"
+                          onClick={removeReport}
+                          style={{
+                            position: "absolute",
+                            top: "8px",
+                            right: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "28px",
+                            height: "28px",
+                            background: "rgba(10,20,30,0.72)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "2px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        className="eq-upload-zone"
+                        onClick={() => reportInputRef.current?.click()}
+                      >
+                        <Upload size={20} style={{ color: "#1CA5CE" }} />
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            color: "#5A6A73",
+                            margin: 0,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          Upload Report
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            color: "#7A8A93",
+                            margin: 0,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          PDF ONLY (Max 10MB)
+                        </p>
+                      </div>
+                    )}
+
+                    <input
+                      ref={reportInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleReportSelect}
+                      style={{ display: "none" }}
+                    />
+                  </div>
               </div>
             </div>
 

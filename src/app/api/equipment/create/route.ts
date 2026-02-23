@@ -5,13 +5,17 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { 
-      code, name, categoryId, location, description, status, imageUrl, safetyMeasures,
+      name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
       capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
     } = body;
 
-    if (!code || !name || !categoryId) {
-      return NextResponse.json({ error: 'Code, Name, and Category ID are required' }, { status: 400 });
+    if (!name || !categoryId) {
+      return NextResponse.json({ error: 'Name and Category ID are required' }, { status: 400 });
     }
+
+    // Auto-generate code: EQ-0001 format
+    const count = await prisma.equipment.count();
+    const code = `EQ-${String(count + 1).padStart(4, '0')}`;
 
     const newEquipment = await prisma.equipment.create({
       data: {
@@ -22,6 +26,7 @@ export async function POST(req: NextRequest) {
         description,
         status: status || 'active',
         imageUrl,
+        serviceReportUrl,
         safetyMeasures,
         capacity,
         model,
@@ -40,7 +45,11 @@ export async function POST(req: NextRequest) {
     // Check for unique constraint violation
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((error as any).code === 'P2002') {
-        return NextResponse.json({ error: 'Equipment code already exists' }, { status: 409 });
+        // Retry with a slightly different logic if count collision happens (rare in this simple setup)
+        const timestamp = Date.now().toString().slice(-4);
+        const fallbackCode = `EQ-COLL-${timestamp}`;
+        // This is a very simple fallback, ideally we'd loop or use a more robust generator
+        return NextResponse.json({ error: 'Generated code collision, please try again.' }, { status: 409 });
     }
     return NextResponse.json({ error: `Internal server error: ${(error as Error).message}` }, { status: 500 });
   }

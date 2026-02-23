@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.3",
@@ -27,6 +28,7 @@
     "prisma": "^7.4.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "swr": "^2.4.0",
     "tailwind-merge": "^3.4.1",
     "xlsx": "^0.18.5"
   },

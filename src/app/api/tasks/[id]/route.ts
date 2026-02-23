@@ -30,21 +30,38 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const body = await req.json();
-    const { taskId, taskName, frequency, taskDetail, equipmentId } = body;
+    const { taskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality, estimatedHours, runningHours } = body;
 
     const currentTask = await prisma.task.findUnique({ where: { id: dbTaskId } });
     if (!currentTask) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    const updateData: any = {
-      taskId,
-      taskName,
-      frequency,
-      taskDetail,
-    };
+    const updateData: any = {};
 
-    if (equipmentId) updateData.equipmentId = parseInt(equipmentId);
+    if (taskId !== undefined) updateData.taskId = taskId;
+    if (taskName !== undefined) updateData.taskName = taskName;
+    if (frequency !== undefined) updateData.frequency = frequency;
+    if (taskDetail !== undefined) updateData.taskDetail = taskDetail;
+    if (equipmentId !== undefined) updateData.equipmentId = parseInt(equipmentId);
+    if (lastCompletedDate !== undefined) updateData.lastCompletedDate = lastCompletedDate ? new Date(lastCompletedDate) : null;
+    if (nextDueDate !== undefined) updateData.nextDueDate = nextDueDate ? new Date(nextDueDate) : null;
+    if (criticality !== undefined) updateData.criticality = criticality;
+    
+    // Usage tracking safeguards
+    if (estimatedHours !== undefined) {
+        if (estimatedHours === null || estimatedHours === "") {
+            updateData.estimatedHours = null;
+        } else {
+            const parsed = parseInt(estimatedHours);
+            updateData.estimatedHours = isNaN(parsed) ? null : parsed;
+        }
+    }
+    
+    if (runningHours !== undefined) {
+        const parsed = parseInt(runningHours);
+        updateData.runningHours = isNaN(parsed) ? 0 : parsed;
+    }
 
     const updatedTask = await prisma.task.update({
       where: { id: dbTaskId },

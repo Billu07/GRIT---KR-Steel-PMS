@@ -63,7 +63,7 @@ const SidebarContent = () => {
             cursor: "pointer",
             lineHeight: 0,
             borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           }}
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -72,7 +72,7 @@ const SidebarContent = () => {
 
       {/* Backdrop for mobile */}
       {isOpen && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsOpen(false)}
         />
@@ -135,22 +135,31 @@ const SidebarContent = () => {
             alignItems: "flex-start",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "6px" }}>
-            <div style={{ 
-              width: "36px", 
-              height: "36px", 
-              background: "#FFFFFF", 
-              borderRadius: "4px", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center", 
-              padding: "4px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-            }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "6px",
+            }}
+          >
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                background: "#FFFFFF",
+                borderRadius: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "4px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src="/logo.png" 
-                alt="KR Steel Logo" 
+              <img
+                src="/logo.png"
+                alt="KR Steel Logo"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             </div>
@@ -177,7 +186,7 @@ const SidebarContent = () => {
               color: "rgba(255,255,255,0.7)",
               marginTop: "4px",
               fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
-              paddingLeft: "4px"
+              paddingLeft: "4px",
             }}
           >
             Shipyard PMS
@@ -202,35 +211,6 @@ const SidebarContent = () => {
             icon={<LayoutDashboard size={18} />}
             onClick={handleLinkClick}
           />
-          <NavLink
-            href="/dashboard/registry"
-            pathname={pathname}
-            label="Equipment Registry"
-            icon={<HardHat size={18} />}
-            onClick={handleLinkClick}
-          />
-          <NavLink
-            href="/dashboard/tasks"
-            pathname={pathname}
-            label="Scheduled Tasks"
-            icon={<CalendarCheck size={18} />}
-            onClick={handleLinkClick}
-          />
-          <NavLink
-            href="/dashboard/maintenance"
-            pathname={pathname}
-            label="Maintenance Log"
-            icon={<Wrench size={18} />}
-            onClick={handleLinkClick}
-          />
-          <NavLink
-            href="/dashboard/inventory"
-            pathname={pathname}
-            label="Inventory"
-            icon={<Package size={18} />}
-            onClick={handleLinkClick}
-          />
-
           {/* Equipment accordion */}
           <div>
             <button
@@ -259,7 +239,7 @@ const SidebarContent = () => {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "12px" }}
               >
-                <List size={18} />
+                <HardHat size={18} />
                 <span>Equipment</span>
               </div>
               <span
@@ -286,6 +266,32 @@ const SidebarContent = () => {
                   gap: "1px",
                 }}
               >
+                <Link
+                  href="/dashboard/registry"
+                  onClick={handleLinkClick}
+                  style={{
+                    display: "block",
+                    padding: "8px 10px",
+                    fontSize: "12px",
+                    letterSpacing: "0.04em",
+                    color: pathname === "/dashboard/registry" ? "#fff" : "rgba(255, 255, 255, 0.75)",
+                    background: pathname === "/dashboard/registry"
+                      ? "rgba(255,255,255,0.09)"
+                      : "transparent",
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    borderLeft: pathname === "/dashboard/registry"
+                      ? "2px solid #1CA5CE"
+                      : "2px solid transparent",
+                    transition: "all 150ms ease",
+                    fontFamily:
+                      "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+                  }}
+                >
+                  All Equipment
+                </Link>
                 {categories.map((category) => {
                   const href = `/dashboard/equipment/${category.id}`;
                   const isActive = pathname === href;
@@ -324,12 +330,32 @@ const SidebarContent = () => {
               </div>
             )}
           </div>
-
+          <NavLink
+            href="/dashboard/tasks"
+            pathname={pathname}
+            label="Planned Tasks"
+            icon={<CalendarCheck size={18} />}
+            onClick={handleLinkClick}
+          />
+          <NavLink
+            href="/dashboard/maintenance"
+            pathname={pathname}
+            label="Maintenance Log"
+            icon={<Wrench size={18} />}
+            onClick={handleLinkClick}
+          />
           <NavLink
             href="/dashboard/reports"
             pathname={pathname}
             label="Reports"
             icon={<FileText size={18} />}
+            onClick={handleLinkClick}
+          />
+          <NavLink
+            href="/dashboard/inventory"
+            pathname={pathname}
+            label="Inventory"
+            icon={<Package size={18} />}
             onClick={handleLinkClick}
           />
         </nav>
