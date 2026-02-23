@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Search, Filter, Calendar, Plus, Edit, Trash2 } from "lucide-react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { format } from "date-fns";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 
 export default function MaintenanceLogPage() {
-  const [logs, setLogs] = useState<any[]>([]);
-  const [equipmentList, setEquipmentList] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR("/api/maintenance", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<any>(null);
 
@@ -17,28 +20,6 @@ export default function MaintenanceLogPage() {
   const [filterType, setFilterType] = useState("all");
   const [filterEq, setFilterEq] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
-
-  const fetchLogs = () => {
-    setLoading(true);
-    fetch("/api/maintenance")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error) {
-          setLogs(data.logs);
-          setEquipmentList(data.equipment);
-          setCategories(data.categories);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchLogs();
-  }, []);
 
   const handleSaveLog = async (data: any) => {
     try {
@@ -60,7 +41,7 @@ export default function MaintenanceLogPage() {
       if (res.ok) {
         setIsLogModalOpen(false);
         setEditingLog(null);
-        fetchLogs();
+        mutate();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to save log");
@@ -75,7 +56,7 @@ export default function MaintenanceLogPage() {
     if (!confirm("Are you sure you want to delete this maintenance record?")) return;
     try {
         const res = await fetch(`/api/maintenance/${id}`, { method: "DELETE" });
-        if (res.ok) fetchLogs();
+        if (res.ok) mutate();
         else alert("Failed to delete log");
     } catch (err) {
         console.error(err);
@@ -88,7 +69,20 @@ export default function MaintenanceLogPage() {
     setIsLogModalOpen(true);
   };
 
-  const filteredLogs = logs.filter((log) => {
+  if (isLoading && !rawData)
+    return (
+      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        Loading Logs...
+      </div>
+    );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading maintenance logs.</div>;
+
+  const logs = rawData?.logs || [];
+  const equipmentList = rawData?.equipment || [];
+  const categories = rawData?.categories || [];
+
+  const filteredLogs = logs.filter((log: any) => {
     let match = true;
     if (filterType !== "all" && log.type !== filterType) match = false;
     if (filterEq !== "all" && log.equipmentId.toString() !== filterEq) match = false;
@@ -123,9 +117,9 @@ export default function MaintenanceLogPage() {
         .ml-tbody tr { transition: background 0.12s ease; }
         .ml-tbody tr:hover td { background: #EAF1F6; }
         
-        .ml-table-wrap::-webkit-scrollbar { height: 4px; }
+        .ml-table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
         .ml-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
-        .ml-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 2px; }
+        .ml-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 4px; }
 
         .ml-add-btn {
           display: inline-flex; align-items: center; gap: 8px;
@@ -203,14 +197,14 @@ export default function MaintenanceLogPage() {
 
             <select style={selectStyle} value={filterCat} onChange={e => setFilterCat(e.target.value)}>
                 <option value="all">All Categories</option>
-                {categories.map(c => (
+                {categories.map((c: any) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
             </select>
 
             <select style={selectStyle} value={filterEq} onChange={e => setFilterEq(e.target.value)}>
                 <option value="all">All Equipment</option>
-                {equipmentList.filter(e => filterCat === "all" || e.categoryId.toString() === filterCat).map(e => (
+                {equipmentList.filter((e: any) => filterCat === "all" || e.categoryId.toString() === filterCat).map((e: any) => (
                 <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
                 ))}
             </select>
@@ -247,220 +241,216 @@ export default function MaintenanceLogPage() {
             </p>
           </div>
 
-          <div className="ml-table-wrap" style={{ overflowX: "auto" }}>
-            {loading ? (
-              <div style={{ padding: "40px", textAlign: "center", color: "#7A8A93", fontSize: "13px" }}>Loading logs...</div>
-            ) : (
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: "12px",
-                }}
-              >
-                <thead>
-                  <tr style={{ background: "#EAE7DF" }}>
-                    {[
-                      "Timeline / Dates",
-                      "Type",
-                      "Equipment",
-                      "Task Info",
-                      "Usage Info",
-                      "Observations",
-                      "Work Done",
-                      "Parts",
-                      "Actions"
-                    ].map((col) => (
-                      <th
-                        key={col}
-                        style={{
-                          padding: "11px 16px",
-                          textAlign: col === "Actions" ? "right" : "left",
-                          fontSize: "10px",
-                          fontWeight: 700,
-                          letterSpacing: "0.14em",
-                          textTransform: "uppercase",
-                          color: "#225CA3",
-                          whiteSpace: "nowrap",
-                          borderBottom: "1px solid #D0CBC0",
-                        }}
-                      >
-                        {col}
-                      </th>
-                    ))}
+          <div className="ml-table-wrap" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 300px)" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: "12px",
+              }}
+            >
+              <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#EAE7DF" }}>
+                <tr>
+                  {[
+                    "Timeline / Dates",
+                    "Type",
+                    "Equipment",
+                    "Task Info",
+                    "Usage Info",
+                    "Observations",
+                    "Work Done",
+                    "Parts",
+                    "Actions"
+                  ].map((col) => (
+                    <th
+                      key={col}
+                      style={{
+                        padding: "11px 16px",
+                        textAlign: col === "Actions" ? "right" : "left",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: "#225CA3",
+                        whiteSpace: "nowrap",
+                        borderBottom: "1px solid #D0CBC0",
+                      }}
+                    >
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="ml-tbody">
+                {filteredLogs.length > 0 ? (
+                  filteredLogs.map((log: any) => {
+                    return (
+                      <tr key={log.id}>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            whiteSpace: "nowrap",
+                            color: "#1A1A1A",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontSize: "11px",
+                            fontWeight: 500,
+                            minWidth: "120px"
+                          }}
+                        >
+                          {log.type === 'corrective' ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>REP:</span>
+                                      <span style={{ fontSize: '10px' }}>{log.informationDate ? format(new Date(log.informationDate), 'dd MMM yy') : '—'}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#225CA3' }}>SRV:</span>
+                                      <span style={{ fontSize: '10px' }}>{log.serviceStartDate ? format(new Date(log.serviceStartDate), 'dd MMM yy') : '—'}</span>
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#2D6A42' }}>END:</span>
+                                      <span style={{ fontSize: '10px' }}>{log.serviceEndDate ? format(new Date(log.serviceEndDate), 'dd MMM yy') : '—'}</span>
+                                  </div>
+                              </div>
+                          ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>MAINTENANCE DATE:</span>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#1A1A1A' }}>
+                                      {log.maintenanceDate ? format(new Date(log.maintenanceDate), 'dd MMM yyyy') : '—'}
+                                  </span>
+                              </div>
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            whiteSpace: "nowrap",
+                            fontWeight: 700,
+                            fontSize: "9px",
+                            color: log.type === 'corrective' ? "#8B2020" : "#2D6A42",
+                            borderBottom: "1px solid #EAE7DF",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em"
+                          }}
+                        >
+                          {log.type}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#225CA3",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontWeight: 600,
+                            minWidth: "140px"
+                          }}
+                        >
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: '12px' }}>{log.equipment?.name || "—"}</span>
+                              <span style={{ fontSize: '10px', color: '#4A5568', letterSpacing: '0.02em' }}>{log.equipment?.code}</span>
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#1A1A1A",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontSize: "11px"
+                          }}
+                        >
+                          {log.type === 'corrective' ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{ color: '#8B2020', fontWeight: 700 }}>{log.problemType?.toUpperCase()}</span>
+                                  <span style={{ color: '#5A6A73' }}>{log.workType?.toUpperCase()} JOB</span>
+                              </div>
+                          ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{ color: '#2D6A42', fontWeight: 700 }}>{log.task?.taskId || 'PREV'}</span>
+                                  <span style={{ color: '#5A6A73', fontSize: '10px' }}>
+                                      {log.task?.taskName || 'MAINTENANCE'}
+                                  </span>
+                              </div>
+                          )}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#1A1A1A",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontSize: "11px",
+                            fontWeight: 600
+                          }}
+                        >
+                          {log.runningHours !== null ? (
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span>{log.runningHours} HRS</span>
+                                  <span style={{ fontSize: '9px', color: '#7A8A93', fontWeight: 400 }}>TAR: {log.estimatedHours || '—'}</span>
+                              </div>
+                          ) : '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#2D3748",
+                            borderBottom: "1px solid #EAE7DF",
+                            maxWidth: "180px",
+                            fontSize: "11px",
+                            lineHeight: "1.4"
+                          }}
+                        >
+                          {log.problemDescription || log.maintenanceDetails || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#1A1A1A",
+                            borderBottom: "1px solid #EAE7DF",
+                            maxWidth: "180px",
+                            fontSize: "11px",
+                            lineHeight: "1.4",
+                            fontWeight: 500
+                          }}
+                        >
+                          {log.solutionDetails || '—'}
+                        </td>
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            color: "#4A5568",
+                            borderBottom: "1px solid #EAE7DF",
+                            fontSize: "11px"
+                          }}
+                        >
+                          {log.usedParts || "—"}
+                        </td>
+                        <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap", borderBottom: "1px solid #EAE7DF" }}>
+                          <button onClick={() => handleEdit(log)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease" }} title="Edit Log">
+                             <Edit size={14} />
+                          </button>
+                          <button onClick={() => handleDelete(log.id)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease", marginLeft: "4px" }} title="Delete Log">
+                             <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      style={{
+                        padding: "48px 24px",
+                        textAlign: "center",
+                        fontSize: "12px",
+                        letterSpacing: "0.06em",
+                        color: "#7A8A93",
+                      }}
+                    >
+                      No maintenance logs found matching criteria.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="ml-tbody">
-                  {filteredLogs.length > 0 ? (
-                    filteredLogs.map((log: any) => {
-                      return (
-                        <tr key={log.id}>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              whiteSpace: "nowrap",
-                              color: "#1A1A1A",
-                              borderBottom: "1px solid #EAE7DF",
-                              fontSize: "11px",
-                              fontWeight: 500,
-                              minWidth: "120px"
-                            }}
-                          >
-                            {log.type === 'corrective' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>REP:</span>
-                                        <span style={{ fontSize: '10px' }}>{log.informationDate ? format(new Date(log.informationDate), 'dd MMM yy') : '—'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#225CA3' }}>SRV:</span>
-                                        <span style={{ fontSize: '10px' }}>{log.serviceStartDate ? format(new Date(log.serviceStartDate), 'dd MMM yy') : '—'}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#2D6A42' }}>END:</span>
-                                        <span style={{ fontSize: '10px' }}>{log.serviceEndDate ? format(new Date(log.serviceEndDate), 'dd MMM yy') : '—'}</span>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>MAINTENANCE DATE:</span>
-                                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#1A1A1A' }}>
-                                        {log.maintenanceDate ? format(new Date(log.maintenanceDate), 'dd MMM yyyy') : '—'}
-                                    </span>
-                                </div>
-                            )}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              whiteSpace: "nowrap",
-                              fontWeight: 700,
-                              fontSize: "9px",
-                              color: log.type === 'corrective' ? "#8B2020" : "#2D6A42",
-                              borderBottom: "1px solid #EAE7DF",
-                              textTransform: "uppercase",
-                              letterSpacing: "0.05em"
-                            }}
-                          >
-                            {log.type}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#225CA3",
-                              borderBottom: "1px solid #EAE7DF",
-                              fontWeight: 600,
-                              minWidth: "140px"
-                            }}
-                          >
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontSize: '12px' }}>{log.equipment?.name || "—"}</span>
-                                <span style={{ fontSize: '10px', color: '#4A5568', letterSpacing: '0.02em' }}>{log.equipment?.code}</span>
-                            </div>
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#1A1A1A",
-                              borderBottom: "1px solid #EAE7DF",
-                              fontSize: "11px"
-                            }}
-                          >
-                            {log.type === 'corrective' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    <span style={{ color: '#8B2020', fontWeight: 700 }}>{log.problemType?.toUpperCase()}</span>
-                                    <span style={{ color: '#5A6A73' }}>{log.workType?.toUpperCase()} JOB</span>
-                                </div>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    <span style={{ color: '#2D6A42', fontWeight: 700 }}>{log.task?.taskId || 'PREV'}</span>
-                                    <span style={{ color: '#5A6A73', fontSize: '10px' }}>
-                                        {log.task?.taskName || 'MAINTENANCE'}
-                                    </span>
-                                </div>
-                            )}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#1A1A1A",
-                              borderBottom: "1px solid #EAE7DF",
-                              fontSize: "11px",
-                              fontWeight: 600
-                            }}
-                          >
-                            {log.runningHours !== null ? (
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span>{log.runningHours} HRS</span>
-                                    <span style={{ fontSize: '9px', color: '#7A8A93', fontWeight: 400 }}>TAR: {log.estimatedHours || '—'}</span>
-                                </div>
-                            ) : '—'}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#2D3748",
-                              borderBottom: "1px solid #EAE7DF",
-                              maxWidth: "180px",
-                              fontSize: "11px",
-                              lineHeight: "1.4"
-                            }}
-                          >
-                            {log.problemDescription || log.maintenanceDetails || '—'}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#1A1A1A",
-                              borderBottom: "1px solid #EAE7DF",
-                              maxWidth: "180px",
-                              fontSize: "11px",
-                              lineHeight: "1.4",
-                              fontWeight: 500
-                            }}
-                          >
-                            {log.solutionDetails || '—'}
-                          </td>
-                          <td
-                            style={{
-                              padding: "14px 16px",
-                              color: "#4A5568",
-                              borderBottom: "1px solid #EAE7DF",
-                              fontSize: "11px"
-                            }}
-                          >
-                            {log.usedParts || "—"}
-                          </td>
-                          <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap", borderBottom: "1px solid #EAE7DF" }}>
-                            <button onClick={() => handleEdit(log)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease" }} title="Edit Log">
-                               <Edit size={14} />
-                            </button>
-                            <button onClick={() => handleDelete(log.id)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease", marginLeft: "4px" }} title="Delete Log">
-                               <Trash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        style={{
-                          padding: "48px 24px",
-                          textAlign: "center",
-                          fontSize: "12px",
-                          letterSpacing: "0.06em",
-                          color: "#7A8A93",
-                        }}
-                      >
-                        No maintenance logs found matching criteria.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

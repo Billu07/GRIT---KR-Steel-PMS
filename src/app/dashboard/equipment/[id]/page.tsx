@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import EquipmentModal from "@/components/EquipmentModal";
 import { Plus, Search } from "lucide-react";
 
@@ -12,33 +12,13 @@ export default function CategoryPage() {
   const router = useRouter();
   const categoryId = params.id as string;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [category, setCategory] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [equipment, setEquipment] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR(`/api/equipment/${categoryId}`, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (categoryId) {
-      fetch(`/api/equipment/${categoryId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            console.error(data.error);
-          } else {
-            setCategory(data.category);
-            setEquipment(data.equipment);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setLoading(false);
-        });
-    }
-  }, [categoryId]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreateEquipment = async (newEquipment: any) => {
@@ -50,11 +30,7 @@ export default function CategoryPage() {
       });
 
       if (res.ok) {
-        const createdEq = await res.json();
-        // Only add to local state if it belongs to this category
-        if (createdEq.categoryId.toString() === categoryId) {
-          setEquipment((prev) => [...prev, createdEq]);
-        }
+        mutate();
         setIsEquipmentModalOpen(false);
       } else {
         const err = await res.json();
@@ -66,13 +42,7 @@ export default function CategoryPage() {
     }
   };
 
-  const filteredEquipment = equipment.filter(
-    (eq) =>
-      eq.name.toLowerCase().includes(search.toLowerCase()) ||
-      eq.code.toLowerCase().includes(search.toLowerCase()),
-  );
-
-  if (loading)
+  if (isLoading && !rawData)
     return (
       <div
         style={{
@@ -88,6 +58,11 @@ export default function CategoryPage() {
       </div>
     );
 
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading category equipment.</div>;
+
+  const category = rawData?.category;
+  const equipment = rawData?.equipment || [];
+
   if (!category)
     return (
       <div
@@ -101,6 +76,12 @@ export default function CategoryPage() {
         Category not found.
       </div>
     );
+
+  const filteredEquipment = equipment.filter(
+    (eq: any) =>
+      eq.name.toLowerCase().includes(search.toLowerCase()) ||
+      eq.code.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <>
@@ -162,9 +143,9 @@ export default function CategoryPage() {
         .eq-add-btn:hover { background: #1B4A82; }
         .eq-add-btn:active { background: #133660; }
 
-        .eq-table-wrap::-webkit-scrollbar { height: 4px; }
+        .eq-table-wrap::-webkit-scrollbar { height: 8px; width: 8px; }
         .eq-table-wrap::-webkit-scrollbar-track { background: #EAE7DF; }
-        .eq-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 2px; }
+        .eq-table-wrap::-webkit-scrollbar-thumb { background: #1CA5CE; border-radius: 4px; }
       `}</style>
 
       <div className="eq-root">
@@ -304,7 +285,7 @@ export default function CategoryPage() {
             </p>
           </div>
 
-          <div className="eq-table-wrap" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 220px)" }}>
+          <div className="eq-table-wrap" style={{ overflowX: "auto", overflowY: "auto", maxHeight: "calc(100vh - 300px)" }}>
             <table
               style={{
                 width: "100%",

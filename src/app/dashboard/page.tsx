@@ -1,59 +1,21 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 import TaskModal from "@/components/TaskModal";
 
 export default function DashboardPage() {
-  const [data, setData] = useState({
-    stats: {
-      logsToday: 0,
-      logsThisMonth: 0,
-      scheduledTasks: 0,
-      totalAssets: 0,
-      inventoryItems: 0,
-      correctiveLogs: 0,
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recentLogs: [] as any[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    activeTasks: [] as any[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    equipment: [] as any[],
+  const { data: rawData, error, isLoading, mutate } = useSWR("/api/dashboard", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000, // Cache for 10 seconds
   });
-  const [loading, setLoading] = useState(true);
 
   // Modal states
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-
-  const fetchDashboardData = () => {
-    setLoading(true);
-    fetch("/api/dashboard")
-      .then((res) => {
-        if (!res.ok) return res.json().then(err => { throw new Error(err.error || "Failed to fetch data") });
-        return res.json();
-      })
-      .then((data) => {
-        if (data && data.stats) {
-          setData(data);
-        } else {
-          console.error("Malformed dashboard data:", data);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-        // Optionally show an error state to the user
-      });
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
 
   const handleAddLog = async (logData: any) => {
     try {
@@ -64,7 +26,7 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         setIsLogModalOpen(false);
-        fetchDashboardData();
+        mutate();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to add log");
@@ -84,7 +46,7 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         setIsTaskModalOpen(false);
-        fetchDashboardData();
+        mutate();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to add task");
@@ -95,7 +57,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
+  if (isLoading && !rawData) {
     return (
       <div className="flex h-full items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -107,6 +69,15 @@ export default function DashboardPage() {
       </div>
     );
   }
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading facility records.</div>;
+
+  const data = rawData || {
+    stats: { totalAssets: 0, inventoryItems: 0, scheduledTasks: 0, correctiveLogs: 0 },
+    recentLogs: [],
+    activeTasks: [],
+    equipment: []
+  };
 
   const stats = [
     {

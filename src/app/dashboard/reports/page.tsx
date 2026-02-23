@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { exportTaskReportPdf, exportEquipmentReportPdf, exportMaintenancePdf } from "@/lib/pdfExport";
 import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExcel, exportToExcel } from "@/lib/excelExport";
@@ -8,8 +10,12 @@ import { exportToPDF } from "@/lib/pdfExport";
 import { format } from "date-fns";
 
 export default function ReportsBuilderPage() {
+  const { data: rawData, error, isLoading } = useSWR("/api/reports", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [loading, setLoading] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
 
   // Configuration State
   const [reportType, setReportType] = useState("tasks");
@@ -30,25 +36,6 @@ export default function ReportsBuilderPage() {
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   
-  // Raw Data
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [rawData, setRawData] = useState<{ tasks: any[], equipment: any[], maintenanceHistory: any[], inventory: any[] } | null>(null);
-
-  // Fetch data on mount
-  useEffect(() => {
-    setDataLoading(true);
-    fetch("/api/reports")
-      .then((res) => res.json())
-      .then((data) => {
-        setRawData(data);
-        setDataLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setDataLoading(false);
-      });
-  }, []);
-
   // Derived / Filtered Data
   const filteredData = useMemo(() => {
     if (!rawData) return null;

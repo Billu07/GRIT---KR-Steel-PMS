@@ -1,13 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { Search, Package, FileText, Download, Plus, Edit2, Trash2, X } from "lucide-react";
 import { exportToExcel } from "@/lib/excelExport";
 import { exportToPDF } from "@/lib/pdfExport";
 
 export default function InventoryPage() {
-  const [inventory, setInventory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR("/api/inventory", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [search, setSearch] = useState("");
   
   // Modal state
@@ -20,23 +25,6 @@ export default function InventoryPage() {
     swl: "",
     certificateNo: ""
   });
-
-  const fetchInventory = () => {
-    fetch("/api/inventory")
-      .then((res) => res.json())
-      .then((data) => {
-        setInventory(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Frontend: Error fetching inventory:", err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchInventory();
-  }, []);
 
   const handleOpenAdd = () => {
     setEditingItem(null);
@@ -60,7 +48,7 @@ export default function InventoryPage() {
     if (!confirm("Are you sure you want to delete this item?")) return;
     try {
       const res = await fetch(`/api/inventory?id=${id}`, { method: "DELETE" });
-      if (res.ok) fetchInventory();
+      if (res.ok) mutate();
       else alert("Failed to delete item");
     } catch (err) {
       console.error(err);
@@ -80,7 +68,7 @@ export default function InventoryPage() {
       });
       if (res.ok) {
         setIsModalOpen(false);
-        fetchInventory();
+        mutate();
       } else {
         alert("Failed to save item");
       }
@@ -89,7 +77,18 @@ export default function InventoryPage() {
     }
   };
 
-  const filteredInventory = inventory.filter((item) => {
+  if (isLoading && !rawData)
+    return (
+      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        Loading Inventory...
+      </div>
+    );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading inventory.</div>;
+
+  const inventory = Array.isArray(rawData) ? rawData : [];
+
+  const filteredInventory = inventory.filter((item: any) => {
     const matchesSearch =
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       (item.description && item.description.toLowerCase().includes(search.toLowerCase())) ||
@@ -121,13 +120,6 @@ export default function InventoryPage() {
     ]);
     exportToPDF("Inventory Summary Report", headers, data, "Inventory_Report");
   };
-
-  if (loading)
-    return (
-      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-        Loading Inventory...
-      </div>
-    );
 
   const inputStyle = {
     width: "100%", padding: "10px 12px", fontSize: "13px", color: "#1A1A1A", background: "#FAFAF8", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none", marginTop: "4px"
@@ -213,7 +205,7 @@ export default function InventoryPage() {
               </thead>
               <tbody className="inv-tbody">
                 {filteredInventory.length > 0 ? (
-                  filteredInventory.map((item, idx) => (
+                  filteredInventory.map((item: any, idx) => (
                     <tr key={item.id} style={{ borderBottom: "1px solid #EAE7DF" }}>
                       <td style={{ padding: "14px 24px", color: "#7A8A93", fontWeight: 500 }}>{idx + 1}</td>
                       <td style={{ padding: "14px 24px", color: "#1A1A1A", fontWeight: 600 }}>{item.name}</td>

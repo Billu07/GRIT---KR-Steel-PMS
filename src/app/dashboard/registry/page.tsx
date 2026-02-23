@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import EquipmentModal from "@/components/EquipmentModal";
 import { Search, Plus, MapPin, Tag, Edit, Layers } from "lucide-react";
 
 export default function RegistryPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [equipment, setEquipment] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR("/api/reports", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -19,23 +23,6 @@ export default function RegistryPage() {
   const [editingEquipment, setEditingEquipment] = useState<any>(null);
   
   const router = useRouter();
-
-  const fetchEquipment = () => {
-    fetch("/api/reports")
-      .then((res) => res.json())
-      .then((data) => {
-        setEquipment(data.equipment || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
 
   const handleOpenCreateModal = () => {
     setEditingEquipment(null);
@@ -61,7 +48,7 @@ export default function RegistryPage() {
         });
         if (res.ok) {
           alert("Equipment updated successfully!");
-          fetchEquipment();
+          mutate();
           setIsEquipmentModalOpen(false);
           setEditingEquipment(null);
         } else {
@@ -77,7 +64,7 @@ export default function RegistryPage() {
         });
         if (res.ok) {
           alert("Equipment created successfully!");
-          fetchEquipment();
+          mutate();
           setIsEquipmentModalOpen(false);
         } else {
           const err = await res.json();
@@ -90,15 +77,35 @@ export default function RegistryPage() {
     }
   };
 
+  if (isLoading && !rawData)
+    return (
+      <div
+        style={{
+          padding: "40px",
+          fontFamily: "'DM Sans', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: "13px",
+          color: "#7A8A93",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+        }}
+      >
+        Loading...
+      </div>
+    );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading registry records.</div>;
+
+  const equipment = rawData?.equipment || [];
+
   const categories = Array.from(
     new Map(
       equipment
-        .filter((eq) => eq.category)
-        .map((eq) => [eq.category.id, eq.category]),
-    ).values(),
+        .filter((eq: any) => eq.category)
+        .map((eq: any) => [eq.category.id, eq.category]),
+    ).values()
   );
 
-  const filteredEquipment = equipment.filter((eq) => {
+  const filteredEquipment = equipment.filter((eq: any) => {
     const matchesSearch =
       eq.name.toLowerCase().includes(search.toLowerCase()) ||
       eq.code.toLowerCase().includes(search.toLowerCase()) ||

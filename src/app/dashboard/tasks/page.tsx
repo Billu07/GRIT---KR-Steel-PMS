@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { Search, Plus, CalendarCheck, Edit, Trash2, Tag, HardHat, Save, X, AlertTriangle, RefreshCw, Wrench } from "lucide-react";
 import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 
 export default function PlannedTasksPage() {
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [equipmentList, setEquipmentList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR("/api/tasks", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [search, setSearch] = useState("");
   const [updatingHours, setUpdatingHours] = useState<number | null>(null);
 
@@ -32,25 +36,6 @@ export default function PlannedTasksPage() {
   // Log Maintenance Modal state
   const [isLogMaintenanceOpen, setIsLogMaintenanceOpen] = useState(false);
   const [selectedTaskForLog, setSelectedTaskForLog] = useState<any>(null);
-
-  const fetchTasks = () => {
-    setLoading(true);
-    fetch("/api/tasks")
-      .then((res) => res.json())
-      .then((data) => {
-        setTasks(data.tasks || []);
-        setEquipmentList(data.equipment || []);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
 
   const handleOpenEdit = (task: any) => {
     setEditingTask(task);
@@ -80,9 +65,10 @@ export default function PlannedTasksPage() {
       if (res.ok) {
         setIsLogMaintenanceOpen(false);
         setSelectedTaskForLog(null);
-        fetchTasks(); // Refresh to see updated hours/dates
+        mutate();
       } else {
-        alert("Failed to log maintenance.");
+        const err = await res.json();
+        alert(err.error || "Failed to log maintenance.");
       }
     } catch (err) {
       console.error(err);
@@ -107,7 +93,7 @@ export default function PlannedTasksPage() {
             body: JSON.stringify({ runningHours: hours }),
         });
         if (res.ok) {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, runningHours: hours } : t));
+            mutate();
         }
     } catch (err) {
         console.error(err);
@@ -155,7 +141,7 @@ export default function PlannedTasksPage() {
       if (res.ok) {
         setIsAdding(false);
         setNewTask({ taskId: "", taskName: "", equipmentId: "", frequency: "weekly", taskDetail: "", criticality: "medium", lastCompletedDate: "", estimatedHours: "" });
-        fetchTasks();
+        mutate();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to create task");
@@ -170,7 +156,7 @@ export default function PlannedTasksPage() {
     if (!confirm("Are you sure you want to delete this planned task?")) return;
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      if (res.ok) fetchTasks();
+      if (res.ok) mutate();
       else alert("Failed to delete task");
     } catch (err) {
       console.error(err);
@@ -187,7 +173,7 @@ export default function PlannedTasksPage() {
 
       if (res.ok) {
         setIsModalOpen(false);
-        fetchTasks();
+        mutate();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to save task");
@@ -198,7 +184,19 @@ export default function PlannedTasksPage() {
     }
   };
 
-  const filteredTasks = tasks.filter((t) => {
+  if (isLoading && !rawData)
+    return (
+      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        Loading Tasks...
+      </div>
+    );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading planned tasks.</div>;
+
+  const tasks = rawData?.tasks || [];
+  const equipmentList = rawData?.equipment || [];
+
+  const filteredTasks = tasks.filter((t: any) => {
     const matchesSearch =
       t.taskName.toLowerCase().includes(search.toLowerCase()) ||
       t.taskId.toLowerCase().includes(search.toLowerCase()) ||
@@ -211,13 +209,6 @@ export default function PlannedTasksPage() {
     width: "100%", padding: "6px 8px", fontSize: "12px", color: "#1A1A1A",
     background: "#FFFFFF", border: "1px solid #1CA5CE", borderRadius: "2px", outline: "none"
   };
-
-  if (loading)
-    return (
-      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-        Loading Tasks...
-      </div>
-    );
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -318,7 +309,7 @@ export default function PlannedTasksPage() {
                     <td style={{ padding: "8px 12px" }}>
                       <select name="equipmentId" value={newTask.equipmentId} onChange={handleInputChange} style={{ ...inlineInput, cursor: 'pointer' }}>
                         <option value="">-- Asset --</option>
-                        {equipmentList.map(eq => (
+                        {equipmentList.map((eq: any) => (
                           <option key={eq.id} value={eq.id}>{eq.name} ({eq.code})</option>
                         ))}
                       </select>
@@ -354,7 +345,7 @@ export default function PlannedTasksPage() {
                 )}
 
                 {filteredTasks.length > 0 || isAdding ? (
-                  filteredTasks.map((t) => {
+                  filteredTasks.map((t: any) => {
                     const nextDueDate = t.nextDueDate ? new Date(t.nextDueDate) : null;
                     if (nextDueDate) nextDueDate.setHours(0, 0, 0, 0);
                     const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
@@ -418,7 +409,7 @@ export default function PlannedTasksPage() {
                                 {updatingHours === t.id && <RefreshCw size={10} className="animate-spin text-blue-500" />}
                             </div>
                         </td>
-                        <td style={{ padding: "14px 16px", color: remainingHours !== null && remainingHours <= 0 ? "#DC2626" : "#5A6A73", fontWeight: remainingHours !== null && remainingHours <= 0 ? 700 : 400 }}>
+                        <td style={{ padding: "14px 16px", color: remainingHours !== null && remainingHours <= 0 ? "#DC2626" : "#5A6A73", fontWeight: remainingHours !== null && remainingHours <= 0 ? 700 : 400, borderBottom: "1px solid #EAE7DF" }}>
                             {remainingHours !== null ? remainingHours : "—"}
                         </td>
                         <td style={{ padding: "14px 16px" }}>

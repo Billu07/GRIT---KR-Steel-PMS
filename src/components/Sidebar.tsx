@@ -2,9 +2,11 @@
 // Add to your layout.tsx or globals.css:
 // @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import {
   LayoutDashboard,
   Wrench,
@@ -20,27 +22,17 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { CATEGORIES } from "@/lib/mockData";
 import { useSidebar } from "@/context/SidebarContext";
 
 const SidebarContent = () => {
   const pathname = usePathname();
   const { isOpen, setIsOpen } = useSidebar();
   const [equipmentOpen, setEquipmentOpen] = useState(true);
-  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-    [],
-  );
-
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setCategories(data);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch categories:", err));
-  }, []);
+  
+  const { data: categories = [] } = useSWR("/api/categories", fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 60000,
+  });
 
   const handleLinkClick = () => {
     // Only close sidebar on mobile (less than md breakpoint 768px)

@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { Plus, Download, Trash2, Edit, Save, X, Wrench, AlertTriangle, RefreshCw } from "lucide-react";
 import { exportEquipmentTasksPdf } from "@/lib/pdfExport";
 import { exportEquipmentTasksExcel } from "@/lib/excelExport";
@@ -15,11 +17,11 @@ export default function EquipmentDetailPage() {
   const categoryId = params.id as string;
   const equipmentId = params.equipmentId as string;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [equipment, setEquipment] = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawData, error, isLoading, mutate } = useSWR(categoryId ? `/api/equipment/${categoryId}` : null, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 10000,
+  });
+
   const [updatingHours, setUpdatingHours] = useState<number | null>(null);
 
   // Inline Creation State
@@ -41,39 +43,6 @@ export default function EquipmentDetailPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingTask, setEditingTask] = useState<any>(null);
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryId, equipmentId]);
-
-  const fetchData = () => {
-    if (categoryId && equipmentId) {
-      fetch(`/api/equipment/${categoryId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) {
-            console.error(data.error);
-          } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const foundEq = data.equipment.find(
-              (e: any) => e.id.toString() === equipmentId,
-            );
-            setEquipment(foundEq);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const eqTasks = data.tasks.filter(
-              (t: any) => t.equipmentId.toString() === equipmentId,
-            );
-            setTasks(eqTasks);
-          }
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setLoading(false);
-        });
-    }
-  };
-
   // ── EQUIPMENT ACTIONS ──
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,7 +55,7 @@ export default function EquipmentDetailPage() {
       });
       if (res.ok) {
         alert("Equipment updated successfully!");
-        fetchData();
+        mutate();
         setIsEqModalOpen(false);
       } else {
         alert("Failed to update equipment");
@@ -144,7 +113,7 @@ export default function EquipmentDetailPage() {
             body: JSON.stringify({ runningHours: hours }),
         });
         if (res.ok) {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, runningHours: hours } : t));
+            mutate();
         }
     } catch (err) {
         console.error(err);
@@ -184,7 +153,7 @@ export default function EquipmentDetailPage() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        fetchData();
+        mutate();
         setIsAdding(false);
         setNewTask({
           taskId: "",
@@ -215,7 +184,7 @@ export default function EquipmentDetailPage() {
           body: JSON.stringify(taskData),
         });
         if (res.ok) {
-          fetchData();
+          mutate();
           setIsTaskModalOpen(false);
           setEditingTask(null);
         } else {
@@ -237,7 +206,7 @@ export default function EquipmentDetailPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        fetchData(); // Refresh list
+        mutate(); // Refresh list
       } else {
         alert("Failed to delete task");
       }
@@ -263,7 +232,7 @@ export default function EquipmentDetailPage() {
       
       if (res.ok) {
         alert("Maintenance logged successfully!");
-        fetchData(); // Important: Refresh to see updated hours/dates
+        mutate(); // Important: Refresh to see updated hours/dates
         setIsLogMaintenanceModalOpen(false);
       } else {
         alert("Failed to log maintenance.");
@@ -280,15 +249,7 @@ export default function EquipmentDetailPage() {
     setIsTaskModalOpen(true);
   };
 
-  const exportTasksPDF = () => {
-    exportEquipmentTasksPdf({ equipment, tasks });
-  };
-
-  const exportTasksExcel = () => {
-    exportEquipmentTasksExcel({ equipment, tasks });
-  };
-
-  if (loading)
+  if (isLoading && !rawData)
     return (
       <div
         style={{
@@ -300,9 +261,15 @@ export default function EquipmentDetailPage() {
           textTransform: "uppercase",
         }}
       >
-        Loading...
+        Loading details...
       </div>
     );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading equipment details.</div>;
+
+  const equipment = rawData?.equipment.find((e: any) => e.id.toString() === equipmentId);
+  const tasks = rawData?.tasks.filter((t: any) => t.equipmentId.toString() === equipmentId) || [];
+
   if (!equipment)
     return (
       <div
@@ -316,6 +283,14 @@ export default function EquipmentDetailPage() {
         Equipment not found.
       </div>
     );
+
+  const exportTasksPDF = () => {
+    exportEquipmentTasksPdf({ equipment, tasks });
+  };
+
+  const exportTasksExcel = () => {
+    exportEquipmentTasksExcel({ equipment, tasks });
+  };
 
   /* shared inline input style */
   const inlineInput: React.CSSProperties = {
@@ -646,7 +621,7 @@ export default function EquipmentDetailPage() {
                   margin: 0,
                 }}
               >
-                Scheduled Tasks
+                Planned Tasks
               </p>
               <p
                 style={{

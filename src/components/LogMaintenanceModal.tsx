@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 import { X, Calendar, ClipboardCheck, AlertCircle, Package } from "lucide-react";
 
 interface LogMaintenanceModalProps {
@@ -25,6 +27,14 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   equipmentName: initialEqName = "",
   initialData,
 }) => {
+  const { data: rawData } = useSWR(isOpen && (!initialEqId || initialData) ? "/api/reports" : null, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
+
+  const allEquipment = rawData?.equipment || [];
+  const allTasks = rawData?.tasks || [];
+
   const [formData, setFormData] = useState({
     type: "corrective",
     taskId: "",
@@ -40,12 +50,6 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     problemType: "minor",
     remarks: "",
   });
-
-  // For global mode: fetch all equipment and tasks
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [allEquipment, setAllEquipment] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [allTasks, setAllTasks] = useState<any[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -84,25 +88,13 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             remarks: "",
         }));
       }
-
-      // If in global mode (no initialEqId) OR editing, fetch everything to allow changing equipment if needed
-      // Actually, if editing, we might want to fetch everything too to show the correct equipment name in dropdown
-      if (!initialEqId || initialData) {
-        fetch("/api/reports")
-          .then(res => res.json())
-          .then(data => {
-            setAllEquipment(data.equipment || []);
-            setAllTasks(data.tasks || []);
-          })
-          .catch(console.error);
-      }
     }
   }, [isOpen, initialEqId, initialData]);
 
   const filteredTasks = useMemo(() => {
     if (initialEqId) return initialTasks;
     if (!formData.equipmentId) return [];
-    return allTasks.filter(t => String(t.equipmentId) === formData.equipmentId);
+    return allTasks.filter((t: any) => String(t.equipmentId) === formData.equipmentId);
   }, [initialEqId, initialTasks, allTasks, formData.equipmentId]);
 
   if (!isOpen) return null;
