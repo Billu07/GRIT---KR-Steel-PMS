@@ -30,10 +30,34 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await requestToJson(req);
-    const { taskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality, estimatedHours, runningHours } = body;
+    const { taskId: providedTaskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality, estimatedHours, runningHours } = body;
 
-    if (!taskId || !taskName || !equipmentId || !frequency) {
+    if (!taskName || !equipmentId || !frequency) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    let taskId = providedTaskId;
+
+    // Auto-generate taskId if not provided
+    if (!taskId || taskId.trim() === "") {
+      const existingTasks = await prisma.task.findMany({
+        select: { taskId: true }
+      });
+
+      let maxNum = 0;
+      existingTasks.forEach(t => {
+        if (t.taskId) {
+          // Try to find digits at the end of any TSK- prefixed ID or any ID ending in digits
+          const match = t.taskId.match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1]);
+            if (!isNaN(num) && num > maxNum) {
+              maxNum = num;
+            }
+          }
+        }
+      });
+      taskId = `TSK-${String(maxNum + 1).padStart(4, '0')}`;
     }
 
     const parsedEstimatedHours = estimatedHours ? parseInt(estimatedHours) : null;

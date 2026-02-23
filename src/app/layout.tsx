@@ -11,13 +11,12 @@ export const metadata: Metadata = {
   title: "KR Steel PMS",
   description: "Shipyard Heavy Asset Reliability Planner",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
-    other: {
-      rel: "icon",
-      url: "/favicon-32x32.png",
-    },
+    icon: [
+      { url: "/favicon-32x32.png?v=1", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png?v=1", sizes: "16x16", type: "image/png" },
+      { url: "/favicon.ico?v=1" },
+    ],
+    apple: "/apple-touch-icon.png?v=1",
   },
 };
 
