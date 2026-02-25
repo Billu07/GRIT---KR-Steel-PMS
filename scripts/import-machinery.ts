@@ -38,14 +38,14 @@ function getCategoryName(machineName: string): string {
     return 'Safety Equipment';
   }
 
-  // Measurement Equipment
+  // Measuring Equipment
   if (
     lower.includes('micrometer') || 
     lower.includes('caliper') || 
     lower.includes('gauge') || 
     lower.includes('meter')
   ) {
-    return 'Measurement Equipment';
+    return 'Measuring Equipment';
   }
 
   // PPE
@@ -78,7 +78,7 @@ async function main() {
   // predefined categories to ensure they exist (IDs 1-4)
   const predefinedCategories = [
     { id: 1, name: 'Material Handling Equipment' },
-    { id: 2, name: 'Measurement Equipment' },
+    { id: 2, name: 'Measuring Equipment' },
     { id: 3, name: 'Safety Equipment' },
     { id: 4, name: 'PPE and Personal Equipment' }
   ];

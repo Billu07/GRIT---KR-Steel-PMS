@@ -96,7 +96,7 @@ export default function InventoryPage() {
     return matchesSearch;
   });
 
-  const handleDownloadExcel = () => {
+  const handleDownloadExcel = async () => {
     const data = filteredInventory.map((item, idx) => ({
       "SL No.": idx + 1,
       "Name of Equipment": item.name,
@@ -105,7 +105,7 @@ export default function InventoryPage() {
       "SWL": item.swl || "—",
       "Certificate Number": item.certificateNo || "—",
     }));
-    exportToExcel(data, "Inventory_Report");
+    await exportToExcel(data, "Inventory_Report");
   };
 
   const handleDownloadPDF = () => {

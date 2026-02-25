@@ -1,0 +1,43 @@
+Equipment/Item,Frequency,Maintenance Task
+Steel wire,Daily,"Visual inspection, cleanliness"
+Steel wire,Weekly,"Inspect for broken wires, kinks, crushing, or excessive wear."
+Steel wire,Weekly,Check for excessive corrosion
+Steel wire,Monthly,"Measure for any significant loss of diameter, which could indicate internal damage."
+Steel wire,Monthly,Check for lubrication
+Steel wire,3 Monthly,Examine full length and Carry out lubrication.
+Steel wire,3 Monthly,Check the inner condition of the wire
+Steel wire,Yearly,Load test by external party (DIEF approved)
+Bow shackle,Daily,"Inspect the body for cracks, distortion, or any corrosion."
+Bow shackle,Daily,Ensure the pin is correctly seated and secured
+Bow shackle,Weekly,Check for any deformation
+Bow shackle,Monthly,Deep clean all components to reveal any hidden damage.
+Bow shackle,Monthly,Lubricate as required
+Bow shackle,Yearly,Load test by external party (DIEF approved)
+D Shackle,Daily,"Inspect the body for cracks, distortion, or any corrosion."
+D Shackle,Daily,Ensure the pin is correctly seated and secured
+D Shackle,Weekly,Check for any deformation
+D Shackle,Monthly,Deep clean all components to reveal any hidden damage.
+D Shackle,Monthly,Lubricate as required
+D Shackle,Yearly,Load test by external party (DIEF approved)
+Safety Pin,Daily,"Check for bending, wear, or signs of fatigue"
+Safety Pin,Weekly,Check for any deformation of any parts
+Safety Pin,Monthly,Check all components for hidden damage
+Safety Pin,Yearly,Load test by external party (DIEF approved)
+Snatch Block,Daily,"Inspect the sheave for cracks, chips, or excessive wear"
+Snatch Block,Weekly,Check that the sheave rotates freely without excessive play
+Snatch Block,Monthly,Deep clean all components to reveal any hidden damage.
+Snatch Block,Monthly,Lubricate as required
+Snatch Block,Yearly,Load test by external party (DIEF approved)
+Chain Block,Daily,"Inspect the load chain for wear, stretching, kinks, or damage"
+Chain Block,Weekly,Check for any unusual noises during operation.
+Chain Block,Weekly,Check for lubrication
+Chain Block,Monthly,"Disassemble to inspect internal components like gears, pawls, and springs for wear or damage"
+Chain Block,Yearly,Load test by external party (DIEF approved)
+Wire Sling,Daily,"Inspect for broken wires, fraying, corrosion, or deformation"
+Wire Sling,Weekly,Check for any evidence of chemical attack or extreme temperature exposure
+Wire Sling,Monthly,Inspect thoroughly for any damage
+Wire Sling,Yearly,Load test by external party (DIEF approved)
+Chain end securing pin,Daily,"Check for bending, wear, or signs of fatigue"
+Chain end securing pin,Weekly,Check for any deformation of any parts
+Chain end securing pin,Monthly,Check all components for hidden damage
+Chain end securing pin,Yearly,Load test by external party (DIEF approved)

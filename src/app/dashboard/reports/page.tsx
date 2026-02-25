@@ -134,25 +134,25 @@ export default function ReportsBuilderPage() {
   }, [rawData, reportType, maintenanceType, durationFilterType, fromDate, toDate, singleDate, month, year, selectedEquipments, statusFilter]);
 
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!filteredData || !rawData) return;
     setLoading(true);
 
-    setTimeout(() => {
+    try {
       if (reportType === "tasks") {
         const tasks = filteredData.tasks || [];
         if (reportFormat === "pdf") exportTaskReportPdf({ tasks, equipment: rawData.equipment, groupBy });
-        else exportTaskReportExcel({ tasks, equipment: rawData.equipment, groupBy });
+        else await exportTaskReportExcel({ tasks, equipment: rawData.equipment, groupBy });
       } else if (reportType === "equipment") {
         const equipment = filteredData.equipment || [];
         if (reportFormat === "pdf") exportEquipmentReportPdf({ equipment, groupBy });
-        else exportEquipmentReportExcel({ equipment, groupBy });
+        else await exportEquipmentReportExcel({ equipment, groupBy });
       } else if (reportType === "maintenance") {
          const maintenance = filteredData.maintenance || [];
          if (reportFormat === "pdf") {
             exportMaintenancePdf({ data: maintenance, type: maintenanceType as 'corrective' | 'preventive' });
          } else {
-            exportMaintenanceExcel(maintenance, maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
+            await exportMaintenanceExcel(maintenance, maintenanceType as 'corrective' | 'preventive', `KR_Steel_${maintenanceType}_Maintenance`);
          }
       } else if (reportType === "inventory") {
         const inventory = filteredData.inventory || [];
@@ -162,11 +162,15 @@ export default function ReportsBuilderPage() {
           exportToPDF("Shipyard Inventory Summary", headers, data, "KR_Steel_Inventory_Report");
         } else {
           const data = inventory.map((item: any, idx: number) => ({"SL No.": idx + 1, "Name of Equipment": item.name, "Quantity": item.quantity || "—", "Description": item.description || "—", "SWL": item.swl || "—", "Certificate Number": item.certificateNo || "—"}));
-          exportToExcel(data, "KR_Steel_Inventory_Report");
+          await exportToExcel(data, "KR_Steel_Inventory_Report");
         }
       }
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export report. Please try again.");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const handleEquipmentToggle = (id: string) => {

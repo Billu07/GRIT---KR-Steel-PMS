@@ -1,69 +1,148 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { format, differenceInMinutes } from 'date-fns';
 import { getTaskStatus } from './taskUtils';
+import { LOGO_BASE64 } from './pdfExport';
 
-export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
-  const wsData: any[][] = [];
+const C = {
+  navy: '0C2C58',
+  accent: '1CA5CE',
+  pasteLight: 'FAF9F7',
+  rule: 'B4AFA0',
+  white: 'FFFFFF',
+  muted: '646E78',
+};
 
-  // 1. Equipment Name
-  wsData.push([`Equipment Name: ${equipment.name} (${equipment.code})`]);
+function addExcelHeader(workbook: ExcelJS.Workbook, worksheet: ExcelJS.Worksheet, title: string, subtitle?: string) {
+  // Push table down by 7 rows
+  worksheet.spliceRows(1, 0, [], [], [], [], [], [], []);
   
-  // 2. Header Row
-  wsData.push(["Checkpoint", "Daily", "Weekly", "Monthly", "3 Month", "6 Month", "Yearly", "5 Yearly"]);
-
-  // 3. Task Rows
-  tasks.forEach((task) => {
-    const row = [task.taskName, "", "", "", "", "", ""];
-    
-    // Check frequency and mark with checkmark
-    switch (task.frequency) {
-      case 'daily': row[1] = '✓'; break;
-      case 'weekly': row[2] = '✓'; break;
-      case 'monthly': row[3] = '✓'; break;
-      case 'quarterly': row[4] = '✓'; break;
-      case 'semi_annually': row[5] = '✓'; break;
-      case 'yearly': row[6] = '✓'; break;
-      case 'five_yearly': row[7] = '✓'; break;
-    }
-    
-    wsData.push(row);
+  const logoId = workbook.addImage({
+    base64: `data:image/png;base64,${LOGO_BASE64}`,
+    extension: 'png',
+  });
+  
+  worksheet.addImage(logoId, {
+    tl: { col: 0.2, row: 0.2 },
+    ext: { width: 50, height: 50 }
   });
 
-  // 4. Safety Measures Row
-  wsData.push([`Safety Measures: ${equipment.safetyMeasures || 'N/A'}`]);
-
-  const worksheet = XLSX.utils.aoa_to_sheet(wsData);
-  const workbook = XLSX.utils.book_new();
-
-  // Merge Equipment Name cell across all columns
-  if (!worksheet['!merges']) worksheet['!merges'] = [];
-  worksheet['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } });
+  worksheet.getCell('B2').value = 'KR STEEL';
+  worksheet.getCell('B2').font = { name: 'Arial', size: 16, bold: true, color: { argb: C.navy } };
   
-  // Merge Safety Measures cell across all columns (last row)
-  const lastRowIdx = wsData.length - 1;
-  worksheet['!merges'].push({ s: { r: lastRowIdx, c: 0 }, e: { r: lastRowIdx, c: 6 } });
-
-  // Set column widths
-  worksheet['!cols'] = [
-    { wch: 40 }, // Checkpoint
-    { wch: 10 }, // Daily
-    { wch: 10 }, // Weekly
-    { wch: 10 }, // Monthly
-    { wch: 10 }, // 3 Month
-    { wch: 10 }, // 6 Month
-    { wch: 10 }, // Yearly
-    { wch: 10 }, // 5 Yearly
-  ];
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Checklist');
-  XLSX.writeFile(workbook, `Checklist_${equipment.code}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+  worksheet.getCell('B3').value = 'SHIP RECYCLING FACILITY';
+  worksheet.getCell('B3').font = { name: 'Arial', size: 8, color: { argb: C.accent } };
+  
+  worksheet.getCell('F2').value = 'GRIT SYSTEM';
+  worksheet.getCell('F2').font = { name: 'Arial', size: 10, bold: true, color: { argb: C.navy } };
+  
+  worksheet.getCell('F3').value = 'GEAR RELIABILITY & INTERVENTION TRACKER';
+  worksheet.getCell('F3').font = { name: 'Arial', size: 8, color: { argb: C.accent } };
+  
+  worksheet.getCell('A5').value = title.toUpperCase();
+  worksheet.getCell('A5').font = { name: 'Arial', size: 14, bold: true, color: { argb: C.navy } };
+  
+  if (subtitle) {
+    worksheet.getCell('A6').value = subtitle;
+    worksheet.getCell('A6').font = { name: 'Arial', size: 10, color: { argb: C.muted } };
+  }
+  
+  worksheet.getCell('F6').value = `PRINTED: ${format(new Date(), "dd MMM yyyy, HH:mm")}`;
+  worksheet.getCell('F6').font = { name: 'Arial', size: 8, color: { argb: C.muted } };
+  
+  for(let i = 1; i <= Math.max(8, worksheet.columnCount); i++) {
+    worksheet.getCell(6, i).border = { bottom: { style: 'thin', color: { argb: C.rule } } };
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
+function buildSheetFromJson(worksheet: ExcelJS.Worksheet, sheetData: any[]) {
+  if (sheetData.length === 0) return;
+  const keys = Object.keys(sheetData[0]);
+  worksheet.columns = keys.map(key => ({
+    header: key,
+    key: key,
+    width: key.toLowerCase().includes('description') || key.toLowerCase().includes('detail') || key.toLowerCase().includes('observations') || key.toLowerCase().includes('performed') ? 40 : 20
+  }));
+  
+  worksheet.addRows(sheetData);
+  
+  worksheet.getRow(1).eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.navy } };
+    cell.font = { bold: true, color: { argb: C.white } };
+    cell.border = { bottom: { style: 'thin', color: { argb: C.rule } } };
+  });
+
+  // Alternate row styles and general borders
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) {
+      row.eachCell((cell) => {
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: 'FFEAE7DF' } }
+        };
+      });
+      if (rowNumber % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFDFDFC' } };
+        });
+      }
+    }
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Checklist');
+
+  // Instead of standard grid, this is a special grid for checklist
+  worksheet.columns = [
+    { header: 'Checkpoint', key: 'checkpoint', width: 40 },
+    { header: 'Daily', key: 'daily', width: 10 },
+    { header: 'Weekly', key: 'weekly', width: 10 },
+    { header: 'Monthly', key: 'monthly', width: 10 },
+    { header: '3 Month', key: 'quarterly', width: 10 },
+    { header: '6 Month', key: 'semi_annually', width: 10 },
+    { header: 'Yearly', key: 'yearly', width: 10 },
+    { header: '5 Yearly', key: 'five_yearly', width: 10 },
+  ];
+
+  tasks.forEach((task) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const row: any = { checkpoint: task.taskName };
+    switch (task.frequency) {
+      case 'daily': row.daily = '✓'; break;
+      case 'weekly': row.weekly = '✓'; break;
+      case 'monthly': row.monthly = '✓'; break;
+      case 'quarterly': row.quarterly = '✓'; break;
+      case 'semi_annually': row.semi_annually = '✓'; break;
+      case 'yearly': row.yearly = '✓'; break;
+      case 'five_yearly': row.five_yearly = '✓'; break;
+    }
+    worksheet.addRow(row);
+  });
+
+  worksheet.getRow(1).eachCell((cell) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.navy } };
+    cell.font = { bold: true, color: { argb: C.white } };
+  });
+
+  // Add the extra info rows (safety measures)
+  worksheet.addRow([]);
+  const safetyRow = worksheet.addRow([`Safety Measures: ${equipment.safetyMeasures || 'N/A'}`]);
+  worksheet.mergeCells(`A${safetyRow.number}:H${safetyRow.number}`);
+  safetyRow.font = { bold: true };
+
+  addExcelHeader(workbook, worksheet, `Equipment Checklist`, `Equipment Name: ${equipment.name} (${equipment.code})`);
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `Checklist_${equipment.code}_${format(new Date(), 'yyyyMMdd')}.xlsx`);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
   const sheetData = tasks.map((task) => {
     const statusText = getTaskStatus(task);
-
     return {
       'Task ID': task.taskId,
       'Task Name': task.taskName,
@@ -76,23 +155,19 @@ export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any
     };
   });
 
-  const worksheet = XLSX.utils.json_to_sheet(sheetData);
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Tasks');
+  buildSheetFromJson(worksheet, sheetData);
+  addExcelHeader(workbook, worksheet, `Asset Task List: ${equipment.name}`, `Code: ${equipment.code} · Location: ${equipment.location}`);
 
-  if (sheetData.length > 0) {
-    const colWidths = Object.keys(sheetData[0]).map((key) => ({ wch: key === 'Task Detail' ? 40 : 20 }));
-    worksheet['!cols'] = colWidths;
-  }
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
-  XLSX.writeFile(workbook, `${equipment.code}_Tasks_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `${equipment.code}_Tasks_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
+export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
-  
   tasks.forEach((task) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eq = equipment.find((e: any) => e.id === task.equipmentId);
@@ -102,9 +177,7 @@ export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: an
     } else if (groupBy === "equipment") {
       group = eq ? `${eq.name} (${eq.code})` : "Unknown Equipment";
     }
-
     const statusText = getTaskStatus(task);
-
     sheetData.push({
       'Grouping': group,
       'Equipment Code': eq?.code || '—',
@@ -127,29 +200,24 @@ export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: an
     sheetData.sort((a, b) => a.Grouping.localeCompare(b.Grouping));
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(sheetData);
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Tasks');
+  buildSheetFromJson(worksheet, sheetData);
+  addExcelHeader(workbook, worksheet, `Scheduled Maintenance Tasks`, `Grouping: ${groupBy}`);
 
-  if (sheetData.length > 0) {
-    const colWidths = Object.keys(sheetData[0]).map((key) => ({ wch: key === 'Task Detail' ? 40 : 20 }));
-    worksheet['!cols'] = colWidths;
-  }
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
-  XLSX.writeFile(workbook, `Task_Report_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `Task_Report_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function exportEquipmentReportExcel({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
+export async function exportEquipmentReportExcel({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
-  
   equipment.forEach((eq) => {
     let group = "All Equipment";
     if (groupBy === "category") {
       group = eq?.category?.name || "Uncategorized";
     }
-
     sheetData.push({
       'Grouping': group,
       'Code': eq.code || '—',
@@ -177,33 +245,29 @@ export function exportEquipmentReportExcel({ equipment, groupBy }: { equipment: 
     sheetData.sort((a, b) => a.Grouping.localeCompare(b.Grouping));
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(sheetData);
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Equipment');
+  buildSheetFromJson(worksheet, sheetData);
+  addExcelHeader(workbook, worksheet, `Shipyard Equipment Registry`, `Master Asset List · Grouped by ${groupBy}`);
 
-  if (sheetData.length > 0) {
-    const colWidths = Object.keys(sheetData[0]).map((key) => ({ wch: key === 'Description' ? 40 : 20 }));
-    worksheet['!cols'] = colWidths;
-  }
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Equipment');
-  XLSX.writeFile(workbook, `Equipment_Registry_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `Equipment_Registry_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function exportToExcel(data: any[], filename: string = 'Export') {
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
+export async function exportToExcel(data: any[], filename: string = 'Export') {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Sheet1');
+  buildSheetFromJson(worksheet, data);
+  addExcelHeader(workbook, worksheet, filename);
 
-  if (data.length > 0) {
-    const colWidths = Object.keys(data[0]).map(() => ({ wch: 20 }));
-    worksheet['!cols'] = colWidths;
-  }
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-  XLSX.writeFile(workbook, `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `${filename}_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
 }
 
-export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preventive', filename: string = 'Maintenance_Report') {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preventive', filename: string = 'Maintenance_Report') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
 
   if (type === 'corrective') {
@@ -245,7 +309,6 @@ export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preven
       };
     });
   } else {
-    // Preventive / Scheduled / Predictive
     sheetData = data.map((item) => {
       const date = item.maintenanceDate ? new Date(item.maintenanceDate) : 
                    item.performedAt ? new Date(item.performedAt) : null;
@@ -272,19 +335,12 @@ export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preven
     });
   }
 
-  const worksheet = XLSX.utils.json_to_sheet(sheetData);
-  const workbook = XLSX.utils.book_new();
-  
-  // Set column widths
-  if (sheetData.length > 0) {
-    const colWidths = Object.keys(sheetData[0]).map((key) => {
-        if (['Problem Description', 'Solution Details', 'Details/Observations', 'Work Performed'].includes(key)) return { wch: 40 };
-        return { wch: 20 };
-    });
-    worksheet['!cols'] = colWidths;
-  }
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Maintenance Log');
+  buildSheetFromJson(worksheet, sheetData);
+  const title = type === "corrective" ? "Corrective (Breakdown) Maintenance Report" : "Preventive (Scheduled) Maintenance Report";
+  addExcelHeader(workbook, worksheet, title, `KR Steel Ship Recycling Yard · Maintenance Operations Log`);
 
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Maintenance Log');
-
-  XLSX.writeFile(workbook, `KR_Steel_${type}_Maintenance_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+  const buffer = await workbook.xlsx.writeBuffer();
+  saveAs(new Blob([buffer]), `KR_Steel_${type}_Maintenance_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
 }

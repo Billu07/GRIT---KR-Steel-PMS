@@ -1,6 +1,6 @@
 export const CATEGORIES = {
   '1': { id: 1, name: 'Material Handling Equipment' },
-  '2': { id: 2, name: 'Measurement Equipment' },
+  '2': { id: 2, name: 'Measuring Equipment' },
   '3': { id: 3, name: 'Safety Equipment' },
   '4': { id: 4, name: 'PPE and Personal Equipment' },
 };
@@ -28,6 +28,6 @@ export const EQUIPMENT_LIST = [
 export const JOBS = [
   { id: 1, jobCode: 'J-001', jobName: 'Monthly Inspection', jobType: 'Inspection', equipmentId: 1, category: 'Material Handling Equipment', flag: 'Urgent', dateDone: '2026-02-01', hoursWorked: 10, plannedHours: 12, dateDue: '2026-03-01', remainingHours: 2, criticality: 'high', overdueDays: 0 },
   { id: 2, jobCode: 'J-002', jobName: 'Oil Change', jobType: 'Maintenance', equipmentId: 2, category: 'Material Handling Equipment', flag: '', dateDone: '2026-01-15', hoursWorked: 5, plannedHours: 5, dateDue: '2026-02-15', remainingHours: 0, criticality: 'medium', overdueDays: 1 },
-  { id: 3, jobCode: 'J-003', jobName: 'Calibration', jobType: 'Calibration', equipmentId: 5, category: 'Measurement Equipment', flag: '', dateDone: '2025-12-01', hoursWorked: 2, plannedHours: 2, dateDue: '2026-12-01', remainingHours: 0, criticality: 'high', overdueDays: 0 },
+  { id: 3, jobCode: 'J-003', jobName: 'Calibration', jobType: 'Calibration', equipmentId: 5, category: 'Measuring Equipment', flag: '', dateDone: '2025-12-01', hoursWorked: 2, plannedHours: 2, dateDue: '2026-12-01', remainingHours: 0, criticality: 'high', overdueDays: 0 },
   { id: 4, jobCode: 'J-004', jobName: 'Safety Check', jobType: 'Inspection', equipmentId: 8, category: 'Safety Equipment', flag: '', dateDone: '2026-01-01', hoursWorked: 1, plannedHours: 1, dateDue: '2026-02-01', remainingHours: 0, criticality: 'low', overdueDays: 14 },
 ];

@@ -9,7 +9,7 @@ async function main() {
   // 1. Create Default Categories
   const categories = [
     { name: 'Material Handling Equipment', description: 'Cranes, Forklifts, etc.' },
-    { name: 'Measurement Equipment', description: 'Calipers, Micrometers, Gauges' },
+    { name: 'Measuring Equipment', description: 'Calipers, Micrometers, Gauges' },
     { name: 'Safety Equipment', description: 'Extinguishers, Harnesses, Kits' },
     { name: 'PPE and Personal Equipment', description: 'Helmets, Gloves, Boots' },
   ]

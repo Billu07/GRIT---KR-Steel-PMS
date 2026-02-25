@@ -97,7 +97,7 @@ ALTER TABLE "maintenance_history" ADD CONSTRAINT "maintenance_history_jobId_fkey
 -- 10. SEED DATA (Categories)
 INSERT INTO "equipment_categories" ("name", "description") VALUES
 ('Material Handling Equipment', 'Cranes, Forklifts, etc.'),
-('Measurement Equipment', 'Calipers, Micrometers, Gauges'),
+('Measuring Equipment', 'Calipers, Micrometers, Gauges'),
 ('Safety Equipment', 'Extinguishers, Harnesses, Kits'),
 ('PPE and Personal Equipment', 'Helmets, Gloves, Boots')
 ON CONFLICT ("name") DO NOTHING;

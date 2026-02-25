@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
-import { Plus, Download, Trash2, Edit, Save, X, Wrench, AlertTriangle, RefreshCw } from "lucide-react";
+import { Plus, Download, Trash2, Edit, Save, X, Wrench, AlertTriangle, RefreshCw, ClipboardCheck } from "lucide-react";
 import { exportEquipmentTasksPdf } from "@/lib/pdfExport";
-import { exportEquipmentTasksExcel } from "@/lib/excelExport";
+import { exportEquipmentTasksExcel, exportEquipmentChecklistExcel } from "@/lib/excelExport";
 import EquipmentModal from "@/components/EquipmentModal";
 import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
@@ -276,8 +276,12 @@ export default function EquipmentDetailPage() {
     exportEquipmentTasksPdf({ equipment, tasks });
   };
 
-  const exportTasksExcel = () => {
-    exportEquipmentTasksExcel({ equipment, tasks });
+  const exportTasksExcel = async () => {
+    await exportEquipmentTasksExcel({ equipment, tasks });
+  };
+
+  const exportChecklistExcel = async () => {
+    await exportEquipmentChecklistExcel(equipment, tasks);
   };
 
   /* shared inline input style */
@@ -469,6 +473,9 @@ export default function EquipmentDetailPage() {
             </button>
             <button className="detail-btn-secondary" onClick={exportTasksExcel}>
             <Download size={13} /> Export Tasks (Excel)
+            </button>
+            <button className="detail-btn-secondary" onClick={exportChecklistExcel}>
+            <ClipboardCheck size={13} /> Export Checklist (Excel)
             </button>
             <button
                 className="detail-btn-secondary"
