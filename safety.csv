@@ -1,0 +1,68 @@
+Equipment/Item,Frequency,Maintenance Task
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Weekly,"Check for any leaks, loose connections, or obvious damage."
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Weekly,"Jockey pump- Ensure it's running at rated speed. Monitor pressure, flow, and check for leaks or unusual noises."
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Weekly,Electrical Pump: Briefly run the pump (if safe to do so and per site procedure) to ensure it starts and runs smoothly. Check for unusual vibrations or noises.
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Weekly,"Diesel Pump: Check engine oil levels, coolant levels, and battery charge. Briefly run the engine to ensure it starts and operates without issues."
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Weekly,Control Panel: Check indicator lights and ensure the system is in an 'Auto' or ready state
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,"Inspect pump casing, seals, bearings, and couplings for wear or damage."
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,"Electrical Pump: Run the pump for a designated period (e.g., 15-30 minutes) Monitor pressure, flow, and temperature."
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,"Diesel Pump: Run the engine for a longer period (e.g., 30 minutes), checking for leaks, proper operation of governor, exhaust system, and all engine components"
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,Battery Check (Diesel Pump): Test battery voltage and specific gravity (if applicable). Clean terminals.
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,Cooling System (Diesel Pump): Check coolant level and condition.
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Monthly,Fuel System (Diesel Pump): Check fuel level and look for any signs of leaks or contamination
+"Fire Pump (Electrical, Diesel and Jockey Pump)",3 Monthly,Flow Testing: Conduct a full flow test to verify pump performance against its rated capacity and pressure.
+"Fire Pump (Electrical, Diesel and Jockey Pump)",3 Monthly,Alarm System Test: Test all alarm functions and interlocks associated with the fire pump system
+"Fire Pump (Electrical, Diesel and Jockey Pump)",Yearly,Carry out major overhauling of all pumps periodically to maintain system pressure
+Fire Hydrant,Weekly,"Visual Check: Ensure the hydrant is visible, accessible, and not obstructed by landscaping, vehicles, or debris. Check for obvious damage or leaks. Check that it drains properly after closure (if applicable to the type of hydrant)."
+Fire Hydrant,Weekly,"Check Caps: Ensure all outlet caps are in place, secure, and have their gaskets intact."
+Fire Hydrant,Monthly,Operate Hydrant: Briefly open and close the hydrant to ensure the valve operates smoothly and there are no leaks from the barrel or outlets.
+Fire Hydrant,3 Monthly,Lubrication: Lubricate the operating nut and stem threads.
+Fire Hydrant,3 Monthly,"Inspect Barrel and Valve: Check for corrosion, damage, or leaks."
+Fire Hydrant,3 Monthly,Test Draining Mechanism: Ensure the drain valve operates correctly to prevent water from freezing in the barrel
+Fire Hydrant,Yearly,Full pressure test
+"Fire Hose and Nozzle, Hose Box",Weekly,"Ensure the box is clean, unlocked (or if locked, the key is in its designated accessible spot), and free from damage."
+"Fire Hose and Nozzle, Hose Box",Weekly,"Check that the hose and nozzle are properly stored and that readily accessible. Visual Check: Inspect the hose for any cuts, abrasions, cracks, mildew, or signs of deterioration. Ensure couplings are not damaged"
+"Fire Hose and Nozzle, Hose Box",Monthly,"Ensure couplings are clean, free from damage, and the gaskets are present and in good condition."
+"Fire Hose and Nozzle, Hose Box",Yearly,"Hose Inspection: Thoroughly inspect the entire length of the hose, inside and out. Look for any signs of weakening."
+"Fire Hose and Nozzle, Hose Box",Yearly,"Hose Replacement: Replace any hose that shows signs of damage, age, or has failed a pressure test."
+"Fire Hose and Nozzle, Hose Box",Yearly,Pressure Testing: Conduct hydrostatic pressure testing.
+Sand Box / Bucket,Weekly,"Visual Check: Ensure the bucket is intact, not cracked or rusted through."
+Sand Box / Bucket,Monthly,"Replace Damp Sand: If sand has become damp or caked, empty and replace it with dry sand."
+Firefighter's Outfit & SCBA,Weekly,"Firefighter's Outfit: Visual Inspection: Check for tears, holes, worn areas, damaged seams, reflective tape issues, and contamination."
+Firefighter's Outfit & SCBA,Weekly,"SCBA: Visual Inspection: Check the entire unit, including cylinder, regulator, mask, harness, and hoses, for damage, wear, or leaks."
+Firefighter's Outfit & SCBA,Weekly,Cylinder Pressure: Ensure the cylinder is at its required pressure (usually 90% or full).
+Firefighter's Outfit & SCBA,Weekly,"Mask Inspection: Check the face seal, lens, and head harness for damage."
+Firefighter's Outfit & SCBA,Monthly,Firefighter's Outfit: Cleaning: Clean exterior contamination as per manufacturer’s instructions.
+Firefighter's Outfit & SCBA,Monthly,Closures Test: Operate all closures to ensure they work smoothly.
+Firefighter's Outfit & SCBA,Monthly,"SCBA: Operational Check: Perform a full system operational check (per manufacturer and regulatory standards, This includes checking the regulator, flow, positive pressure, and listening for leaks."
+Firefighter's Outfit & SCBA,Yearly,Firefighter's Outfit: Thorough Cleaning & Inspection: Professional cleaning and a detailed inspection by a certified technician.
+Firefighter's Outfit & SCBA,Yearly,"SCBA: Full Service: All SCBA units typically require a comprehensive service by a certified technician annually or bi-annually, as per NFPA standards and manufacturer guidelines. This includes internal cleaning and servicing of regulators, mask maintenance, and re-certification of operational checks."
+Firefighter's Outfit & SCBA,5 Yearly,Cylinder Hydrostatic Testing: Cylinders must be hydrostatically tested every 5 years
+Life Buoy and Life Jacket,Weekly,"Visual Check: Ensure they are accessible, not damaged (cracks, tears, missing components), and securely mounted."
+Life Buoy and Life Jacket,Weekly,Life Jacket (Inflatable): Check for any signs of deflation or damage to the bladder and casing.
+Life Buoy and Life Jacket,Monthly,"Visual Check: Ensure they are accessible, not damaged (cracks, tears, missing components), and securely mounted."
+Life Buoy and Life Jacket,Monthly,Life Jacket (Inflatable): Check for any signs of deflation or damage to the bladder and casing.
+Life Buoy and Life Jacket,Yearly,Check Attachment Lines: Inspect all lines for wear and tear
+Water Jel Fire Blanket,Weekly,"Visual Check: Ensure the blanket is present, the packaging is intact, and there are no obvious signs of damage."
+Water Jel Fire Blanket,Monthly,"Inspection: Remove from packaging (if possible, without compromising sterile seal if applicable) for a visual check of the material for tears or signs of deterioration. Ensure it's clean. Re-package carefully."
+Water Jel Fire Blanket,Yearly,Check Expiry Date: Ensure the blanket is not expired. Replace if expired.
+Fire Extinguishers,Weekly,Inspect visually for proper storage.
+Fire Extinguishers,Weekly,Pin and Tamper Seal: Ensure the pin is in place and the tamper seal is intact.
+Fire Extinguishers,Weekly,"Cylinder: Check for dents, corrosion, leaks, or other damage."
+Fire Extinguishers,Weekly,Label: Ensure the label is legible and indicates the type of extinguisher and suitable fires.
+Fire Extinguishers,Weekly,Mounting: Ensure the extinguisher is properly secured to its mounting bracket.
+Fire Extinguishers,Monthly,Pressure Gauge: Ensure the needle is in the green (charged) zone.
+Fire Extinguishers,Monthly,"Nozzle/Hose: Check for obstructions, cracks, or damage."
+Fire Extinguishers,Yearly,Carry out 3rd party inspection
+Emergency Siren,Weekly,Visual Check for proper mounting and obvious damage.
+Emergency Siren,Monthly,Operational Test: Briefly activate the siren to ensure it functions correctly and the sound is clear.
+Emergency Siren,Yearly,Full System Test: Comprehensive test of the siren and its triggering mechanisms.
+Rescue Boat,Weekly,"Visual Check: Inspect the hull, engine, and safety equipment for any obvious damage or missing items. Check fuel and battery levels."
+Rescue Boat,Monthly,Engine Run: Start and run the engine for a designated period to ensure proper operation. Check steering and control systems.
+Rescue Boat,Yearly,"Full Service (Engine/Hull): Conduct comprehensive servicing of the engine, hull, and associated systems. Safety Equipment Check: Ensure all safety equipment is in date and fully functional."
+Ambulance,Weekly,"Vehicle Check: Check engine oil, coolant, tire pressure, and battery. Ensure all medical equipment is present and secured."
+Ambulance,Monthly,"Operational Test: Run the vehicle and test all emergency lights, sirens, and medical systems (e.g., oxygen, suction)."
+Ambulance,Yearly,Major Service: Comprehensive vehicle service and inspection by certified mechanics. Safety Equipment Check: Ensure all safety equipment is in date and fully functional.
+Oil Spill Kits,Weekly,"Visual Check: Ensure the kit is present, accessible, and the container is intact."
+Oil Spill Kits,Monthly,"Inventory Check: Verify that all contents (sorbents, PPE, tools) are present and in good condition."
+Oil Spill Kits,Yearly,Replenishment/Replacement: Replace any used or degraded sorbent materials or PPE. Check expiration dates on any chemicals or sealants if included.

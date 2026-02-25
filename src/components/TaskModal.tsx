@@ -365,6 +365,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       <option value="quarterly">Quarterly</option>
                       <option value="semi_annually">Semi-Annually</option>
                       <option value="yearly">Yearly</option>
+                      <option value="five_yearly">Five Yearly</option>
                     </select>
                   </div>
                   <div>

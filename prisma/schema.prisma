@@ -138,6 +138,7 @@ enum Frequency {
   quarterly     @map("3-monthly")
   semi_annually @map("6-monthly")
   yearly
+  five_yearly   @map("5-yearly")
   hourly
   fifteen_days  @map("15-days")
 }

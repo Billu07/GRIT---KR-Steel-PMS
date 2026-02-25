@@ -315,6 +315,7 @@ export default function PlannedTasksPage() {
                         <option value="quarterly">Quarterly</option>
                         <option value="semi_annually">Semi-Annually</option>
                         <option value="yearly">Yearly</option>
+                        <option value="five_yearly">Five Yearly</option>
                       </select>
                     </td>
                     <td style={{ padding: "8px 12px" }}>

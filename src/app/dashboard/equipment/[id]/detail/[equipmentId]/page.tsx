@@ -706,10 +706,10 @@ export default function EquipmentDetailPage() {
                           <option value="fifteen_days">15 Days</option>
                           <option value="monthly">Monthly</option>
                           <option value="quarterly">Quarterly</option>
-                          <option value="semi_annually">Semi-Annually</option>
-                          <option value="yearly">Yearly</option>
-                        </select>
-                      </td>
+                                                     <option value="semi_annually">Semi-Annually</option>
+                                                     <option value="yearly">Yearly</option>
+                                                     <option value="five_yearly">Five Yearly</option>
+                                                   </select>                      </td>
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
                         <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                       </td>

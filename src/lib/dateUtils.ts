@@ -27,6 +27,9 @@ export function calculateNextDueDate(lastCompletedDate: Date | string, frequency
     case 'yearly':
       nextDue.setFullYear(nextDue.getFullYear() + 1);
       break;
+    case 'five_yearly':
+      nextDue.setFullYear(nextDue.getFullYear() + 5);
+      break;
     default:
       // Default to weekly if unknown, or maybe no change?
       // For safety, let's just return the original date or handle error.

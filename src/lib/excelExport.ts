@@ -9,7 +9,7 @@ export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
   wsData.push([`Equipment Name: ${equipment.name} (${equipment.code})`]);
   
   // 2. Header Row
-  wsData.push(["Checkpoint", "Daily", "Weekly", "Monthly", "3 Month", "6 Month", "Yearly"]);
+  wsData.push(["Checkpoint", "Daily", "Weekly", "Monthly", "3 Month", "6 Month", "Yearly", "5 Yearly"]);
 
   // 3. Task Rows
   tasks.forEach((task) => {
@@ -23,6 +23,7 @@ export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
       case 'quarterly': row[4] = '✓'; break;
       case 'semi_annually': row[5] = '✓'; break;
       case 'yearly': row[6] = '✓'; break;
+      case 'five_yearly': row[7] = '✓'; break;
     }
     
     wsData.push(row);
@@ -51,6 +52,7 @@ export function exportEquipmentChecklistExcel(equipment: any, tasks: any[]) {
     { wch: 10 }, // 3 Month
     { wch: 10 }, // 6 Month
     { wch: 10 }, // Yearly
+    { wch: 10 }, // 5 Yearly
   ];
 
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Checklist');
