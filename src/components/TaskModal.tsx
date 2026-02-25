@@ -31,8 +31,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
     equipmentId: "",
     lastCompletedDate: "",
     nextDueDate: "",
-    estimatedHours: "",
-    runningHours: "0",
     criticality: "medium",
   });
 
@@ -47,8 +45,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
             equipmentId: initialData?.equipmentId ? initialData.equipmentId.toString() : "",
             lastCompletedDate: initialData?.lastCompletedDate ? new Date(initialData.lastCompletedDate).toISOString().split('T')[0] : "",
             nextDueDate: initialData?.nextDueDate ? new Date(initialData.nextDueDate).toISOString().split('T')[0] : "",
-            estimatedHours: initialData?.estimatedHours ? initialData.estimatedHours.toString() : "",
-            runningHours: initialData?.runningHours ? initialData.runningHours.toString() : "0",
             criticality: initialData?.criticality || "medium",
         });
     }
@@ -83,12 +79,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ 
-        ...formData,
-        estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : null,
-        runningHours: parseInt(formData.runningHours || "0")
-    });
-  };
+        onSubmit({
+            ...formData
+        });  };
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
@@ -308,18 +301,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       title="For new equipment, enter the installation date as the reference baseline."
                     />
                   </div>
-                  <div>
-                    <label style={labelStyle}>Running Hours (Logged)</label>
-                    <input
-                      type="number"
-                      name="runningHours"
-                      value={formData.runningHours}
-                      onChange={handleChange}
-                      className="jm-field"
-                      style={fieldStyle}
-                      placeholder="Accumulated hours..."
-                    />
-                  </div>
                 </div>
 
                 {/* Right column */}
@@ -378,18 +359,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
                       className="jm-field"
                       style={{ ...fieldStyle, background: "#F1F5F9", cursor: "not-allowed", opacity: 0.8 }}
                       title="Calculated automatically based on Last Completed Date and Frequency"
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Estimated Hours (Interval)</label>
-                    <input
-                      type="number"
-                      name="estimatedHours"
-                      value={formData.estimatedHours}
-                      onChange={handleChange}
-                      className="jm-field"
-                      style={fieldStyle}
-                      placeholder="e.g. 250"
                     />
                   </div>
                   <div>

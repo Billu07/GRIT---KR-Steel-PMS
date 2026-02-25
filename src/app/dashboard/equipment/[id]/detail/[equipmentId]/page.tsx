@@ -34,8 +34,7 @@ export default function EquipmentDetailPage() {
     frequency: "weekly",
     taskDetail: "",
     criticality: "medium",
-    lastCompletedDate: "",
-    estimatedHours: ""
+    lastCompletedDate: ""
   });
 
   // Modals state
@@ -134,8 +133,7 @@ export default function EquipmentDetailPage() {
       const payload = {
         ...newTask,
         equipmentId,
-        nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
-        estimatedHours: newTask.estimatedHours ? parseInt(newTask.estimatedHours) : null
+        nextDueDate: nextDueDate ? nextDueDate.toISOString() : null
       };
       
       const res = await fetch(`/api/equipment/${categoryId}`, {
@@ -152,8 +150,7 @@ export default function EquipmentDetailPage() {
           frequency: "weekly",
           taskDetail: "",
           criticality: "medium",
-          lastCompletedDate: "",
-          estimatedHours: ""
+          lastCompletedDate: ""
         });
       } else {
         const data = await res.json().catch(() => ({}));
@@ -642,9 +639,6 @@ export default function EquipmentDetailPage() {
                       { label: "Frequency", width: "80px" },
                       { label: "Last Completed", width: "90px" },
                       { label: "Next Due", width: "90px" },
-                      { label: "Est. Hrs", width: "70px" },
-                      { label: "Run. Hrs", width: "90px" },
-                      { label: "Rem. Hrs", width: "70px" },
                       { label: "Status", width: "80px" },
                       { label: "Actions", width: "80px" },
                     ].map((col) => (
@@ -714,11 +708,6 @@ export default function EquipmentDetailPage() {
                         <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                       </td>
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
-                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>
-                         <input name="estimatedHours" type="number" value={newTask.estimatedHours} onChange={handleInputChange} style={inlineInput} placeholder="Hrs" />
-                      </td>
-                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>0</td>
-                      <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>—</td>
                       <td
                         style={{
@@ -763,8 +752,6 @@ export default function EquipmentDetailPage() {
                           statusBg = "#FEF3C7";
                           statusColor = "#92400E";
                       }
-
-                      const remainingHours = task.estimatedHours ? task.estimatedHours - task.runningHours : null;
 
                       return (
                         <tr key={task.id} className={status === "OVERDUE" ? "row-overdue" : status === "DUE" ? "bg-amber-50" : ""}>
@@ -825,29 +812,10 @@ export default function EquipmentDetailPage() {
                           >
                             <span className={status === "OVERDUE" ? "text-overdue" : ""}>
                               {task.nextDueDate ? new Date(task.nextDueDate).toLocaleDateString() : "—"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "12px 16px", color: "#5A6A73", borderBottom: "1px solid #EAE7DF" }}>
-                            {task.estimatedHours || "—"}
-                          </td>
-                          <td style={{ padding: "12px 16px", borderBottom: "1px solid #EAE7DF" }}>
-                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <input 
-                                    type="number" 
-                                    defaultValue={task.runningHours} 
-                                    onBlur={(e) => handleUpdateHours(task.id, e.target.value)}
-                                    className="hours-input"
-                                    disabled={updatingHours === task.id}
-                                />
-                                {updatingHours === task.id && <RefreshCw size={10} className="animate-spin text-blue-500" />}
-                            </div>
-                          </td>
-                          <td style={{ padding: "12px 16px", color: remainingHours !== null && remainingHours <= 0 ? "#DC2626" : "#5A6A73", fontWeight: remainingHours !== null && remainingHours <= 0 ? 700 : 400, borderBottom: "1px solid #EAE7DF" }}>
-                            {remainingHours !== null ? remainingHours : "—"}
-                          </td>
-                          <td style={{ padding: "12px 16px", borderBottom: "1px solid #EAE7DF" }}>
-                             <span style={{ 
-                                padding: "2px 8px", 
+                                                        </span>
+                                                      </td>
+                                                      <td style={{ padding: "12px 16px", borderBottom: "1px solid #EAE7DF" }}>
+                                                         <span style={{                                padding: "2px 8px", 
                                 background: statusBg,
                                 color: statusColor,
                                 borderRadius: "10px", fontSize: "9px", fontWeight: 700, textTransform: "uppercase" }}>

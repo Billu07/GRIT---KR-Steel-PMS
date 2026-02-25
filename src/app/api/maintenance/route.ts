@@ -57,16 +57,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    let taskRunningHours = null;
-    let taskEstimatedHours = null;
     let taskTargetDate = null;
 
     // If it's a scheduled task, fetch current hours and targets before we reset them
     if (taskId) {
         const task = await prisma.task.findUnique({ where: { id: parseInt(taskId) } });
         if (task) {
-            taskRunningHours = task.runningHours;
-            taskEstimatedHours = task.estimatedHours;
             taskTargetDate = task.nextDueDate;
         }
     }
@@ -76,10 +72,7 @@ export async function POST(req: NextRequest) {
         equipmentId,
         taskId: taskId ? parseInt(taskId) : null,
         type,
-        runningHours: taskRunningHours,
-        estimatedHours: taskEstimatedHours,
         targetDate: taskTargetDate,
-        targetHours: taskEstimatedHours, // Record the hour target for the history log
         informationDate: informationDate ? new Date(informationDate) : null,
         serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
         serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
@@ -100,14 +93,13 @@ export async function POST(req: NextRequest) {
       if (task) {
         // Use the explicit maintenanceDate if provided, otherwise default to today
         const completedDate = maintenanceDate ? new Date(maintenanceDate) : new Date();
-        const nextDue = calculateNextDueDate(completedDate, task.frequency);
+        const nextDue = calculateNextDueDate(completedDate, task.frequency as any);
 
         await prisma.task.update({
           where: { id: task.id },
           data: {
             lastCompletedDate: completedDate,
-            nextDueDate: nextDue,
-            runningHours: 0 // Reset usage-based counter on completion
+            nextDueDate: nextDue
           }
         });
       }

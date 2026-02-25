@@ -71,8 +71,6 @@ export function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any
       'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
       'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
       'Criticality': task.criticality?.toUpperCase() || '—',
-      'Running Hours': task.runningHours || 0,
-      'Estimated Hours': task.estimatedHours || '—',
       'Status': statusText,
       'Task Detail': task.taskDetail || '—',
     };
@@ -117,8 +115,6 @@ export function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: an
       'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
       'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
       'Criticality': task.criticality?.toUpperCase() || '—',
-      'Running Hours': task.runningHours || 0,
-      'Estimated Hours': task.estimatedHours || '—',
       'Status': statusText,
       'Task Detail': task.taskDetail || '—',
     });
@@ -255,8 +251,7 @@ export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preven
                    item.performedAt ? new Date(item.performedAt) : null;
       
       const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
-      const wasHoursOverdue = item.targetHours && item.runningHours && item.runningHours >= item.targetHours;
-      const performanceStatus = (wasDateOverdue || wasHoursOverdue) ? "LATE / OVER" : "ON-TIME";
+      const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
       return {
         'Log ID': item.id,
@@ -268,8 +263,6 @@ export function exportMaintenanceExcel(data: any[], type: 'corrective' | 'preven
         'Task Name': item.task?.taskName || '—',
         'Interval': item.task?.frequency?.toUpperCase() || '—',
         'Target Date': item.targetDate ? format(new Date(item.targetDate), 'dd MMM yyyy') : '—',
-        'Target Hours': item.targetHours || '—',
-        'Hours at Completion': item.runningHours !== null ? item.runningHours : '—',
         'Performance Status': performanceStatus,
         'Observations': item.maintenanceDetails || item.problemDescription || '—',
         'Work Performed': item.solutionDetails || '—',

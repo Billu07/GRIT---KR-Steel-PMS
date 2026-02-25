@@ -27,8 +27,7 @@ export default function PlannedTasksPage() {
     frequency: "weekly",
     taskDetail: "",
     criticality: "medium",
-    lastCompletedDate: "",
-    estimatedHours: ""
+    lastCompletedDate: ""
   });
 
   // Modal state
@@ -119,8 +118,7 @@ export default function PlannedTasksPage() {
 
       const payload = {
           ...newTask,
-          nextDueDate: nextDueDate ? nextDueDate.toISOString() : null,
-          estimatedHours: newTask.estimatedHours ? parseInt(newTask.estimatedHours) : null
+          nextDueDate: nextDueDate ? nextDueDate.toISOString() : null
       };
 
       const res = await fetch("/api/tasks", {
@@ -131,7 +129,7 @@ export default function PlannedTasksPage() {
 
       if (res.ok) {
         setIsAdding(false);
-        setNewTask({ taskId: "", taskName: "", equipmentId: "", frequency: "weekly", taskDetail: "", criticality: "medium", lastCompletedDate: "", estimatedHours: "" });
+        setNewTask({ taskId: "", taskName: "", equipmentId: "", frequency: "weekly", taskDetail: "", criticality: "medium", lastCompletedDate: "" });
         mutate();
       } else {
         const err = await res.json();
@@ -280,7 +278,7 @@ export default function PlannedTasksPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#EAE7DF" }}>
                 <tr>
-                  {["Task ID", "Task Name", "Equipment", "Frequency", "Reference Date (Last Done)", "Next Due Date", "Est. Hours", "Running Hours", "Rem. Hours", "Status", "Actions"].map((h) => (
+                  {["Task ID", "Task Name", "Equipment", "Frequency", "Reference Date (Last Done)", "Next Due Date", "Status", "Actions"].map((h) => (
                     <th key={h} style={{ padding: "12px 16px", textAlign: h === "Actions" ? "right" : "left", fontSize: "10px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#225CA3", borderBottom: "1px solid #D0CBC0", whiteSpace: "nowrap" }}>
                       {h}
                     </th>
@@ -322,11 +320,6 @@ export default function PlannedTasksPage() {
                       <input type="date" name="lastCompletedDate" value={newTask.lastCompletedDate} onChange={handleInputChange} style={inlineInput} />
                     </td>
                     <td style={{ padding: "8px 12px" }}>—</td>
-                    <td style={{ padding: "8px 12px" }}>
-                        <input name="estimatedHours" type="number" value={newTask.estimatedHours} onChange={handleInputChange} style={inlineInput} placeholder="Hrs" />
-                    </td>
-                    <td style={{ padding: "8px 12px" }}>0</td>
-                    <td style={{ padding: "8px 12px" }}>—</td>
                     <td style={{ padding: "8px 12px" }}>—</td>
                     <td style={{ padding: "8px 12px", textAlign: "right", whiteSpace: "nowrap" }}>
                       <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
@@ -347,8 +340,8 @@ export default function PlannedTasksPage() {
                     let statusBg = "#DEF7EC";
                     let statusColor = "#03543F";
                     
-                    const isOverdue = (nextDueDate && nextDueDate < today) || (t.estimatedHours && t.runningHours >= t.estimatedHours);
-                    const isDueSoon = (nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate) || (t.estimatedHours && t.runningHours >= t.estimatedHours * 0.9 && t.runningHours < t.estimatedHours);
+                    const isOverdue = nextDueDate && nextDueDate < today;
+                    const isDueSoon = nextDueDate && nextDueDate >= today && nextDueDate <= dueSoonDate;
 
                     if (isOverdue) {
                         statusText = "OVERDUE";
@@ -359,8 +352,6 @@ export default function PlannedTasksPage() {
                         statusBg = "#FEF3C7";
                         statusColor = "#92400E";
                     }
-
-                    const remainingHours = t.estimatedHours ? t.estimatedHours - t.runningHours : null;
 
                     return (
                       <tr key={t.id} className={isOverdue ? "row-overdue" : isDueSoon ? "bg-amber-50" : ""} style={{ borderBottom: "1px solid #EAE7DF" }}>
@@ -388,29 +379,10 @@ export default function PlannedTasksPage() {
                         <td style={{ padding: "14px 16px", color: "#1A1A1A" }}>
                           <span className={isOverdue ? "text-overdue" : ""}>
                             {t.nextDueDate ? new Date(t.nextDueDate).toLocaleDateString() : "—"}
-                          </span>
-                        </td>
-                        <td style={{ padding: "14px 16px", color: "#5A6A73" }}>
-                            {t.estimatedHours || "—"}
-                        </td>
-                        <td style={{ padding: "14px 16px" }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <input 
-                                    type="number" 
-                                    defaultValue={t.runningHours} 
-                                    onBlur={(e) => handleUpdateHours(t.id, e.target.value)}
-                                    className="hours-input"
-                                    disabled={updatingHours === t.id}
-                                />
-                                {updatingHours === t.id && <RefreshCw size={10} className="animate-spin text-blue-500" />}
-                            </div>
-                        </td>
-                        <td style={{ padding: "14px 16px", color: remainingHours !== null && remainingHours <= 0 ? "#DC2626" : "#5A6A73", fontWeight: remainingHours !== null && remainingHours <= 0 ? 700 : 400, borderBottom: "1px solid #EAE7DF" }}>
-                            {remainingHours !== null ? remainingHours : "—"}
-                        </td>
-                        <td style={{ padding: "14px 16px" }}>
-                            <span style={{ 
-                                padding: "2px 8px", 
+                                                    </span>
+                                                  </td>
+                                                  <td style={{ padding: "14px 16px" }}>
+                                                      <span style={{                                padding: "2px 8px", 
                                 background: statusBg,
                                 color: statusColor,
                                 borderRadius: "10px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>

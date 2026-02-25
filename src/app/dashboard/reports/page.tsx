@@ -327,7 +327,6 @@ export default function ReportsBuilderPage() {
                                         <th className="p-4 border-b border-[#D0CBC0]">Frequency</th>
                                         <th className="p-4 border-b border-[#D0CBC0]">Last Done</th>
                                         <th className="p-4 border-b border-[#D0CBC0]">Next Due</th>
-                                        <th className="p-4 border-b border-[#D0CBC0]">Running Hrs</th>
                                         <th className="p-4 border-b border-[#D0CBC0]">Status</th>
                                     </>
                                 )}
@@ -362,7 +361,6 @@ export default function ReportsBuilderPage() {
                                         <td className="p-4 capitalize">{task.frequency}</td>
                                         <td className="p-4">{task.lastCompletedDate ? format(new Date(task.lastCompletedDate), "dd MMM yyyy") : 'NEVER'}</td>
                                         <td className="p-4">{task.nextDueDate ? format(new Date(task.nextDueDate), "dd MMM yyyy") : '—'}</td>
-                                        <td className="p-4">{task.runningHours || 0} / {task.estimatedHours || '—'}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${statusColor}`}>
                                                 {statusText}

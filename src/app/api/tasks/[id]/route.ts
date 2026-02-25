@@ -30,7 +30,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const body = await req.json();
-    const { taskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality, estimatedHours, runningHours } = body;
+    const { taskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality } = body;
 
     const currentTask = await prisma.task.findUnique({ where: { id: dbTaskId } });
     if (!currentTask) {
@@ -47,21 +47,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (lastCompletedDate !== undefined) updateData.lastCompletedDate = lastCompletedDate ? new Date(lastCompletedDate) : null;
     if (nextDueDate !== undefined) updateData.nextDueDate = nextDueDate ? new Date(nextDueDate) : null;
     if (criticality !== undefined) updateData.criticality = criticality;
-    
-    // Usage tracking safeguards
-    if (estimatedHours !== undefined) {
-        if (estimatedHours === null || estimatedHours === "") {
-            updateData.estimatedHours = null;
-        } else {
-            const parsed = parseInt(estimatedHours);
-            updateData.estimatedHours = isNaN(parsed) ? null : parsed;
-        }
-    }
-    
-    if (runningHours !== undefined) {
-        const parsed = parseInt(runningHours);
-        updateData.runningHours = isNaN(parsed) ? 0 : parsed;
-    }
 
     const updatedTask = await prisma.task.update({
       where: { id: dbTaskId },

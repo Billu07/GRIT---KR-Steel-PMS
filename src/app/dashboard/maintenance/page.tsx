@@ -256,7 +256,6 @@ export default function MaintenanceLogPage() {
                     "Type",
                     "Equipment",
                     "Task Info",
-                    "Usage Info",
                     "Observations",
                     "Work Done",
                     "Parts",
@@ -370,22 +369,6 @@ export default function MaintenanceLogPage() {
                                   </span>
                               </div>
                           )}
-                        </td>
-                        <td
-                          style={{
-                            padding: "14px 16px",
-                            color: "#1A1A1A",
-                            borderBottom: "1px solid #EAE7DF",
-                            fontSize: "11px",
-                            fontWeight: 600
-                          }}
-                        >
-                          {log.runningHours !== null ? (
-                              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span>{log.runningHours} HRS</span>
-                                  <span style={{ fontSize: '9px', color: '#7A8A93', fontWeight: 400 }}>TAR: {log.estimatedHours || '—'}</span>
-                              </div>
-                          ) : '—'}
                         </td>
                         <td
                           style={{

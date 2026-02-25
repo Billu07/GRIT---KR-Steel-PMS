@@ -165,14 +165,13 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
           t.frequency?.toUpperCase() || "—", 
           t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
           t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "—", 
-          `${t.runningHours || 0}/${t.estimatedHours || "—"}`,
           statusText,
           t.taskDetail || "—"
         ];
     });
     autoTable(doc, { 
       ...tableDefaults(startY, meta), 
-      head: [["ID", "TASK NAME", "EQ CODE", "FREQ", "LAST DONE", "NEXT DUE", "HRS (R/E)", "STATUS", "DETAIL"]], 
+      head: [["ID", "TASK NAME", "EQ CODE", "FREQ", "LAST DONE", "NEXT DUE", "STATUS", "DETAIL"]], 
       body: rows,
       columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 40 }, 7: { fontStyle: 'bold' } }
     });
@@ -219,7 +218,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
   const head = type === "corrective" 
     ? [["TIMELINE / DATES", "EQUIPMENT IDENTITY", "SPECS / DURATIONS", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["DATE COMPLETED", "EQUIPMENT / SPECS", "TASK / FREQ", "TARGETS (DATE/HRS)", "ACTUAL (HRS/STATUS)", "WORK DONE / REMARKS", "PARTS"]];
+    : [["DATE COMPLETED", "EQUIPMENT / SPECS", "TASK / FREQ", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
 
   const rows = data.map((item: any) => {
     const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
@@ -250,13 +249,11 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : (item.performedAt ? format(new Date(item.performedAt), 'dd/MM/yyyy') : "—");
       const taskInfo = `${item.task?.taskId || 'PREV'}\n${item.task?.taskName || 'MAINT'}\nFreq: ${item.task?.frequency?.toUpperCase() || '—'}`;
       
-      const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}\nTar: ${item.targetHours || '—'} hrs`;
+            const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;
       
-      const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
-      const wasHoursOverdue = item.targetHours && item.runningHours && item.runningHours >= item.targetHours;
-      const status = (wasDateOverdue || wasHoursOverdue) ? "LATE / OVER" : "ON-TIME";
-      const usage = `Run: ${item.runningHours || '0'} hrs\nStat: ${status}`;
-      
+            const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
+            const status = wasDateOverdue ? "LATE" : "ON-TIME";
+            const usage = `Stat: ${status}`;      
       const details = `${item.maintenanceDetails || item.problemDescription || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
       return [date, eqInfo, taskInfo, targets, usage, details, item.usedParts || "—"];
     }
@@ -295,7 +292,6 @@ export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; 
       t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
       t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "—", 
       t.criticality?.toUpperCase() || "—", 
-      `${t.runningHours || 0}/${t.estimatedHours || "—"}`,
       statusText,
       t.taskDetail || "—"
     ];
@@ -303,7 +299,7 @@ export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; 
 
   autoTable(doc, { 
     ...tableDefaults(startY, meta), 
-    head: [["ID", "TASK NAME", "FREQUENCY", "LAST DONE", "NEXT DUE", "CRITICALITY", "HRS (R/E)", "STATUS", "DETAILS"]], 
+    head: [["ID", "TASK NAME", "FREQUENCY", "LAST DONE", "NEXT DUE", "CRITICALITY", "STATUS", "DETAILS"]], 
     body: rows,
     columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 45 }, 7: { fontStyle: 'bold' } }
   });

@@ -48,7 +48,7 @@ async function main() {
   // Keep track of created equipment to avoid querying DB for every row
   const equipmentMap = new Map<string, any>();
 
-  for (const row of records) {
+  for (const row of records as any[]) {
     const equipmentName = row['Equipment/Item']?.trim();
     const frequencyStr = row['Frequency']?.trim();
     const taskName = row['Maintenance Task']?.trim();

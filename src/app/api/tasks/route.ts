@@ -30,7 +30,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await requestToJson(req);
-    const { taskId: providedTaskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality, estimatedHours, runningHours } = body;
+    const { taskId: providedTaskId, taskName, frequency, taskDetail, equipmentId, lastCompletedDate, nextDueDate, criticality } = body;
 
     if (!taskName || !equipmentId || !frequency) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -60,9 +60,6 @@ export async function POST(req: NextRequest) {
       taskId = `TSK-${String(maxNum + 1).padStart(4, '0')}`;
     }
 
-    const parsedEstimatedHours = estimatedHours ? parseInt(estimatedHours) : null;
-    const parsedRunningHours = runningHours ? parseInt(runningHours) : 0;
-
     const newTask = await prisma.task.create({
       data: {
         taskId,
@@ -72,8 +69,6 @@ export async function POST(req: NextRequest) {
         equipmentId: parseInt(equipmentId),
         lastCompletedDate: lastCompletedDate ? new Date(lastCompletedDate) : null,
         nextDueDate: nextDueDate ? new Date(nextDueDate) : null,
-        estimatedHours: isNaN(parsedEstimatedHours as number) ? null : parsedEstimatedHours,
-        runningHours: isNaN(parsedRunningHours) ? 0 : parsedRunningHours,
         criticality: criticality || 'medium',
         createdBy: 1, // Default admin
       },

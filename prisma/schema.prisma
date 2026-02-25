@@ -69,8 +69,6 @@ model Task {
   criticality        Criticality          @default(medium)
   lastCompletedDate  DateTime?
   nextDueDate        DateTime?
-  estimatedHours     Int?
-  runningHours       Int                  @default(0)
   maintenanceHistory MaintenanceHistory[]
   creator            User                 @relation("TaskCreator", fields: [createdBy], references: [id])
   equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
@@ -96,10 +94,7 @@ model MaintenanceHistory {
   usedParts          String?
   workType           WorkType?
   taskId             Int?
-  estimatedHours     Int?
-  runningHours       Int?
   targetDate         DateTime?
-  targetHours        Int?
   equipment          Equipment       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   task               Task?           @relation(fields: [taskId], references: [id])
 
