@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     const { 
       equipmentId, 
       taskId,
+      taskIds,
       type, 
       informationDate, 
       serviceStartDate, 
@@ -57,41 +58,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    let taskTargetDate = null;
+    const targetTaskIds = taskIds && Array.isArray(taskIds) && taskIds.length > 0 
+      ? taskIds 
+      : (taskId ? [parseInt(taskId)] : [null]);
 
-    // If it's a scheduled task, fetch current hours and targets before we reset them
-    if (taskId) {
-        const task = await prisma.task.findUnique({ where: { id: parseInt(taskId) } });
+    const createdLogs = [];
+
+    for (const tId of targetTaskIds) {
+      let taskTargetDate = null;
+      let task = null;
+
+      if (tId) {
+        task = await prisma.task.findUnique({ where: { id: tId } });
         if (task) {
             taskTargetDate = task.nextDueDate;
         }
-    }
+      }
 
-    const newHistory = await prisma.maintenanceHistory.create({
-      data: {
-        equipmentId,
-        taskId: taskId ? parseInt(taskId) : null,
-        type,
-        targetDate: taskTargetDate,
-        informationDate: informationDate ? new Date(informationDate) : null,
-        serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
-        serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
-        problemDescription,
-        solutionDetails,
-        usedParts,
-        workType,
-        problemType,
-        remarks,
-        maintenanceDate: maintenanceDate ? new Date(maintenanceDate) : null,
-        maintenanceDetails,
-        performedAt: new Date(),
-      },
-    });
+      const newHistory = await prisma.maintenanceHistory.create({
+        data: {
+          equipmentId,
+          taskId: tId,
+          type,
+          targetDate: taskTargetDate,
+          informationDate: informationDate ? new Date(informationDate) : null,
+          serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
+          serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
+          problemDescription: type === 'scheduled' ? null : problemDescription,
+          solutionDetails,
+          usedParts,
+          workType,
+          problemType,
+          remarks,
+          maintenanceDate: maintenanceDate ? new Date(maintenanceDate) : null,
+          maintenanceDetails,
+          performedAt: new Date(),
+        },
+      });
 
-    if (taskId) {
-      const task = await prisma.task.findUnique({ where: { id: parseInt(taskId) } });
+      createdLogs.push(newHistory);
+
       if (task) {
-        // Use the explicit maintenanceDate if provided, otherwise default to today
         const completedDate = maintenanceDate ? new Date(maintenanceDate) : new Date();
         const nextDue = calculateNextDueDate(completedDate, task.frequency as any);
 
@@ -105,7 +112,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json(newHistory, { status: 201 });
+    return NextResponse.json(createdLogs.length === 1 ? createdLogs[0] : createdLogs, { status: 201 });
   } catch (error) {
     console.error('Maintenance logging error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

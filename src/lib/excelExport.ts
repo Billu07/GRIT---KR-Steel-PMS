@@ -327,7 +327,6 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
         'Interval': item.task?.frequency?.toUpperCase() || '—',
         'Target Date': item.targetDate ? format(new Date(item.targetDate), 'dd MMM yyyy') : '—',
         'Performance Status': performanceStatus,
-        'Observations': item.maintenanceDetails || item.problemDescription || '—',
         'Work Performed': item.solutionDetails || '—',
         'Parts Used': item.usedParts || '—',
         'Remarks': item.remarks || '',

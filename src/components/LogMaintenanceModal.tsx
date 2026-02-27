@@ -38,6 +38,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   const [formData, setFormData] = useState({
     type: "corrective",
     taskId: "",
+    frequency: "",
     equipmentId: "",
     informationDate: "",
     serviceStartDate: "",
@@ -58,6 +59,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
         setFormData({
             type: initialData.type || "corrective",
             taskId: initialData.taskId ? String(initialData.taskId) : "",
+            frequency: "",
             equipmentId: initialData.equipmentId ? String(initialData.equipmentId) : "",
             informationDate: initialData.informationDate ? new Date(initialData.informationDate).toISOString().slice(0, 16) : "",
             serviceStartDate: initialData.serviceStartDate ? new Date(initialData.serviceStartDate).toISOString().slice(0, 16) : "",
@@ -81,6 +83,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             serviceStartDate: now,
             serviceEndDate: now,
             taskId: "",
+            frequency: "",
             type: "corrective",
             problemDescription: "",
             solutionDetails: "",
@@ -116,14 +119,35 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
       return;
     }
 
+    let taskIdsToSubmit: number[] = [];
+    if (formData.type === 'scheduled') {
+      if (!initialData) {
+        if (!formData.frequency) {
+          alert("Please select a frequency.");
+          return;
+        }
+        taskIdsToSubmit = filteredTasks.filter((t: any) => t.frequency === formData.frequency).map((t: any) => t.id);
+        if (taskIdsToSubmit.length === 0) {
+          alert("No tasks found for the selected frequency.");
+          return;
+        }
+      } else {
+        if (formData.taskId) {
+          taskIdsToSubmit = [parseInt(formData.taskId)];
+        }
+      }
+    }
+
     const payload = { 
       ...formData,
       equipmentId: parseInt(formData.equipmentId),
-      taskId: formData.taskId ? parseInt(formData.taskId) : null
+      taskId: formData.taskId ? parseInt(formData.taskId) : null,
+      taskIds: taskIdsToSubmit.length > 0 ? taskIdsToSubmit : undefined
     };
     
     if (formData.type === 'corrective') {
       payload.taskId = null;
+      payload.taskIds = undefined;
     }
 
     onSubmit(payload);
@@ -210,10 +234,33 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
               </div>
             </div>
 
-            {isScheduled && (
+            {isScheduled && !initialData && (
               <div style={{ marginBottom: "24px" }}>
-                <label style={labelStyle}><ClipboardCheck size={12}/> Select Scheduled Task</label>
-                <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} required>
+                <label style={labelStyle}><ClipboardCheck size={12}/> Select Task Frequency</label>
+                <select name="frequency" value={formData.frequency} onChange={handleChange} style={selectStyle} required>
+                  <option value="">-- Select Frequency --</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="15-days">15 Days</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="3-monthly">Quarterly (3 Months)</option>
+                  <option value="6-monthly">Semi-Annually (6 Months)</option>
+                  <option value="yearly">Yearly</option>
+                  <option value="5-yearly">5 Yearly</option>
+                  <option value="hourly">Hourly</option>
+                </select>
+                {formData.frequency && (
+                  <div style={{ marginTop: "8px", fontSize: "12px", color: "#555" }}>
+                    Selected tasks: {filteredTasks.filter((t: any) => t.frequency === formData.frequency).length}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isScheduled && initialData && (
+              <div style={{ marginBottom: "24px" }}>
+                <label style={labelStyle}><ClipboardCheck size={12}/> Scheduled Task</label>
+                <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} disabled>
                   <option value="">-- Select Task --</option>
                   {filteredTasks.map((t: any) => (
                     <option key={t.id} value={t.id}>{t.taskId}: {t.taskName} ({t.frequency})</option>
@@ -247,12 +294,14 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-              <div>
-                <label style={labelStyle}>
-                    {isScheduled ? 'Observations & Details' : isPredictive ? 'Condition Analysis / Findings' : 'Problem Description'}
-                </label>
-                <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
-              </div>
+              {!isScheduled && (
+                <div>
+                  <label style={labelStyle}>
+                      {isPredictive ? 'Condition Analysis / Findings' : 'Problem Description'}
+                  </label>
+                  <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
+                </div>
+              )}
               <div>
                 <label style={labelStyle}>
                     {isPredictive ? 'Recommended Action' : 'Work Performed / Solution'}

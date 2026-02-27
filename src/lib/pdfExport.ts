@@ -254,7 +254,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
             const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
             const status = wasDateOverdue ? "LATE" : "ON-TIME";
             const usage = `Stat: ${status}`;      
-      const details = `${item.maintenanceDetails || item.problemDescription || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
+      const details = `${item.solutionDetails || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
       return [date, eqInfo, taskInfo, targets, usage, details, item.usedParts || "—"];
     }
   });
