@@ -380,7 +380,7 @@ export default function MaintenanceLogPage() {
                             lineHeight: "1.4"
                           }}
                         >
-                          {log.problemDescription || log.maintenanceDetails || '—'}
+                          {log.type === 'scheduled' ? '—' : (log.problemDescription || log.maintenanceDetails || '—')}
                         </td>
                         <td
                           style={{
