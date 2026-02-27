@@ -225,57 +225,59 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                   <option value="predictive">Predictive (Condition)</option>
                 </select>
               </div>
-              <div>
-                <label style={labelStyle}>
-                    <Calendar size={12}/> 
-                    {isScheduled ? 'Maintenance Date' : isPredictive ? 'Observation Date' : 'Breakdown Reported'}
-                </label>
-                <input type="datetime-local" name={isScheduled || isPredictive ? "maintenanceDate" : "informationDate"} value={isScheduled || isPredictive ? formData.maintenanceDate : formData.informationDate} onChange={handleChange} style={fieldStyle} />
-              </div>
-            </div>
-
-            {isScheduled && !initialData && (
-              <div style={{ marginBottom: "24px" }}>
-                <label style={labelStyle}><ClipboardCheck size={12}/> Select Task Frequency</label>
-                <select name="frequency" value={formData.frequency} onChange={handleChange} style={selectStyle} required>
-                  <option value="">-- Select Frequency --</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="15-days">15 Days</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="3-monthly">Quarterly (3 Months)</option>
-                  <option value="6-monthly">Semi-Annually (6 Months)</option>
-                  <option value="yearly">Yearly</option>
-                  <option value="5-yearly">5 Yearly</option>
-                  <option value="hourly">Hourly</option>
-                </select>
-                {formData.frequency && (
-                  <div style={{ marginTop: "8px", fontSize: "12px", color: "#555" }}>
-                    Selected tasks: {filteredTasks.filter((t: any) => t.frequency === formData.frequency).length}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {isScheduled && initialData && (
-              <div style={{ marginBottom: "24px" }}>
-                <label style={labelStyle}><ClipboardCheck size={12}/> Scheduled Task</label>
-                <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} disabled>
-                  <option value="">-- Select Task --</option>
-                  {filteredTasks.map((t: any) => (
-                    <option key={t.id} value={t.id}>{t.taskId}: {t.taskName} ({t.frequency})</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {isCorrective && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
-                <div><label style={labelStyle}>Service Start</label><input type="datetime-local" name="serviceStartDate" value={formData.serviceStartDate} onChange={handleChange} style={fieldStyle} /></div>
-                <div><label style={labelStyle}>Service End</label><input type="datetime-local" name="serviceEndDate" value={formData.serviceEndDate} onChange={handleChange} style={fieldStyle} /></div>
-              </div>
-            )}
-
+                            <div>
+                              <label style={labelStyle}>
+                                  <Calendar size={12}/>
+                                  {isPredictive ? 'Observation Date' : 'Maintenance / Log Date'}
+                              </label>
+                              <input type="datetime-local" name="maintenanceDate" value={formData.maintenanceDate} onChange={handleChange} style={fieldStyle} />
+                            </div>
+                          </div>
+              
+                          {isScheduled && !initialData && (
+                            <div style={{ marginBottom: "24px" }}>
+                              <label style={labelStyle}><ClipboardCheck size={12}/> Select Task Frequency</label>
+                              <select name="frequency" value={formData.frequency} onChange={handleChange} style={selectStyle} required>
+                                <option value="">-- Select Frequency --</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="15-days">15 Days</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="3-monthly">Quarterly (3 Months)</option>
+                                <option value="6-monthly">Semi-Annually (6 Months)</option>
+                                <option value="yearly">Yearly</option>
+                                <option value="5-yearly">5 Yearly</option>
+                                <option value="hourly">Hourly</option>
+                              </select>
+                              {formData.frequency && (
+                                <div style={{ marginTop: "8px", fontSize: "12px", color: "#555" }}>
+                                  Selected tasks: {filteredTasks.filter((t: any) => t.frequency === formData.frequency).length}
+                                </div>
+                              )}
+                            </div>
+                          )}
+              
+                          {isScheduled && initialData && (
+                            <div style={{ marginBottom: "24px" }}>
+                              <label style={labelStyle}><ClipboardCheck size={12}/> Scheduled Task</label>
+                              <select name="taskId" value={formData.taskId} onChange={handleChange} style={selectStyle} disabled>
+                                <option value="">-- Select Task --</option>
+                                {filteredTasks.map((t: any) => (
+                                  <option key={t.id} value={t.id}>{t.taskId}: {t.taskName} ({t.frequency})</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+              
+                          {isCorrective && (
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px", marginBottom: "24px" }}>
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
+                                <div><label style={labelStyle}>Breakdown Reported</label><input type="datetime-local" name="informationDate" value={formData.informationDate} onChange={handleChange} style={fieldStyle} /></div>
+                                <div><label style={labelStyle}>Service Start</label><input type="datetime-local" name="serviceStartDate" value={formData.serviceStartDate} onChange={handleChange} style={fieldStyle} /></div>
+                                <div><label style={labelStyle}>Service End</label><input type="datetime-local" name="serviceEndDate" value={formData.serviceEndDate} onChange={handleChange} style={fieldStyle} /></div>
+                              </div>
+                            </div>
+                          )}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
               <div>
                 <label style={labelStyle}>Problem Type</label>
