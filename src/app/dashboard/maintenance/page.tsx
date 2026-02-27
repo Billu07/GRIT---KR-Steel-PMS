@@ -299,10 +299,6 @@ export default function MaintenanceLogPage() {
                           {log.type === 'corrective' ? (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                                      <span style={{ fontSize: '9px', fontWeight: 700, color: '#7A8A93' }}>REP:</span>
-                                      <span style={{ fontSize: '10px' }}>{log.informationDate ? format(new Date(log.informationDate), 'dd MMM yy') : '—'}</span>
-                                  </div>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                                       <span style={{ fontSize: '9px', fontWeight: 700, color: '#225CA3' }}>SRV:</span>
                                       <span style={{ fontSize: '10px' }}>{log.serviceStartDate ? format(new Date(log.serviceStartDate), 'dd MMM yy') : '—'}</span>
                                   </div>

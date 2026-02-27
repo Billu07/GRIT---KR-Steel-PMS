@@ -282,12 +282,6 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
         maintenanceTimeStr = `${Math.floor(mins / 60)}h ${mins % 60}m`;
       }
 
-      let breakdownTimeStr = '—';
-      if (information && end) {
-        const mins = differenceInMinutes(end, information);
-        breakdownTimeStr = `${Math.floor(mins / 60)}h ${mins % 60}m`;
-      }
-
       return {
         'Equipment Code': item.equipment?.code || '—',
         'Equipment Name': item.equipment?.name || '—',
@@ -295,11 +289,9 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
         'Model': item.equipment?.model || '—',
         'Serial Number': item.equipment?.serialNumber || '—',
         'Capacity': item.equipment?.capacity || '—',
-        'Log Date': information ? format(information, 'dd MMM yyyy') : '—',
         'Service Start': start ? format(start, 'dd MMM yyyy HH:mm') : '—',
         'Service End': end ? format(end, 'dd MMM yyyy HH:mm') : '—',
         'Maintenance Duration': maintenanceTimeStr,
-        'Total Breakdown': breakdownTimeStr,
         'Problem Type': item.problemType?.toUpperCase() || '—',
         'Work Type': item.workType?.toUpperCase() || '—',
         'Problem Description': item.problemDescription || '—',

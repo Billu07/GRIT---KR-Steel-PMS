@@ -224,7 +224,6 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
     const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
     
     if (type === "corrective") {
-      const information = item.informationDate ? new Date(item.informationDate) : null;
       const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
       const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
 
@@ -234,14 +233,8 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         repairTime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
       }
 
-      let downtime = '—';
-      if (information && end) {
-        const mins = differenceInMinutes(end, information);
-        downtime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
-      }
-
-      const timeline = `Rep: ${information ? format(information, 'dd/MM/yy') : '—'}\nSrv: ${start ? format(start, 'dd/MM/yy') : '—'}\nEnd: ${end ? format(end, 'dd/MM/yy') : '—'}`;
-      const jobSpecs = `Sev: ${item.problemType?.toUpperCase() || '—'}\nJob: ${item.workType?.toUpperCase() || '—'}\nRep: ${repairTime}\nDT: ${downtime}`;
+      const timeline = `Srv: ${start ? format(start, 'dd/MM/yy') : '—'}\nEnd: ${end ? format(end, 'dd/MM/yy') : '—'}`;
+      const jobSpecs = `Sev: ${item.problemType?.toUpperCase() || '—'}\nJob: ${item.workType?.toUpperCase() || '—'}\nDur: ${repairTime}`;
       const footer = `${item.usedParts ? 'Parts: ' + item.usedParts : ''}${item.remarks ? (item.usedParts ? '\n' : '') + 'Rem: ' + item.remarks : ''}`;
 
       return [timeline, eqInfo, jobSpecs, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];

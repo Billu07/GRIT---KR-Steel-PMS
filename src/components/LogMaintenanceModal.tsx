@@ -225,13 +225,15 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                   <option value="predictive">Predictive (Condition)</option>
                 </select>
               </div>
-              <div>
-                <label style={labelStyle}>
-                    <Calendar size={12}/> 
-                    {isScheduled ? 'Maintenance Date' : isPredictive ? 'Observation Date' : 'Breakdown Reported'}
-                </label>
-                <input type="datetime-local" name={isScheduled || isPredictive ? "maintenanceDate" : "informationDate"} value={isScheduled || isPredictive ? formData.maintenanceDate : formData.informationDate} onChange={handleChange} style={fieldStyle} />
-              </div>
+              {!isCorrective && (
+                <div>
+                  <label style={labelStyle}>
+                      <Calendar size={12}/> 
+                      {isScheduled ? 'Maintenance Date' : 'Observation Date'}
+                  </label>
+                  <input type="datetime-local" name="maintenanceDate" value={formData.maintenanceDate} onChange={handleChange} style={fieldStyle} />
+                </div>
+              )}
             </div>
 
             {isScheduled && !initialData && (

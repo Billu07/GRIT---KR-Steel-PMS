@@ -103,7 +103,7 @@ export default function ReportsBuilderPage() {
       if (durationFilterType !== "none") {
         filtered = filtered.filter((m: any) => {
           let targetDate = m.performedAt ? new Date(m.performedAt) : null;
-          if (m.type === "corrective" && m.informationDate) targetDate = new Date(m.informationDate);
+          if (m.type === "corrective" && m.serviceEndDate) targetDate = new Date(m.serviceEndDate);
           else if (m.maintenanceDate) targetDate = new Date(m.maintenanceDate);
 
           if (!targetDate) return false;
@@ -381,7 +381,7 @@ export default function ReportsBuilderPage() {
                                 </tr>
                             ))}
                             {reportType === "maintenance" && filteredData.maintenance?.map((m: any) => {
-                                const date = m.type === 'corrective' ? m.informationDate : m.maintenanceDate;
+                                const date = m.type === 'corrective' ? m.serviceEndDate : m.maintenanceDate;
                                 const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
                                 const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
                                 const wasLate = wasDateOverdue || wasHoursOverdue;
