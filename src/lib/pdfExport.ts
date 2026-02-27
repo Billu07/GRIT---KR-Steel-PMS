@@ -246,7 +246,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
       return [timeline, eqInfo, jobSpecs, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
     } else {
-      const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : (item.performedAt ? format(new Date(item.performedAt), 'dd/MM/yyyy') : "—");
+      const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : "—";
       const taskInfo = `${item.task?.taskId || 'PREV'}\n${item.task?.taskName || 'MAINT'}\nFreq: ${item.task?.frequency?.toUpperCase() || '—'}`;
       
             const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;

@@ -310,8 +310,7 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
     });
   } else {
     sheetData = data.map((item) => {
-      const date = item.maintenanceDate ? new Date(item.maintenanceDate) : 
-                   item.performedAt ? new Date(item.performedAt) : null;
+      const date = item.maintenanceDate ? new Date(item.maintenanceDate) : null;
       
       const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";

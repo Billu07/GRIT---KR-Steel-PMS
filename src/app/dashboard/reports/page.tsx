@@ -381,7 +381,7 @@ export default function ReportsBuilderPage() {
                                 </tr>
                             ))}
                             {reportType === "maintenance" && filteredData.maintenance?.map((m: any) => {
-                                const date = m.performedAt || m.maintenanceDate || m.informationDate;
+                                const date = m.type === 'corrective' ? m.informationDate : m.maintenanceDate;
                                 const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
                                 const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
                                 const wasLate = wasDateOverdue || wasHoursOverdue;
