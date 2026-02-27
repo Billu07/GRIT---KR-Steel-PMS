@@ -20,7 +20,7 @@ async function main() {
       newLogs.push({
         equipmentId: task.equipmentId,
         taskId: task.id,
-        type: 'scheduled',
+        type: 'scheduled' as const,
         targetDate: nextDue,
         maintenanceDate: nextDue,
         performedAt: nextDue,
