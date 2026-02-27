@@ -9,7 +9,7 @@ export async function GET() {
     // Basic data fetching
     const tasks = await prisma.task.findMany({ orderBy: { updatedAt: 'desc' } });
     const equipment = await prisma.equipment.findMany({ include: { category: true }, orderBy: { code: 'asc' } });
-    const maintenanceHistory = await prisma.maintenanceHistory.findMany({ include: { equipment: true, task: true }, orderBy: { performedAt: 'desc' } });
+    const maintenanceHistory = await prisma.maintenanceHistory.findMany({ include: { equipment: { include: { category: true } }, task: true }, orderBy: { performedAt: 'desc' } });
 
     let inventory: any[] = [];
     
