@@ -326,7 +326,14 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
     sheetData = data.map((item, index) => {
       const date = item.maintenanceDate ? new Date(item.maintenanceDate) : null;
       
-      const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
+      let wasDateOverdue = false;
+      if (item.targetDate && item.maintenanceDate) {
+         const targetDateOnly = new Date(item.targetDate);
+         targetDateOnly.setHours(0,0,0,0);
+         const maintDateOnly = new Date(item.maintenanceDate);
+         maintDateOnly.setHours(0,0,0,0);
+         wasDateOverdue = maintDateOnly > targetDateOnly;
+      }
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
       return {

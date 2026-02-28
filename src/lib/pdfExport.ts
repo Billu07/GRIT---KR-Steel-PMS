@@ -195,11 +195,11 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
     doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupEq.map((eq: any, idx: number) => [
-        idx + 1, eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.location || "—", eq.runningHours || "—", eq.status.toUpperCase()
+        idx + 1, eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.unit || "—", eq.quantity || "—", eq.location || "—", eq.status.toUpperCase()
     ]);
     autoTable(doc, { 
         ...tableDefaults(startY, meta), 
-        head: [["SL NO", "CODE", "NAME", "BRAND", "MODEL", "SERIAL NO", "CAPACITY", "LOCATION", "HRS", "STATUS"]], 
+        head: [["SL NO", "CODE", "NAME", "BRAND", "MODEL", "SERIAL NO", "CAPACITY", "UNIT", "QTY", "LOCATION", "STATUS"]], 
         body: rows,
         columnStyles: { 0: { cellWidth: 10 } }
     });
@@ -282,7 +282,14 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         if (item.task && item.task.nextDueDate) {
              targets = `Next Due: ${format(new Date(item.task.nextDueDate), 'dd/MM/yy')}`;
         }
-        const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
+        let wasDateOverdue = false;
+        if (item.targetDate && item.maintenanceDate) {
+           const targetDateOnly = new Date(item.targetDate);
+           targetDateOnly.setHours(0,0,0,0);
+           const maintDateOnly = new Date(item.maintenanceDate);
+           maintDateOnly.setHours(0,0,0,0);
+           wasDateOverdue = maintDateOnly > targetDateOnly;
+        }
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
         const usage = `Stat: ${status}`;      
         const details = `${item.solutionDetails || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
