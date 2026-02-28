@@ -188,7 +188,10 @@ export default function ReportsBuilderPage() {
 
           if (!targetDate) return false;
           if (durationFilterType === "range" && fromDate && toDate) {
-            return targetDate >= new Date(fromDate) && targetDate <= new Date(toDate);
+            const fDate = new Date(fromDate);
+            const tEnd = new Date(toDate);
+            tEnd.setHours(23, 59, 59, 999);
+            return targetDate >= fDate && targetDate <= tEnd;
           }
           if (durationFilterType === "date" && singleDate) {
             return targetDate.toISOString().split("T")[0] === singleDate;
@@ -487,7 +490,7 @@ export default function ReportsBuilderPage() {
                                         <th className="p-4 border-b border-[#D0CBC0]">Status</th>
                                     </>
                                 )}
-                                {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
+                                {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Unit</th><th className="p-4 border-b border-[#D0CBC0]">Qty</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
                                 {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">{maintenanceType === 'corrective' ? 'Problem / Fault' : 'Frequency'}</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
                                 {reportType === "inventory" && (<><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Quantity</th><th className="p-4 border-b border-[#D0CBC0]">Description</th><th className="p-4 border-b border-[#D0CBC0]">SWL</th><th className="p-4 border-b border-[#D0CBC0]">Cert No.</th></>)}
                             </tr>
