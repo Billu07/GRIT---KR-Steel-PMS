@@ -132,11 +132,23 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
   }, {});
 
   Object.entries(grouped).forEach(([groupName, groupTasks]: [string, any], index) => {
-    if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
+    // Force a page break if there's less than ~50mm of space left to prevent header/table splitting awkwardly
+    if (index > 0) { 
+        startY = (doc as any).lastAutoTable.finalY + 10; 
+        if (startY > doc.internal.pageSize.getHeight() - 50) { 
+            doc.addPage(); 
+            startY = 35; 
+        } 
+    }
+
+    let headerPrefix = "";
+    if (groupBy === "category" && groupName !== "All Tasks") headerPrefix = "CATEGORY: ";
+    else if (groupBy === "equipment" && groupName !== "All Tasks") headerPrefix = "EQUIPMENT: ";
+
     doc.setFillColor(...C.paste); 
     doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy); 
-    doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    doc.text(`${headerPrefix}${groupName.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupTasks.map((t: any) => {
         const eq = equipment.find((e: any) => e.id === t.equipmentId);
