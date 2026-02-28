@@ -240,6 +240,13 @@ export default function ReportsBuilderPage() {
           });
       }
 
+      // Sort by date before returning
+      filtered.sort((a: any, b: any) => {
+        const dateA = a.maintenanceDate ? new Date(a.maintenanceDate).getTime() : (a.serviceEndDate ? new Date(a.serviceEndDate).getTime() : 0);
+        const dateB = b.maintenanceDate ? new Date(b.maintenanceDate).getTime() : (b.serviceEndDate ? new Date(b.serviceEndDate).getTime() : 0);
+        return dateA - dateB;
+      });
+
       return { maintenance: filtered };
     }
 
