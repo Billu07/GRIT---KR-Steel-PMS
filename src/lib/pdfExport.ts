@@ -251,7 +251,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
   const head = type === "corrective" 
     ? [["SL NO", "EQUIPMENT IDENTITY", "START DATE", "END DATE", "DURATION", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "DONE DATE", "NEXT DUE", "STATUS", "WORK DONE", "PARTS", "REMARKS"]];
+    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "DONE DATE", "TARGET DATE", "STATUS", "WORK DONE", "PARTS", "REMARKS"]];
 
   const grouped = data.reduce((acc: any, item: any) => {
     let dateStr = "UNKNOWN DATE";
@@ -295,10 +295,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       } else {
         const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
         const doneDate = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yy') : '—';
-        let targets = '—';
-        if (item.task && item.task.nextDueDate) {
-             targets = format(new Date(item.task.nextDueDate), 'dd/MM/yy');
-        }
+        const targets = item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : '—';
         let wasDateOverdue = false;
         if (item.targetDate && item.maintenanceDate) {
            const targetDateOnly = new Date(item.targetDate);
@@ -328,13 +325,13 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       } : {
           0: { cellWidth: 10 },
           1: { cellWidth: 35 }, 
-          2: { cellWidth: 20 }, 
+          2: { cellWidth: 26 }, 
           3: { cellWidth: 22 }, 
           4: { cellWidth: 22 }, 
           5: { cellWidth: 20 },
-          6: { cellWidth: 40 },
+          6: { cellWidth: 38 },
           7: { cellWidth: 20 },
-          8: { cellWidth: 40 }
+          8: { cellWidth: 38 }
       }
     });
   });
