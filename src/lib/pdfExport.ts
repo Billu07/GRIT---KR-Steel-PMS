@@ -212,7 +212,25 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
 
 export function exportMaintenancePdf({ data, type }: { data: any[], type: "corrective" | "preventive" }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const meta: PdfMeta = { title: `${type === "corrective" ? "Corrective (Breakdown)" : "Preventive (Scheduled)"} Maintenance Report`, subtitle: `KR Steel Ship Recycling Yard · Maintenance Operations Log`, orientation: "l" };
+  
+  let dynamicSubtitle = "KR Steel Ship Recycling Yard · Maintenance Operations Log";
+  
+  // Basic heuristic to detect if we're filtering by a single category or equipment
+  if (data.length > 0) {
+      const firstEq = data[0].equipment;
+      if (firstEq) {
+          const allSameCategory = data.every(d => d.equipment?.categoryId === firstEq.categoryId);
+          const allSameEq = data.every(d => d.equipmentId === firstEq.id);
+          
+          if (allSameEq) {
+              dynamicSubtitle = `Equipment: ${firstEq.name} (${firstEq.code})`;
+          } else if (allSameCategory && firstEq.category?.name) {
+              dynamicSubtitle = `Category: ${firstEq.category.name}`;
+          }
+      }
+  }
+
+  const meta: PdfMeta = { title: `${type === "corrective" ? "Corrective (Breakdown)" : "Preventive (Scheduled)"} Maintenance Report`, subtitle: dynamicSubtitle, orientation: "l" };
   let startY = drawHeader(doc, meta, true);
 
   const head = type === "corrective" 
@@ -260,7 +278,10 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         return [idx + 1, eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
       } else {
         const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
-        const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;
+        let targets = '—';
+        if (item.task && item.task.nextDueDate) {
+             targets = `Next Due: ${format(new Date(item.task.nextDueDate), 'dd/MM/yy')}`;
+        }
         const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
         const usage = `Stat: ${status}`;      
