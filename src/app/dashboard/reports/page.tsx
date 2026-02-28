@@ -32,13 +32,42 @@ export default function ReportsBuilderPage() {
   const [singleDate, setSingleDate] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
-  
-  // Equipment Selection
+
+  // Category & Equipment Selection
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
-  
-  // Derived / Filtered Data
-  const filteredData = useMemo(() => {
+
+  const categories = useMemo(() => {
+    if (!rawData?.equipment) return [];
+    const cats = new Map();
+    rawData.equipment.forEach((eq: any) => {
+      if (eq.category) {
+        cats.set(eq.category.id, eq.category);
+      }
+    });
+    return Array.from(cats.values());
+  }, [rawData]);
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId === "all") {
+      setSelectedEquipments([]);
+    } else {
+      const eqIds = rawData?.equipment
+        .filter((eq: any) => String(eq.categoryId) === categoryId)
+        .map((eq: any) => String(eq.id)) || [];
+      setSelectedEquipments(eqIds);
+    }
+  };
+
+  const filteredEquipmentList = useMemo(() => {
+    if (!rawData?.equipment) return [];
+    if (selectedCategory === "all") return rawData.equipment;
+    return rawData.equipment.filter((eq: any) => String(eq.categoryId) === selectedCategory);
+  }, [rawData, selectedCategory]);
+
+  // Derived / Filtered Data  const filteredData = useMemo(() => {
     if (!rawData) return null;
     const { tasks, equipment, maintenanceHistory, inventory } = rawData;
     const today = new Date();
