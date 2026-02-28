@@ -4,9 +4,10 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { 
+    const {
       name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
-      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
+      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied,
+      unit, quantity
     } = body;
 
     if (!name || !categoryId) {
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     const equipments = await prisma.equipment.findMany({
       select: { code: true }
     });
-    
+
     let maxNum = 0;
     equipments.forEach(eq => {
       if (eq.code && eq.code.startsWith('EQ-')) {
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
         }
       }
     });
-    
+
     const code = `EQ-${String(maxNum + 1).padStart(4, '0')}`;
 
     const newEquipment = await prisma.equipment.create({
@@ -52,6 +53,8 @@ export async function POST(req: NextRequest) {
         testCertNumber,
         testCertValidity,
         testCertApplied,
+        unit,
+        quantity,
       },
     });
 

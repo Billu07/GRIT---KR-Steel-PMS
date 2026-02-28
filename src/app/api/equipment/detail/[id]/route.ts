@@ -30,9 +30,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     const body = await req.json();
-    const { 
+    const {
       code, name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
-      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied
+      capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied,
+      unit, quantity
     } = body;
 
     const updateData: any = {
@@ -52,6 +53,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       testCertNumber,
       testCertValidity,
       testCertApplied,
+      unit,
+      quantity
     };
 
     if (categoryId) updateData.categoryId = parseInt(categoryId);

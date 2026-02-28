@@ -284,9 +284,13 @@ export default function ReportsBuilderPage() {
 
       // Sort by date before returning
       filtered.sort((a: any, b: any) => {
-        const dateA = a.maintenanceDate ? new Date(a.maintenanceDate).getTime() : (a.serviceEndDate ? new Date(a.serviceEndDate).getTime() : 0);
-        const dateB = b.maintenanceDate ? new Date(b.maintenanceDate).getTime() : (b.serviceEndDate ? new Date(b.serviceEndDate).getTime() : 0);
-        return dateA - dateB;
+        const getEffectiveDate = (m: any) => {
+            if (maintenanceType === "corrective") {
+                return m.serviceEndDate ? new Date(m.serviceEndDate).getTime() : (m.maintenanceDate ? new Date(m.maintenanceDate).getTime() : 0);
+            }
+            return m.maintenanceDate ? new Date(m.maintenanceDate).getTime() : (m.targetDate ? new Date(m.targetDate).getTime() : 0);
+        };
+        return getEffectiveDate(a) - getEffectiveDate(b);
       });
 
       return { maintenance: filtered };

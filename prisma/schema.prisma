@@ -49,6 +49,8 @@ model Equipment {
   testCertNumber     String?
   testCertValidity   String?
   serviceReportUrl   String?
+  unit               String?
+  quantity           String?
   category           EquipmentCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   maintenanceHistory MaintenanceHistory[]
   tasks              Task[]
