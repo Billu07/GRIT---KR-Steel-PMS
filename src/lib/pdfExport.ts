@@ -218,11 +218,11 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
   const head = type === "corrective" 
     ? [["TIMELINE / DATES", "EQUIPMENT IDENTITY", "SPECS / DURATIONS", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["DATE COMPLETED", "EQUIPMENT / SPECS", "TASK / FREQ", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
+    : [["DATE COMPLETED", "EQUIPMENT / SPECS", "FREQUENCY", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
 
-  const rows = data.map((item: any) => {
+    const rows = data.map((item: any) => {
     const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
-    
+
     if (type === "corrective") {
       const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
       const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
@@ -240,8 +240,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       return [timeline, eqInfo, jobSpecs, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
     } else {
       const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : "—";
-      const taskInfo = `${item.task?.taskId || 'PREV'}\n${item.task?.taskName || 'MAINT'}\nFreq: ${item.task?.frequency?.toUpperCase() || '—'}`;
-      
+      const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
             const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;
       
             const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);

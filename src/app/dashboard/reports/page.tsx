@@ -195,30 +195,48 @@ export default function ReportsBuilderPage() {
               const dateStr = m.maintenanceDate ? new Date(m.maintenanceDate).toISOString().split('T')[0] : 'unknown-date';
               const key = `${m.equipmentId}-${dateStr}`;
               
+              const taskFreq = m.task?.frequency ? m.task.frequency.toUpperCase() : 'N/A';
+              
               if (!groupedMaintMap.has(key)) {
                   groupedMaintMap.set(key, {
                       ...m,
                       _count: 1,
                       _allTasks: [m.task?.taskName || m.maintenanceDetails || 'Unknown Task'],
+                      _frequencies: [taskFreq],
                       _isLate: (m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate)) || (m.targetHours && m.runningHours && m.runningHours >= m.targetHours)
                   });
               } else {
                   const group = groupedMaintMap.get(key);
                   group._count++;
                   group._allTasks.push(m.task?.taskName || m.maintenanceDetails || 'Unknown Task');
+                  if (taskFreq !== 'N/A' && !group._frequencies.includes(taskFreq)) {
+                      group._frequencies.push(taskFreq);
+                  }
                   const isLate = (m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate)) || (m.targetHours && m.runningHours && m.runningHours >= m.targetHours);
                   if (isLate) group._isLate = true;
               }
           });
 
           filtered = Array.from(groupedMaintMap.values()).map((g: any) => {
-              if (g._count === 1) return g;
+              const freqList = g._frequencies.filter((f: string) => f !== 'N/A');
+              const freqStr = freqList.length > 0 ? freqList.join(', ') : 'N/A';
+              
+              if (g._count === 1) {
+                  return {
+                      ...g,
+                      maintenanceDetails: freqStr,
+                      _computedLate: g._isLate,
+                      _freqStr: freqStr,
+                      solutionDetails: g.task?.taskName || g.maintenanceDetails || 'Unknown Task'
+                  };
+              }
               return {
                   ...g,
-                  maintenanceDetails: "Multiple Scheduled Tasks",
+                  maintenanceDetails: freqStr,
                   solutionDetails: g._allTasks.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n'),
                   task: null, // Override to ensure 'maintenanceDetails' is used
-                  _computedLate: g._isLate
+                  _computedLate: g._isLate,
+                  _freqStr: freqStr
               };
           });
       }
@@ -447,7 +465,7 @@ export default function ReportsBuilderPage() {
                                     </>
                                 )}
                                 {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
-                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Details/Task</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
+                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">{maintenanceType === 'corrective' ? 'Problem / Fault' : 'Frequency'}</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
                                 {reportType === "inventory" && (<><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Quantity</th><th className="p-4 border-b border-[#D0CBC0]">Description</th><th className="p-4 border-b border-[#D0CBC0]">SWL</th><th className="p-4 border-b border-[#D0CBC0]">Cert No.</th></>)}
                             </tr>
                         </thead>
