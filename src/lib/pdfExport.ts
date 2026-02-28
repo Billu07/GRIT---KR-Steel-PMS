@@ -315,23 +315,23 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       ...tableDefaults(startY, meta), head, body: rows,
       columnStyles: type === "corrective" ? { 
           0: { cellWidth: 10 },
-          1: { cellWidth: 35 }, 
-          2: { cellWidth: 25 }, 
-          3: { cellWidth: 25 }, 
-          4: { cellWidth: 20 }, 
-          5: { cellWidth: 45 },
-          6: { cellWidth: 45 },
-          7: { cellWidth: 30 }
+          1: { cellWidth: 40 }, 
+          2: { cellWidth: 30 }, 
+          3: { cellWidth: 30 }, 
+          4: { cellWidth: 25 }, 
+          5: { cellWidth: 50 },
+          6: { cellWidth: 50 },
+          7: { cellWidth: 34 }
       } : {
           0: { cellWidth: 10 },
-          1: { cellWidth: 35 }, 
-          2: { cellWidth: 26 }, 
-          3: { cellWidth: 22 }, 
-          4: { cellWidth: 22 }, 
-          5: { cellWidth: 20 },
-          6: { cellWidth: 42 },
-          7: { cellWidth: 20 },
-          8: { cellWidth: 42 }
+          1: { cellWidth: 40 }, 
+          2: { cellWidth: 28 }, 
+          3: { cellWidth: 24 }, 
+          4: { cellWidth: 24 }, 
+          5: { cellWidth: 22 },
+          6: { cellWidth: 50 },
+          7: { cellWidth: 21 },
+          8: { cellWidth: 50 }
       }
     });
   });
