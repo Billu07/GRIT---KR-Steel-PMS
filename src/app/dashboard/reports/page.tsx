@@ -193,9 +193,8 @@ export default function ReportsBuilderPage() {
           const groupedMaintMap = new Map();
           filtered.forEach((m: any) => {
               const dateStr = m.maintenanceDate ? new Date(m.maintenanceDate).toISOString().split('T')[0] : 'unknown-date';
-              const key = `${m.equipmentId}-${dateStr}`;
-              
               const taskFreq = m.task?.frequency ? m.task.frequency.toUpperCase() : 'N/A';
+              const key = `${m.equipmentId}-${dateStr}-${taskFreq}`;
               
               if (!groupedMaintMap.has(key)) {
                   groupedMaintMap.set(key, {
