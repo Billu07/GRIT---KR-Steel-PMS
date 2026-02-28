@@ -36,7 +36,7 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     location: "",
     description: "",
     status: "active",
-    selectedCategoryId: categoryId ? String(categoryId) : "",
+    selectedCategoryId: "",
     imageUrl: "",
     serviceReportUrl: "",
     safetyMeasures: "",
@@ -48,6 +48,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     testCertNumber: "",
     testCertValidity: "",
     testCertApplied: "",
+    unit: "",
+    quantity: "",
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +101,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         testCertNumber: initialData.testCertNumber || "",
         testCertValidity: initialData.testCertValidity || "",
         testCertApplied: initialData.testCertApplied || "",
+        unit: initialData.unit || "",
+        quantity: initialData.quantity || "",
       });
       setImagePreview(initialData.imageUrl || "");
       setReportFile(null);
@@ -560,6 +564,30 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                       className="eq-modal-field"
                       style={fieldStyle}
                       placeholder="e.g. SNT210F52..."
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Unit</label>
+                    <input
+                      type="text"
+                      name="unit"
+                      value={formData.unit}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. Number, Box, kg..."
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Quantity</label>
+                    <input
+                      type="text"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                      placeholder="e.g. 5"
                     />
                   </div>
                 </div>
