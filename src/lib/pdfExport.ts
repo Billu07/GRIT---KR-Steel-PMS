@@ -251,7 +251,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
   const head = type === "corrective" 
     ? [["SL NO", "EQUIPMENT IDENTITY", "START DATE", "END DATE", "DURATION", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "DONE DATE", "TARGET DATE", "STATUS", "WORK DONE", "PARTS", "REMARKS"]];
+    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "TARGET DATE", "DONE DATE", "STATUS", "WORK DONE", "PARTS", "REMARKS"]];
 
   const grouped = data.reduce((acc: any, item: any) => {
     let dateStr = "UNKNOWN DATE";
@@ -307,7 +307,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
         const details = item.solutionDetails || "—";
         const remarks = item.remarks || "—";
-        return [idx + 1, eqInfo, taskInfo, doneDate, targets, status, details, item.usedParts || "—", remarks];
+        return [idx + 1, eqInfo, taskInfo, targets, doneDate, status, details, item.usedParts || "—", remarks];
       }
     });
 
@@ -329,9 +329,9 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
           3: { cellWidth: 22 }, 
           4: { cellWidth: 22 }, 
           5: { cellWidth: 20 },
-          6: { cellWidth: 38 },
+          6: { cellWidth: 42 },
           7: { cellWidth: 20 },
-          8: { cellWidth: 38 }
+          8: { cellWidth: 42 }
       }
     });
   });
