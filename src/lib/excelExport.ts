@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { format, differenceInMinutes } from 'date-fns';
 import { getTaskStatus } from './taskUtils';
-import { LOGO_BASE64 } from './pdfExport';
+import { LOGO_BASE64 } from './logoData';
 
 const C = {
   navy: '0C2C58',

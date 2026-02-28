@@ -1,6 +1,6 @@
-﻿/**
+/**
  * pdfExport.ts
- * Shared branded PDF export utility for GRIT â€” KR Steel Ship Recycling Facility
+ * Shared branded PDF export utility for GRIT — KR Steel Ship Recycling Facility
  */
 
 import jsPDF from "jspdf";
@@ -86,7 +86,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
   doc.setTextColor(...C.muted);
-  doc.text("KR STEEL SRF Â· ASSET MANAGEMENT Â· CONFIDENTIAL", 14, ph - 8);
+  doc.text("KR STEEL SRF · ASSET MANAGEMENT · CONFIDENTIAL", 14, ph - 8);
   doc.text(`PAGE ${pageNum} OF ${totalPages}`, pw - 14, ph - 8, { align: "right" });
 }
 
@@ -153,12 +153,12 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
         idx + 1,
         t.taskId,
         t.taskName,
-        eq?.code || "â€”",
-        t.frequency?.toUpperCase() || "â€”",
+        eq?.code || "—",
+        t.frequency?.toUpperCase() || "—",
         t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
-        t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "â€”",
+        t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "—",
         statusText,
-        t.taskDetail || "â€”"
+        t.taskDetail || "—"
       ];
     });
     autoTable(doc, {
@@ -177,7 +177,7 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
 export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-  let dynamicSubtitle = `Master Asset List Â· Grouped by ${groupBy}`;
+  let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
   if (groupBy === 'none' && equipment.length > 0) {
     const firstCat = equipment[0].category?.name;
     const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
@@ -206,7 +206,7 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
     doc.text(`${headerPrefix}${groupName.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupEq.map((eq: any, idx: number) => [
-      idx + 1, eq.code, eq.name, eq.brand || "â€”", eq.model || "â€”", eq.serialNumber || "â€”", eq.capacity || "â€”", eq.unit || "â€”", eq.quantity || "â€”", eq.location || "â€”", eq.status.toUpperCase()
+      idx + 1, eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.unit || "—", eq.quantity || "—", eq.location || "—", eq.status.toUpperCase()
     ]);
     autoTable(doc, {
       ...tableDefaults(startY, meta),
@@ -224,7 +224,7 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
 export function exportMaintenancePdf({ data, type }: { data: any[], type: "corrective" | "preventive" }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
-  let dynamicSubtitle = "KR Steel Ship Recycling Yard Â· Maintenance Operations Log";
+  let dynamicSubtitle = "KR Steel Ship Recycling Yard · Maintenance Operations Log";
 
   // Basic heuristic to detect if we're filtering by a single category or equipment
   if (data.length > 0) {
@@ -270,27 +270,27 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
     startY += 10;
 
     const rows = groupData.map((item: any, idx: number) => {
-      const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "â€”";
+      const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
 
       if (type === "corrective") {
         const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
         const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
 
-        let repairTime = 'â€”';
+        let repairTime = '—';
         if (start && end) {
           const mins = differenceInMinutes(end, start);
           repairTime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
         }
 
-        const startDate = start ? format(start, 'dd/MM/yy HH:mm') : 'â€”';
-        const endDate = end ? format(end, 'dd/MM/yy HH:mm') : 'â€”';
+        const startDate = start ? format(start, 'dd/MM/yy HH:mm') : '—';
+        const endDate = end ? format(end, 'dd/MM/yy HH:mm') : '—';
         const footer = `${item.usedParts ? 'Parts: ' + item.usedParts : ''}${item.remarks ? (item.usedParts ? '\n' : '') + 'Rem: ' + item.remarks : ''}`;
 
-        return [idx + 1, eqInfo, startDate, endDate, repairTime, item.problemDescription || "â€”", item.solutionDetails || "â€”", footer || "â€”"];
+        return [idx + 1, eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
       } else {
-        const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || 'â€”';
-        const doneDate = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yy') : 'â€”';
-        const targets = item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'â€”';
+        const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';
+        const doneDate = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yy') : '—';
+        const targets = item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : '—';
         let wasDateOverdue = false;
         if (item.targetDate && item.maintenanceDate) {
           const targetDateOnly = new Date(item.targetDate);
@@ -300,9 +300,9 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
           wasDateOverdue = maintDateOnly > targetDateOnly;
         }
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
-        const details = item.solutionDetails || "â€”";
-        const remarks = item.remarks || "â€”";
-        return [idx + 1, eqInfo, taskInfo, targets, doneDate, status, details, item.usedParts || "â€”", remarks];
+        const details = item.solutionDetails || "—";
+        const remarks = item.remarks || "—";
+        return [idx + 1, eqInfo, taskInfo, targets, doneDate, status, details, item.usedParts || "—", remarks];
       }
     });
 
@@ -339,7 +339,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
 export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; tasks: any[]; }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const meta: PdfMeta = { title: `Asset Task List: ${equipment.name}`, subtitle: `Code: ${equipment.code} Â· Location: ${equipment.location}`, orientation: "l" };
+  const meta: PdfMeta = { title: `Asset Task List: ${equipment.name}`, subtitle: `Code: ${equipment.code} · Location: ${equipment.location}`, orientation: "l" };
   const startY = drawHeader(doc, meta, true);
 
   const rows = tasks.map((t: any, idx: number) => {
@@ -349,12 +349,12 @@ export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; 
       idx + 1,
       t.taskId,
       t.taskName,
-      t.frequency?.toUpperCase() || "â€”",
+      t.frequency?.toUpperCase() || "—",
       t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
-      t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "â€”",
-      t.criticality?.toUpperCase() || "â€”",
+      t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "—",
+      t.criticality?.toUpperCase() || "—",
       statusText,
-      t.taskDetail || "â€”"
+      t.taskDetail || "—"
     ];
   });
 
