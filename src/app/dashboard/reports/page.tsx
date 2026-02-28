@@ -318,27 +318,39 @@ export default function ReportsBuilderPage() {
         )}
         
         {reportType !== "inventory" && (
-            <div className="flex flex-col gap-1 relative w-full sm:w-auto">
-                <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Equipment</label>
-                <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)} className="flex items-center justify-between px-3 py-2 bg-white border border-[#D0CBC0] rounded-[2px] w-full sm:w-[200px] text-[13px]">
-                    <span className="truncate">{selectedEquipments.length === 0 ? "All Equipment" : `${selectedEquipments.length} Selected`}</span>
-                    {showEquipmentFilter ? <ChevronUp size={14} className="text-[#7A8A93]" /> : <ChevronDown size={14} className="text-[#7A8A93]" />}
-                </button>
-                {showEquipmentFilter && rawData && (
-                    <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
-                        <div className="flex items-center justify-between mb-2 px-2">
-                            <span className="text-xs font-semibold text-[#225CA3]">Select Equipment</span>
-                            <button onClick={() => setSelectedEquipments([])} className="text-[10px] text-[#7A8A93] hover:text-[#225CA3] uppercase tracking-wide">Clear</button>
-                        </div>
-                        {rawData.equipment.map((eq: any) => (
-                            <div key={eq.id} className="flex items-center gap-2 hover:bg-[#F5F3EF] p-1.5 rounded cursor-pointer" onClick={() => handleEquipmentToggle(String(eq.id))}>
-                                <input type="checkbox" checked={selectedEquipments.includes(String(eq.id))} readOnly className="accent-[#225CA3] w-3.5 h-3.5" />
-                                <div className="flex flex-col"><span className="text-[12px] font-medium text-[#1A1A1A]">{eq.name}</span><span className="text-[10px] text-[#7A8A93]">{eq.code}</span></div>
-                            </div>
+            <>
+                <div className="flex flex-col gap-1 w-full sm:w-auto">
+                    <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Category</label>
+                    <select style={selectStyle} value={selectedCategory} onChange={(e) => handleCategoryChange(e.target.value)}>
+                        <option value="all">All Categories</option>
+                        {categories.map((cat: any) => (
+                            <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
-                    </div>
-                )}
-            </div>
+                    </select>
+                </div>
+
+                <div className="flex flex-col gap-1 relative w-full sm:w-auto">
+                    <label className="text-[10px] font-bold text-[#7A8A93] uppercase tracking-wider">Equipment</label>
+                    <button onClick={() => setShowEquipmentFilter(!showEquipmentFilter)} className="flex items-center justify-between px-3 py-2 bg-white border border-[#D0CBC0] rounded-[2px] w-full sm:w-[200px] text-[13px]">
+                        <span className="truncate">{selectedEquipments.length === 0 ? "All Equipment" : `${selectedEquipments.length} Selected`}</span>
+                        {showEquipmentFilter ? <ChevronUp size={14} className="text-[#7A8A93]" /> : <ChevronDown size={14} className="text-[#7A8A93]" />}
+                    </button>
+                    {showEquipmentFilter && rawData && (
+                        <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
+                            <div className="flex items-center justify-between mb-2 px-2">
+                                <span className="text-xs font-semibold text-[#225CA3]">Select Equipment</span>
+                                <button onClick={() => setSelectedEquipments([])} className="text-[10px] text-[#7A8A93] hover:text-[#225CA3] uppercase tracking-wide">Clear</button>
+                            </div>
+                            {filteredEquipmentList.map((eq: any) => (
+                                <div key={eq.id} className="flex items-center gap-2 hover:bg-[#F5F3EF] p-1.5 rounded cursor-pointer" onClick={() => handleEquipmentToggle(String(eq.id))}>
+                                    <input type="checkbox" checked={selectedEquipments.includes(String(eq.id))} readOnly className="accent-[#225CA3] w-3.5 h-3.5" />
+                                    <div className="flex flex-col"><span className="text-[12px] font-medium text-[#1A1A1A]">{eq.name}</span><span className="text-[10px] text-[#7A8A93]">{eq.code}</span></div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </>
         )}
       </div>
 
