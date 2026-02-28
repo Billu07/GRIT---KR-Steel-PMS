@@ -1,0 +1,111 @@
+(Measurement Equipment)
+
+1. LUX LEVEL METER
+Daily
+* Clean sensor and check physical condition
+* Verify display and battery status
+* Basic functional check
+Weekly
+* Inspect probe/cable (if applicable)
+* Verify stable reading
+Monthly
+* Accuracy check with reference source
+* Verify calibration due date
+* Record inspection
+Quarterly 
+* Cross-check reading with calibrated reference instrument
+* Inspect internal condition (battery terminals, connectors)
+* Review usage log
+Annually 
+* Full calibration by accredited laboratory
+* Obtain calibration certificate
+* Update calibration label and record
+
+2. MULTI GAS DETECTOR 1
+Daily
+* Visual inspection
+* Battery check
+* Self-test
+* Bump test
+* Verify alarm functions
+Weekly
+* Clean sensor inlet and check filter
+* Inspect accessories
+Monthly
+* Full calibration with certified gas
+* Record calibration data
+Quarterly
+* Sensor performance evaluation
+* Replace filters if required
+* Pump flow check (if pump type)
+Annually 
+* Full calibration by authorized service provider
+* Sensor replacement if life expired
+* Firmware update (if applicable)
+* Maintain certification record
+
+3. MULTI GAS DETECTOR 2
+Daily
+* Visual inspection
+* Battery check
+* Self-test
+* Bump test
+* Verify alarm functions
+Weekly
+* Clean sensor inlet and check filter
+* Inspect accessories
+Monthly
+* Full calibration with certified gas
+* Record calibration data
+Quarterly
+* Sensor performance evaluation
+* Replace filters if required
+* Pump flow check (if pump type)
+Annually 
+* Full calibration by authorized service provider
+* Sensor replacement if life expired
+* Firmware update (if applicable)
+* Maintain certification record
+
+4. MULTI GAS DETECTOR 3
+Daily
+* Visual inspection
+* Battery check
+* Self-test
+* Bump test
+* Verify alarm functions
+Weekly
+* Clean sensor inlet and check filter
+* Inspect accessories
+Monthly
+* Full calibration with certified gas
+* Record calibration data
+Quarterly
+* Sensor performance evaluation
+* Replace filters if required
+* Pump flow check (if pump type)
+Annually 
+* Full calibration by authorized service provider
+* Sensor replacement if life expired
+* Firmware update (if applicable)
+* Maintain certification record
+
+3. SOUND LEVEL METER
+Daily
+* Clean microphone
+* Battery check
+* Quick calibrator check
+Weekly
+* Verify measurement settings
+* Inspect windscreen
+Monthly
+* Calibration check with acoustic calibrator
+* Record result
+Quarterly
+* Cross-verification with reference instrument
+* Inspect microphone sensitivity
+Annually 
+* Full calibration by accredited laboratory
+* Obtain valid calibration certificate
+* Update calibration label
+
