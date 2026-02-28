@@ -235,7 +235,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
 
   const head = type === "corrective" 
     ? [["SL NO", "EQUIPMENT IDENTITY", "START DATE", "END DATE", "DURATION", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
+    : [["SL NO", "EQUIPMENT / SPECS", "FREQUENCY", "DONE DATE", "NEXT DUE", "STATUS", "WORK DONE", "PARTS", "REMARKS"]];
 
   const grouped = data.reduce((acc: any, item: any) => {
     let dateStr = "UNKNOWN DATE";
@@ -278,9 +278,10 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         return [idx + 1, eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
       } else {
         const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
+        const doneDate = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yy') : '—';
         let targets = '—';
         if (item.task && item.task.nextDueDate) {
-             targets = `Next Due: ${format(new Date(item.task.nextDueDate), 'dd/MM/yy')}`;
+             targets = format(new Date(item.task.nextDueDate), 'dd/MM/yy');
         }
         let wasDateOverdue = false;
         if (item.targetDate && item.maintenanceDate) {
@@ -291,9 +292,9 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
            wasDateOverdue = maintDateOnly > targetDateOnly;
         }
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
-        const usage = `Stat: ${status}`;      
-        const details = `${item.solutionDetails || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
-        return [idx + 1, eqInfo, taskInfo, targets, usage, details, item.usedParts || "—"];
+        const details = item.solutionDetails || "—";
+        const remarks = item.remarks || "—";
+        return [idx + 1, eqInfo, taskInfo, doneDate, targets, status, details, item.usedParts || "—", remarks];
       }
     });
 
@@ -310,12 +311,14 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
           7: { cellWidth: 30 }
       } : {
           0: { cellWidth: 10 },
-          1: { cellWidth: 45 }, 
-          2: { cellWidth: 35 }, 
-          3: { cellWidth: 30 }, 
-          4: { cellWidth: 30 }, 
-          5: { cellWidth: 50 },
-          6: { cellWidth: 35 } 
+          1: { cellWidth: 35 }, 
+          2: { cellWidth: 20 }, 
+          3: { cellWidth: 22 }, 
+          4: { cellWidth: 22 }, 
+          5: { cellWidth: 20 },
+          6: { cellWidth: 40 },
+          7: { cellWidth: 20 },
+          8: { cellWidth: 40 }
       }
     });
   });

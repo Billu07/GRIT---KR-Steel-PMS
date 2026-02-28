@@ -173,7 +173,14 @@ export default function ReportsBuilderPage() {
       // Overdue context for historical logs
       if (statusFilter !== "all") {
           filtered = filtered.filter((m: any) => {
-             const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
+             let wasDateOverdue = false;
+             if (m.targetDate && m.maintenanceDate) {
+                 const tDate = new Date(m.targetDate);
+                 tDate.setHours(0,0,0,0);
+                 const mDate = new Date(m.maintenanceDate);
+                 mDate.setHours(0,0,0,0);
+                 wasDateOverdue = mDate > tDate;
+             }
              const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
              const wasOverdueAtCompletion = wasDateOverdue || wasHoursOverdue;
              return statusFilter === "overdue" ? wasOverdueAtCompletion : !wasOverdueAtCompletion;
@@ -491,7 +498,8 @@ export default function ReportsBuilderPage() {
                                     </>
                                 )}
                                 {reportType === "equipment" && (<><th className="p-4 border-b border-[#D0CBC0]">Code</th><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Category</th><th className="p-4 border-b border-[#D0CBC0]">Model</th><th className="p-4 border-b border-[#D0CBC0]">Serial No</th><th className="p-4 border-b border-[#D0CBC0]">Unit</th><th className="p-4 border-b border-[#D0CBC0]">Qty</th><th className="p-4 border-b border-[#D0CBC0]">Location</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
-                                {reportType === "maintenance" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">{maintenanceType === 'corrective' ? 'Problem / Fault' : 'Frequency'}</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
+                                {reportType === "maintenance" && maintenanceType === "corrective" && (<><th className="p-4 border-b border-[#D0CBC0]">Date</th><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Problem / Fault</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
+                                {reportType === "maintenance" && maintenanceType !== "corrective" && (<><th className="p-4 border-b border-[#D0CBC0]">Equipment</th><th className="p-4 border-b border-[#D0CBC0]">Frequency</th><th className="p-4 border-b border-[#D0CBC0]">Done Date</th><th className="p-4 border-b border-[#D0CBC0]">Next Due</th><th className="p-4 border-b border-[#D0CBC0]">Action/Work</th><th className="p-4 border-b border-[#D0CBC0]">Parts Used</th><th className="p-4 border-b border-[#D0CBC0]">Remarks</th><th className="p-4 border-b border-[#D0CBC0]">Status</th></>)}
                                 {reportType === "inventory" && (<><th className="p-4 border-b border-[#D0CBC0]">Name</th><th className="p-4 border-b border-[#D0CBC0]">Quantity</th><th className="p-4 border-b border-[#D0CBC0]">Description</th><th className="p-4 border-b border-[#D0CBC0]">SWL</th><th className="p-4 border-b border-[#D0CBC0]">Cert No.</th></>)}
                             </tr>
                         </thead>
@@ -540,25 +548,52 @@ export default function ReportsBuilderPage() {
                             ))}
                             {reportType === "maintenance" && filteredData.maintenance?.map((m: any, index: number) => {
                                 const date = m.type === 'corrective' ? m.serviceEndDate : m.maintenanceDate;
-                                const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
+                                let wasDateOverdue = false;
+                                if (m.targetDate && m.maintenanceDate) {
+                                    const tDate = new Date(m.targetDate);
+                                    tDate.setHours(0,0,0,0);
+                                    const mDate = new Date(m.maintenanceDate);
+                                    mDate.setHours(0,0,0,0);
+                                    wasDateOverdue = mDate > tDate;
+                                }
                                 const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
                                 const wasLate = m._computedLate !== undefined ? m._computedLate : (wasDateOverdue || wasHoursOverdue);
 
-                                return (
-                                    <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
-                                        <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
-                                        <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
-                                        <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
-                                        <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
-                                        <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
-                                        <td className="p-4">{m.usedParts || '—'}</td>
-                                        <td className="p-4">
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
-                                                {wasLate ? 'Performed Late' : 'On-Time'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                );
+                                if (maintenanceType === "corrective") {
+                                    return (
+                                        <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                            <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                            <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
+                                            <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.problemDescription || '—'}</td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
+                                            <td className="p-4">{m.usedParts || '—'}</td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
+                                                    {wasLate ? 'Performed Late' : 'On-Time'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                } else {
+                                    return (
+                                        <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                            <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                            <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.task?.taskName || m.maintenanceDetails || '—'}</td>
+                                            <td className="p-4">{m.maintenanceDate ? format(new Date(m.maintenanceDate), "dd MMM yyyy") : '—'}</td>
+                                            <td className="p-4">{m.task?.nextDueDate ? format(new Date(m.task.nextDueDate), "dd MMM yyyy") : '—'}</td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.usedParts || '—'}</td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.remarks || '—'}</td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
+                                                    {wasLate ? 'Performed Late' : 'On-Time'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                }
                             })}
                             {reportType === "inventory" && filteredData.inventory?.map((item: any, index: number) => (
                                 <tr key={item.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">

@@ -336,15 +336,20 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       }
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
+      let nextDueDateStr = '—';
+      if (item.task && item.task.nextDueDate) {
+          nextDueDateStr = format(new Date(item.task.nextDueDate), 'dd MMM yyyy');
+      }
+
       return {
         'Sl No.': index + 1,
         'Log ID': item.id,
         'Asset Code': item.equipment?.code || '—',
         'Asset Name': item.equipment?.name || '—',
-        'Maintenance Date': date ? format(date, 'dd MMM yyyy') : '—',
+        'Done Date': date ? format(date, 'dd MMM yyyy') : '—',
         'Maintenance Type': item.type?.toUpperCase(),
         'Frequency': item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—',
-        'Target Date': item.targetDate ? format(new Date(item.targetDate), 'dd MMM yyyy') : '—',
+        'Next Due Date': nextDueDateStr,
         'Performance Status': performanceStatus,
         'Work Performed': item.solutionDetails || '—',
         'Parts Used': item.usedParts || '—',
