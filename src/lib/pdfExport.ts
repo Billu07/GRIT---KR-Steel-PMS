@@ -100,20 +100,7 @@ function drawFooter(doc: jsPDF, pageNum: number, totalPages: number) {
 }
 
 function drawSignatures(doc: jsPDF, y: number) {
-    const pw = doc.internal.pageSize.getWidth();
-    const ph = doc.internal.pageSize.getHeight();
-    if (y > ph - 35) { doc.addPage(); y = 40; }
-    const sigY = y + 15;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.setTextColor(...C.navy);
-    const cols = ["YARD MANAGER", "PRODUCTION IN-CHARGE", "WIRE FOREMAN", "MAINTENANCE IN-CHARGE"];
-    const colWidth = (pw - 28) / 4;
-    cols.forEach((label, i) => {
-        const x = 14 + (i * colWidth) + (colWidth / 2);
-        doc.text("_______________________", x, sigY - 2, { align: "center" });
-        doc.text(label, x, sigY + 2, { align: "center" });
-    });
+    // Signature block removed as requested
 }
 
 const tableDefaults = (startY: number, meta: PdfMeta) => ({
@@ -217,7 +204,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
   const startY = drawHeader(doc, meta, true);
 
   const head = type === "corrective" 
-    ? [["TIMELINE / DATES", "EQUIPMENT IDENTITY", "SPECS / DURATIONS", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
+    ? [["EQUIPMENT IDENTITY", "START DATE", "END DATE", "DURATION", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
     : [["DATE COMPLETED", "EQUIPMENT / SPECS", "FREQUENCY", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
 
     const rows = data.map((item: any) => {
@@ -233,11 +220,11 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         repairTime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
       }
 
-      const timeline = `Srv: ${start ? format(start, 'dd/MM/yy') : '—'}\nEnd: ${end ? format(end, 'dd/MM/yy') : '—'}`;
-      const jobSpecs = `Sev: ${item.problemType?.toUpperCase() || '—'}\nJob: ${item.workType?.toUpperCase() || '—'}\nDur: ${repairTime}`;
+      const startDate = start ? format(start, 'dd/MM/yy HH:mm') : '—';
+      const endDate = end ? format(end, 'dd/MM/yy HH:mm') : '—';
       const footer = `${item.usedParts ? 'Parts: ' + item.usedParts : ''}${item.remarks ? (item.usedParts ? '\n' : '') + 'Rem: ' + item.remarks : ''}`;
 
-      return [timeline, eqInfo, jobSpecs, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
+      return [eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
     } else {
       const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : "—";
       const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
@@ -254,12 +241,13 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
   autoTable(doc, { 
     ...tableDefaults(startY, meta), head, body: rows,
     columnStyles: { 
-        0: { cellWidth: type === "corrective" ? 32 : 25 }, 
-        1: { cellWidth: type === "corrective" ? 40 : 40 }, 
-        2: { cellWidth: type === "corrective" ? 30 : 35 }, 
-        3: { cellWidth: type === "corrective" ? 45 : 30 }, 
+        0: { cellWidth: type === "corrective" ? 35 : 25 }, 
+        1: { cellWidth: type === "corrective" ? 25 : 40 }, 
+        2: { cellWidth: type === "corrective" ? 25 : 35 }, 
+        3: { cellWidth: type === "corrective" ? 20 : 30 }, 
         4: { cellWidth: type === "corrective" ? 45 : 30 },
-        5: { cellWidth: type === "corrective" ? 30 : 45 } 
+        5: { cellWidth: type === "corrective" ? 45 : 45 },
+        6: { cellWidth: type === "corrective" ? 30 : 30 }
     }
   });
 
