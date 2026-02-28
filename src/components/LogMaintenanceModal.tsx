@@ -120,20 +120,27 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     }
 
     let taskIdsToSubmit: number[] = [];
+    let maintenanceDetails = formData.solutionDetails;
+
     if (formData.type === 'scheduled') {
       if (!initialData) {
         if (!formData.frequency) {
           alert("Please select a frequency.");
           return;
         }
-        taskIdsToSubmit = filteredTasks.filter((t: any) => t.frequency === formData.frequency).map((t: any) => t.id);
+        const tasks = filteredTasks.filter((t: any) => t.frequency === formData.frequency);
+        taskIdsToSubmit = tasks.map((t: any) => t.id);
         if (taskIdsToSubmit.length === 0) {
           alert("No tasks found for the selected frequency.");
           return;
         }
+        // Auto-fill maintenanceDetails with task names for bulk logging
+        maintenanceDetails = tasks.map((t: any) => t.taskName).join("; ");
       } else {
         if (formData.taskId) {
           taskIdsToSubmit = [parseInt(formData.taskId)];
+          const task = filteredTasks.find((t: any) => String(t.id) === formData.taskId);
+          if (task) maintenanceDetails = task.taskName;
         }
       }
     }
@@ -142,7 +149,8 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
       ...formData,
       equipmentId: parseInt(formData.equipmentId),
       taskId: formData.taskId ? parseInt(formData.taskId) : null,
-      taskIds: taskIdsToSubmit.length > 0 ? taskIdsToSubmit : undefined
+      taskIds: taskIdsToSubmit.length > 0 ? taskIdsToSubmit : undefined,
+      maintenanceDetails: maintenanceDetails
     };
     
     if (formData.type === 'corrective') {
@@ -297,19 +305,21 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {!isScheduled && (
-                <div>
-                  <label style={labelStyle}>
-                      {isPredictive ? 'Condition Analysis / Findings' : 'Problem Description'}
-                  </label>
-                  <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
-                </div>
+                <>
+                  <div>
+                    <label style={labelStyle}>
+                        {isPredictive ? 'Condition Analysis / Findings' : 'Problem Description'}
+                    </label>
+                    <textarea name="problemDescription" value={formData.problemDescription} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>
+                        {isPredictive ? 'Recommended Action' : 'Work Performed / Solution'}
+                    </label>
+                    <textarea name="solutionDetails" value={formData.solutionDetails} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
+                  </div>
+                </>
               )}
-              <div>
-                <label style={labelStyle}>
-                    {isPredictive ? 'Recommended Action' : 'Work Performed / Solution'}
-                </label>
-                <textarea name="solutionDetails" value={formData.solutionDetails} onChange={handleChange} style={{ ...fieldStyle, minHeight: "60px" }} />
-              </div>
               <div><label style={labelStyle}>Used Parts / Consumables</label><input type="text" name="usedParts" value={formData.usedParts} onChange={handleChange} style={fieldStyle} placeholder="e.g. 2x Filter, Hydraulic Oil 5L" /></div>
               <div><label style={labelStyle}>General Remarks</label><textarea name="remarks" value={formData.remarks} onChange={handleChange} style={{ ...fieldStyle, minHeight: "40px" }} /></div>
             </div>
