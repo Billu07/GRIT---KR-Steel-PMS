@@ -58,12 +58,27 @@ function addExcelHeader(workbook: ExcelJS.Workbook, worksheet: ExcelJS.Worksheet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildSheetFromJson(worksheet: ExcelJS.Worksheet, sheetData: any[]) {
   if (sheetData.length === 0) return;
+  
+  // Set print-ready page setup
+  worksheet.pageSetup = {
+    paperSize: 9, // A4
+    orientation: 'landscape',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+    margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 }
+  };
+
   const keys = Object.keys(sheetData[0]);
-  worksheet.columns = keys.map(key => ({
-    header: key,
-    key: key,
-    width: key.toLowerCase().includes('description') || key.toLowerCase().includes('detail') || key.toLowerCase().includes('observations') || key.toLowerCase().includes('performed') ? 40 : 20
-  }));
+  worksheet.columns = keys.map(key => {
+    const k = key.toLowerCase();
+    const isWide = k.includes('name') || k.includes('description') || k.includes('detail') || k.includes('observations') || k.includes('performed') || k.includes('remarks') || k.includes('parts');
+    return {
+      header: key,
+      key: key,
+      width: isWide ? 45 : 18
+    };
+  });
   
   worksheet.addRows(sheetData);
   
@@ -71,6 +86,7 @@ function buildSheetFromJson(worksheet: ExcelJS.Worksheet, sheetData: any[]) {
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: C.navy } };
     cell.font = { bold: true, color: { argb: C.white } };
     cell.border = { bottom: { style: 'thin', color: { argb: C.rule } } };
+    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
   });
 
   // Alternate row styles and general borders
@@ -80,6 +96,8 @@ function buildSheetFromJson(worksheet: ExcelJS.Worksheet, sheetData: any[]) {
         cell.border = {
           bottom: { style: 'thin', color: { argb: 'FFEAE7DF' } }
         };
+        // Ensure text wraps cleanly for multi-line content
+        cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
       });
       if (rowNumber % 2 === 0) {
         row.eachCell((cell) => {
