@@ -1,4 +1,4 @@
-import ExcelJS from 'exceljs';
+﻿import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { format, differenceInMinutes } from 'date-fns';
 import { getTaskStatus } from './taskUtils';
@@ -164,12 +164,12 @@ export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipmen
       'Sl No.': index + 1,
       'Task ID': task.taskId,
       'Task Name': task.taskName,
-      'Frequency': task.frequency?.toUpperCase() || '—',
+      'Frequency': task.frequency?.toUpperCase() || '-',
       'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
-      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
-      'Criticality': task.criticality?.toUpperCase() || '—',
+      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '-',
+      'Criticality': task.criticality?.toUpperCase() || '-',
       'Status': statusText,
-      'Remarks': task.taskDetail || '—',
+      'Remarks': task.taskDetail || '-',
     };
   });
 
@@ -199,16 +199,16 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
     sheetData.push({
       'Grouping': group,
       'Sl No.': index + 1,
-      'Equipment Code': eq?.code || '—',
-      'Equipment Name': eq?.name || '—',
+      'Equipment Code': eq?.code || '-',
+      'Equipment Name': eq?.name || '-',
       'Task ID': task.taskId,
       'Task Name': task.taskName,
-      'Frequency': task.frequency?.toUpperCase() || '—',
+      'Frequency': task.frequency?.toUpperCase() || '-',
       'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
-      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
-      'Criticality': task.criticality?.toUpperCase() || '—',
+      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '-',
+      'Criticality': task.criticality?.toUpperCase() || '-',
       'Status': statusText,
-      'Remarks': task.taskDetail || '—',
+      'Remarks': task.taskDetail || '-',
     });
   });
 
@@ -239,23 +239,23 @@ export async function exportEquipmentReportExcel({ equipment, groupBy }: { equip
     }
     sheetData.push({
       'Grouping': group,
-      'Code': eq.code || '—',
-      'Name': eq.name || '—',
-      'Category': eq.category?.name || '—',
-      'Model': eq.model || '—',
-      'Serial Number': eq.serialNumber || '—',
-      'Capacity': eq.capacity || '—',
-      'Unit': eq.unit || '—',
-      'Quantity': eq.quantity || '—',
-      'Brand': eq.brand || '—',
-      'Location': eq.location || '—',
-      'Running Hours': eq.runningHours || '—',
-      'Test Cert No': eq.testCertNumber || '—',
-      'Test Cert Validity': eq.testCertValidity || '—',
-      'Test Cert Applied': eq.testCertApplied || '—',
-      'Status': eq.status || '—',
-      'Safety Measures': eq.safetyMeasures || '—',
-      'Description': eq.description || '—',
+      'Code': eq.code || '-',
+      'Name': eq.name || '-',
+      'Category': eq.category?.name || '-',
+      'Model': eq.model || '-',
+      'Serial Number': eq.serialNumber || '-',
+      'Capacity': eq.capacity || '-',
+      'Unit': eq.unit || '-',
+      'Quantity': eq.quantity || '-',
+      'Brand': eq.brand || '-',
+      'Location': eq.location || '-',
+      'Running Hours': eq.runningHours || '-',
+      'Test Cert No': eq.testCertNumber || '-',
+      'Test Cert Validity': eq.testCertValidity || '-',
+      'Test Cert Applied': eq.testCertApplied || '-',
+      'Status': eq.status || '-',
+      'Safety Measures': eq.safetyMeasures || '-',
+      'Description': eq.description || '-',
     });
   });
 
@@ -297,7 +297,7 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
       const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
 
-      let maintenanceTimeStr = '—';
+      let maintenanceTimeStr = '-';
       if (start && end) {
         const mins = differenceInMinutes(end, start);
         maintenanceTimeStr = `${Math.floor(mins / 60)}h ${mins % 60}m`;
@@ -305,20 +305,20 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
 
       return {
         'Sl No.': index + 1,
-        'Equipment Code': item.equipment?.code || '—',
-        'Equipment Name': item.equipment?.name || '—',
-        'Category': item.equipment?.category?.name || '—',
-        'Model': item.equipment?.model || '—',
-        'Serial Number': item.equipment?.serialNumber || '—',
-        'Capacity': item.equipment?.capacity || '—',
-        'Service Start': start ? format(start, 'dd MMM yyyy HH:mm') : '—',
-        'Service End': end ? format(end, 'dd MMM yyyy HH:mm') : '—',
+        'Equipment Code': item.equipment?.code || '-',
+        'Equipment Name': item.equipment?.name || '-',
+        'Category': item.equipment?.category?.name || '-',
+        'Model': item.equipment?.model || '-',
+        'Serial Number': item.equipment?.serialNumber || '-',
+        'Capacity': item.equipment?.capacity || '-',
+        'Service Start': start ? format(start, 'dd MMM yyyy HH:mm') : '-',
+        'Service End': end ? format(end, 'dd MMM yyyy HH:mm') : '-',
         'Maintenance Duration': maintenanceTimeStr,
-        'Problem Type': item.problemType?.toUpperCase() || '—',
-        'Work Type': item.workType?.toUpperCase() || '—',
-        'Problem Description': item.problemDescription || '—',
-        'Solution Details': item.solutionDetails || '—',
-        'Used Parts': item.usedParts || '—',
+        'Problem Type': item.problemType?.toUpperCase() || '-',
+        'Work Type': item.workType?.toUpperCase() || '-',
+        'Problem Description': item.problemDescription || '-',
+        'Solution Details': item.solutionDetails || '-',
+        'Used Parts': item.usedParts || '-',
         'Remarks': item.remarks || '',
       };
     });
@@ -336,7 +336,7 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       }
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
-      let nextDueDateStr = '—';
+      let nextDueDateStr = '-';
       if (item.task && item.task.nextDueDate) {
           nextDueDateStr = format(new Date(item.task.nextDueDate), 'dd MMM yyyy');
       }
@@ -344,15 +344,15 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       return {
         'Sl No.': index + 1,
         'Log ID': item.id,
-        'Asset Code': item.equipment?.code || '—',
-        'Asset Name': item.equipment?.name || '—',
-        'Done Date': date ? format(date, 'dd MMM yyyy') : '—',
+        'Asset Code': item.equipment?.code || '-',
+        'Asset Name': item.equipment?.name || '-',
+        'Done Date': date ? format(date, 'dd MMM yyyy') : '-',
         'Maintenance Type': item.type?.toUpperCase(),
-        'Frequency': item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—',
+        'Frequency': item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '-',
         'Next Due Date': nextDueDateStr,
         'Performance Status': performanceStatus,
-        'Work Performed': item.solutionDetails || '—',
-        'Parts Used': item.usedParts || '—',
+        'Work Performed': item.solutionDetails || '-',
+        'Parts Used': item.usedParts || '-',
         'Remarks': item.remarks || '',
       };
     });

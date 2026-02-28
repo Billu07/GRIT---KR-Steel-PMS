@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useMemo } from "react";
 import useSWR from "swr";
@@ -328,10 +328,10 @@ export default function ReportsBuilderPage() {
         const inventory = filteredData.inventory || [];
         if (reportFormat === "pdf") {
           const headers = [["SL No.", "Equipment Name", "Quantity", "Description", "SWL", "Certificate Number"]];
-          const data = inventory.map((item: any, idx: number) => [idx + 1, item.name, item.quantity || "—", item.description || "—", item.swl || "—", item.certificateNo || "—"]);
+          const data = inventory.map((item: any, idx: number) => [idx + 1, item.name, item.quantity || "-", item.description || "-", item.swl || "-", item.certificateNo || "-"]);
           exportToPDF("Shipyard Inventory Summary", headers, data, "KR_Steel_Inventory_Report");
         } else {
-          const data = inventory.map((item: any, idx: number) => ({"SL No.": idx + 1, "Name of Equipment": item.name, "Quantity": item.quantity || "—", "Description": item.description || "—", "SWL": item.swl || "—", "Certificate Number": item.certificateNo || "—"}));
+          const data = inventory.map((item: any, idx: number) => ({"SL No.": idx + 1, "Name of Equipment": item.name, "Quantity": item.quantity || "-", "Description": item.description || "-", "SWL": item.swl || "-", "Certificate Number": item.certificateNo || "-"}));
           await exportToExcel(data, "KR_Steel_Inventory_Report");
         }
       }
@@ -546,10 +546,10 @@ export default function ReportsBuilderPage() {
                                         <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                         <td className="p-4 flex items-center gap-2">{status === "OVERDUE" && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
                                         <td className="p-4 font-medium whitespace-pre-line leading-relaxed">{task.taskName}</td>
-                                        <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td>
+                                        <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '-'}</td>
                                         <td className="p-4 capitalize">{task.frequency}</td>
                                         <td className="p-4">{task.lastCompletedDate ? format(new Date(task.lastCompletedDate), "dd MMM yyyy") : 'NEVER'}</td>
-                                        <td className="p-4">{task.nextDueDate ? format(new Date(task.nextDueDate), "dd MMM yyyy") : '—'}</td>
+                                        <td className="p-4">{task.nextDueDate ? format(new Date(task.nextDueDate), "dd MMM yyyy") : '-'}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${statusColor}`}>
                                                 {statusText}
@@ -562,7 +562,7 @@ export default function ReportsBuilderPage() {
                                 <tr key={eq.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                     <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                     <td className="p-4 font-medium">{eq.code}</td><td className="p-4">{eq.name}</td><td className="p-4">{eq.category?.name}</td>
-                                    <td className="p-4">{eq.model || '—'}</td><td className="p-4">{eq.serialNumber || '—'}</td><td className="p-4">{eq.location || '—'}</td>
+                                    <td className="p-4">{eq.model || '-'}</td><td className="p-4">{eq.serialNumber || '-'}</td><td className="p-4">{eq.location || '-'}</td>
                                     <td className="p-4"><span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${eq.status === 'active' ? 'bg-[#E6F4EA] text-[#1E4620]' : 'bg-[#F5F3EF] text-[#2D3748]'}`}>{eq.status}</span></td>
                                 </tr>
                             ))}
@@ -583,11 +583,11 @@ export default function ReportsBuilderPage() {
                                     return (
                                         <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                             <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
-                                            <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
+                                            <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '-'}</td>
                                             <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
-                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.problemDescription || '—'}</td>
-                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
-                                            <td className="p-4">{m.usedParts || '—'}</td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.problemDescription || '-'}</td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '-'}</td>
+                                            <td className="p-4">{m.usedParts || '-'}</td>
                                             <td className="p-4">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
                                                     {wasLate ? 'Performed Late' : 'On-Time'}
@@ -600,12 +600,12 @@ export default function ReportsBuilderPage() {
                                         <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                             <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                             <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
-                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.task?.taskName || m.maintenanceDetails || '—'}</td>
-                                            <td className="p-4">{m.maintenanceDate ? format(new Date(m.maintenanceDate), "dd MMM yyyy") : '—'}</td>
-                                            <td className="p-4">{m.targetDate ? format(new Date(m.targetDate), "dd MMM yyyy") : '—'}</td>
-                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
-                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.usedParts || '—'}</td>
-                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.remarks || '—'}</td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.task?.taskName || m.maintenanceDetails || '-'}</td>
+                                            <td className="p-4">{m.maintenanceDate ? format(new Date(m.maintenanceDate), "dd MMM yyyy") : '-'}</td>
+                                            <td className="p-4">{m.targetDate ? format(new Date(m.targetDate), "dd MMM yyyy") : '-'}</td>
+                                            <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '-'}</td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.usedParts || '-'}</td>
+                                            <td className="p-4 truncate max-w-[150px] whitespace-pre-line leading-relaxed">{m.remarks || '-'}</td>
                                             <td className="p-4">
                                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
                                                     {wasLate ? 'Performed Late' : 'On-Time'}
@@ -618,9 +618,9 @@ export default function ReportsBuilderPage() {
                             {reportType === "inventory" && filteredData.inventory?.map((item: any, index: number) => (
                                 <tr key={item.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                     <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
-                                    <td className="p-4 font-medium">{item.name}</td><td className="p-4">{item.quantity || '—'}</td>
-                                    <td className="p-4 truncate max-w-[300px]">{item.description || '—'}</td><td className="p-4">{item.swl || '—'}</td>
-                                    <td className="p-4 font-mono text-xs">{item.certificateNo || '—'}</td>
+                                    <td className="p-4 font-medium">{item.name}</td><td className="p-4">{item.quantity || '-'}</td>
+                                    <td className="p-4 truncate max-w-[300px]">{item.description || '-'}</td><td className="p-4">{item.swl || '-'}</td>
+                                    <td className="p-4 font-mono text-xs">{item.certificateNo || '-'}</td>
                                 </tr>
                             ))}
                         </tbody>
