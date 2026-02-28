@@ -122,12 +122,28 @@ export default function ReportsBuilderPage() {
             }
         });
 
+        const frequencyOrder: { [key: string]: number } = {
+            'daily': 1,
+            'weekly': 2,
+            'monthly': 3,
+            'quarterly': 4,
+            'semi_annually': 5,
+            'yearly': 6,
+            'five_yearly': 7
+        };
+
         filteredTasks = Array.from(groupedTasksMap.values()).map((g: any) => ({
             ...g,
             taskId: g._count > 1 ? g._allTaskIds.join(', ') : g.taskId,
             taskName: g._count > 1 ? g._allNames.join('\n') : g.taskName,
             _computedStatus: g._rawStatuses.includes("OVERDUE") ? "OVERDUE" : g._rawStatuses.includes("DUE") ? "DUE" : "UP-TO-DATE"
         }));
+
+        filteredTasks.sort((a: any, b: any) => {
+            const freqA = a.frequency?.toLowerCase() || 'yearly';
+            const freqB = b.frequency?.toLowerCase() || 'yearly';
+            return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
+        });
 
         return { tasks: filteredTasks, equipment };
     } 
