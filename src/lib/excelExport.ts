@@ -32,15 +32,14 @@ function addExcelHeader(workbook: ExcelJS.Workbook, worksheet: ExcelJS.Worksheet
   
   worksheet.getCell('B3').value = 'SHIP RECYCLING FACILITY';
   worksheet.getCell('B3').font = { name: 'Arial', size: 8, color: { argb: C.accent } };
-  
-  worksheet.getCell('F2').value = 'GRIT SYSTEM';
+
+  worksheet.getCell('F2').value = 'GRIT - GEAR RELIABILITY & INTERVENTION TRACKER';
   worksheet.getCell('F2').font = { name: 'Arial', size: 10, bold: true, color: { argb: C.navy } };
-  
-  worksheet.getCell('F3').value = 'GEAR RELIABILITY & INTERVENTION TRACKER';
+
+  worksheet.getCell('F3').value = '';
   worksheet.getCell('F3').font = { name: 'Arial', size: 8, color: { argb: C.accent } };
-  
-  worksheet.getCell('A5').value = title.toUpperCase();
-  worksheet.getCell('A5').font = { name: 'Arial', size: 14, bold: true, color: { argb: C.navy } };
+
+  worksheet.getCell('A5').value = title.toUpperCase();  worksheet.getCell('A5').font = { name: 'Arial', size: 14, bold: true, color: { argb: C.navy } };
   
   if (subtitle) {
     worksheet.getCell('A6').value = subtitle;

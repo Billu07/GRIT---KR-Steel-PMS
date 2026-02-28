@@ -53,13 +53,9 @@ function drawHeader(doc: jsPDF, meta: PdfMeta, isFirstPage: boolean = true): num
   doc.text("SHIP RECYCLING FACILITY", 34, 17);
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
-  doc.text("GRIT SYSTEM", pw - 14, 11, { align: "right" });
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6);
-  doc.setTextColor(...C.accent);
-  doc.text("GEAR RELIABILITY & INTERVENTION TRACKER", pw - 14, 16, { align: "right" });
+  doc.text("GRIT - GEAR RELIABILITY & INTERVENTION TRACKER", pw - 14, 15, { align: "right" });
 
   if (!isFirstPage) return 32;
 
@@ -138,9 +134,10 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
   Object.entries(grouped).forEach(([groupName, groupTasks]: [string, any], index) => {
     if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
     doc.setFillColor(...C.paste); 
-    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 6, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...C.navy); doc.text(groupName.toUpperCase(), 18, startY + 4.2);
-    startY += 8;
+    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy); 
+    doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    startY += 10;
     const rows = groupTasks.map((t: any) => {
         const eq = equipment.find((e: any) => e.id === t.equipmentId);
         const statusText = getTaskStatus(t);
@@ -158,7 +155,7 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
     });
     autoTable(doc, { 
       ...tableDefaults(startY, meta), 
-      head: [["ID", "TASK NAME", "EQ CODE", "FREQ", "LAST DONE", "NEXT DUE", "STATUS", "DETAIL"]], 
+      head: [["ID", "TASK NAME", "EQ CODE", "FREQ", "LAST DONE", "NEXT DUE", "STATUS", "REMARKS"]], 
       body: rows,
       columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 40 }, 7: { fontStyle: 'bold' } }
     });
@@ -180,9 +177,10 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
   Object.entries(grouped).forEach(([groupName, groupEq]: [string, any], index) => {
     if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
     doc.setFillColor(...C.paste); 
-    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 6, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...C.navy); doc.text(groupName.toUpperCase(), 18, startY + 4.2);
-    startY += 8;
+    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy); 
+    doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    startY += 10;
     const rows = groupEq.map((eq: any) => [
         eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.location || "—", eq.runningHours || "—", eq.status.toUpperCase()
     ]);
@@ -201,54 +199,81 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
 export function exportMaintenancePdf({ data, type }: { data: any[], type: "corrective" | "preventive" }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const meta: PdfMeta = { title: `${type === "corrective" ? "Corrective (Breakdown)" : "Preventive (Scheduled)"} Maintenance Report`, subtitle: `KR Steel Ship Recycling Yard · Maintenance Operations Log`, orientation: "l" };
-  const startY = drawHeader(doc, meta, true);
+  let startY = drawHeader(doc, meta, true);
 
   const head = type === "corrective" 
     ? [["EQUIPMENT IDENTITY", "START DATE", "END DATE", "DURATION", "PROBLEM / FAULT", "WORK PERFORMED", "PARTS / REMARKS"]]
-    : [["DATE COMPLETED", "EQUIPMENT / SPECS", "FREQUENCY", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
+    : [["EQUIPMENT / SPECS", "FREQUENCY", "TARGETS (DATE)", "ACTUAL (STATUS)", "WORK DONE / REMARKS", "PARTS"]];
 
-    const rows = data.map((item: any) => {
-    const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
-
+  const grouped = data.reduce((acc: any, item: any) => {
+    let dateStr = "UNKNOWN DATE";
     if (type === "corrective") {
-      const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
-      const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
-
-      let repairTime = '—';
-      if (start && end) {
-        const mins = differenceInMinutes(end, start);
-        repairTime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
-      }
-
-      const startDate = start ? format(start, 'dd/MM/yy HH:mm') : '—';
-      const endDate = end ? format(end, 'dd/MM/yy HH:mm') : '—';
-      const footer = `${item.usedParts ? 'Parts: ' + item.usedParts : ''}${item.remarks ? (item.usedParts ? '\n' : '') + 'Rem: ' + item.remarks : ''}`;
-
-      return [eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
+      dateStr = item.serviceEndDate ? format(new Date(item.serviceEndDate), "dd MMM yyyy") : "UNKNOWN DATE";
     } else {
-      const date = item.maintenanceDate ? format(new Date(item.maintenanceDate), 'dd/MM/yyyy') : "—";
-      const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
-            const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;
-      
-            const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
-            const status = wasDateOverdue ? "LATE" : "ON-TIME";
-            const usage = `Stat: ${status}`;      
-      const details = `${item.solutionDetails || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
-      return [date, eqInfo, taskInfo, targets, usage, details, item.usedParts || "—"];
+      dateStr = item.maintenanceDate ? format(new Date(item.maintenanceDate), "dd MMM yyyy") : "UNKNOWN DATE";
     }
-  });
+    if (!acc[dateStr]) acc[dateStr] = [];
+    acc[dateStr].push(item);
+    return acc;
+  }, {});
 
-  autoTable(doc, { 
-    ...tableDefaults(startY, meta), head, body: rows,
-    columnStyles: { 
-        0: { cellWidth: type === "corrective" ? 35 : 25 }, 
-        1: { cellWidth: type === "corrective" ? 25 : 40 }, 
-        2: { cellWidth: type === "corrective" ? 25 : 35 }, 
-        3: { cellWidth: type === "corrective" ? 20 : 30 }, 
-        4: { cellWidth: type === "corrective" ? 45 : 30 },
-        5: { cellWidth: type === "corrective" ? 45 : 45 },
-        6: { cellWidth: type === "corrective" ? 30 : 30 }
-    }
+  Object.entries(grouped).forEach(([dateGroup, groupData]: [string, any], index) => {
+    if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
+    
+    doc.setFillColor(...C.paste); 
+    doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy); 
+    doc.text(`DATE: ${dateGroup.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    startY += 10;
+
+    const rows = groupData.map((item: any) => {
+      const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "—";
+
+      if (type === "corrective") {
+        const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
+        const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
+
+        let repairTime = '—';
+        if (start && end) {
+          const mins = differenceInMinutes(end, start);
+          repairTime = `${Math.floor(mins / 60)}h ${mins % 60}m`;
+        }
+
+        const startDate = start ? format(start, 'dd/MM/yy HH:mm') : '—';
+        const endDate = end ? format(end, 'dd/MM/yy HH:mm') : '—';
+        const footer = `${item.usedParts ? 'Parts: ' + item.usedParts : ''}${item.remarks ? (item.usedParts ? '\n' : '') + 'Rem: ' + item.remarks : ''}`;
+
+        return [eqInfo, startDate, endDate, repairTime, item.problemDescription || "—", item.solutionDetails || "—", footer || "—"];
+      } else {
+        const taskInfo = item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '—';      
+        const targets = `Due: ${item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : 'N/A'}`;
+        const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
+        const status = wasDateOverdue ? "LATE" : "ON-TIME";
+        const usage = `Stat: ${status}`;      
+        const details = `${item.solutionDetails || "—"}${item.remarks ? '\n\nRemarks: ' + item.remarks : ''}`;
+        return [eqInfo, taskInfo, targets, usage, details, item.usedParts || "—"];
+      }
+    });
+
+    autoTable(doc, { 
+      ...tableDefaults(startY, meta), head, body: rows,
+      columnStyles: type === "corrective" ? { 
+          0: { cellWidth: 35 }, 
+          1: { cellWidth: 25 }, 
+          2: { cellWidth: 25 }, 
+          3: { cellWidth: 20 }, 
+          4: { cellWidth: 45 },
+          5: { cellWidth: 45 },
+          6: { cellWidth: 30 }
+      } : {
+          0: { cellWidth: 45 }, 
+          1: { cellWidth: 35 }, 
+          2: { cellWidth: 30 }, 
+          3: { cellWidth: 30 }, 
+          4: { cellWidth: 50 },
+          5: { cellWidth: 35 } 
+      }
+    });
   });
 
   drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
@@ -279,7 +304,7 @@ export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; 
 
   autoTable(doc, { 
     ...tableDefaults(startY, meta), 
-    head: [["ID", "TASK NAME", "FREQUENCY", "LAST DONE", "NEXT DUE", "CRITICALITY", "STATUS", "DETAILS"]], 
+    head: [["ID", "TASK NAME", "FREQUENCY", "LAST DONE", "NEXT DUE", "CRITICALITY", "STATUS", "REMARKS"]], 
     body: rows,
     columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 45 }, 7: { fontStyle: 'bold' } }
   });
