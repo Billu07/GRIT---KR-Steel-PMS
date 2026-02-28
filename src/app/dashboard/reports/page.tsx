@@ -95,6 +95,38 @@ export default function ReportsBuilderPage() {
             });
         }
 
+        // Compress / Group Tasks
+        const groupedTasksMap = new Map();
+        filteredTasks.forEach((t: any) => {
+            const key = `${t.equipmentId}-${t.frequency}`;
+            if (!groupedTasksMap.has(key)) {
+                groupedTasksMap.set(key, { 
+                    ...t, 
+                    _count: 1, 
+                    _allNames: [`1. ${t.taskName}`], 
+                    _rawStatuses: [getTaskStatus(t)] 
+                });
+            } else {
+                const group = groupedTasksMap.get(key);
+                group._count++;
+                group._allNames.push(`${group._count}. ${t.taskName}`);
+                group._rawStatuses.push(getTaskStatus(t));
+                if (t.nextDueDate && (!group.nextDueDate || new Date(t.nextDueDate) < new Date(group.nextDueDate))) {
+                    group.nextDueDate = t.nextDueDate;
+                }
+                if (t.lastCompletedDate && (!group.lastCompletedDate || new Date(t.lastCompletedDate) > new Date(group.lastCompletedDate))) {
+                    group.lastCompletedDate = t.lastCompletedDate;
+                }
+            }
+        });
+
+        filteredTasks = Array.from(groupedTasksMap.values()).map((g: any) => ({
+            ...g,
+            taskId: g._count > 1 ? `Multiple (${g._count})` : g.taskId,
+            taskName: g._count > 1 ? g._allNames.join('\n') : g.taskName,
+            _computedStatus: g._rawStatuses.includes("OVERDUE") ? "OVERDUE" : g._rawStatuses.includes("DUE") ? "DUE" : "UP-TO-DATE"
+        }));
+
         return { tasks: filteredTasks, equipment };
     } 
     
@@ -153,6 +185,42 @@ export default function ReportsBuilderPage() {
           return true;
         });
       }
+
+      // Compress / Group Maintenance Logs
+      if (maintenanceType !== "corrective") {
+          const groupedMaintMap = new Map();
+          filtered.forEach((m: any) => {
+              const dateStr = m.maintenanceDate ? new Date(m.maintenanceDate).toISOString().split('T')[0] : 'unknown-date';
+              const key = `${m.equipmentId}-${dateStr}`;
+              
+              if (!groupedMaintMap.has(key)) {
+                  groupedMaintMap.set(key, {
+                      ...m,
+                      _count: 1,
+                      _allTasks: [m.task?.taskName || m.maintenanceDetails || 'Unknown Task'],
+                      _isLate: (m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate)) || (m.targetHours && m.runningHours && m.runningHours >= m.targetHours)
+                  });
+              } else {
+                  const group = groupedMaintMap.get(key);
+                  group._count++;
+                  group._allTasks.push(m.task?.taskName || m.maintenanceDetails || 'Unknown Task');
+                  const isLate = (m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate)) || (m.targetHours && m.runningHours && m.runningHours >= m.targetHours);
+                  if (isLate) group._isLate = true;
+              }
+          });
+
+          filtered = Array.from(groupedMaintMap.values()).map((g: any) => {
+              if (g._count === 1) return g;
+              return {
+                  ...g,
+                  maintenanceDetails: "Multiple Scheduled Tasks",
+                  solutionDetails: g._allTasks.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n'),
+                  task: null, // Override to ensure 'maintenanceDetails' is used
+                  _computedLate: g._isLate
+              };
+          });
+      }
+
       return { maintenance: filtered };
     }
 
@@ -384,7 +452,7 @@ export default function ReportsBuilderPage() {
                         <tbody className="text-[13px] text-[#1A1A1A]">
                             {reportType === "tasks" && filteredData.tasks?.map((task: any) => {
                                 const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
-                                const status = getTaskStatus(task);
+                                const status = task._computedStatus || getTaskStatus(task);
 
                                 // Status Logic
                                 let statusText = status;
@@ -400,9 +468,9 @@ export default function ReportsBuilderPage() {
                                 }
 
                                 return (
-                                    <tr key={task.id} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
+                                    <tr key={task.id || task.taskId} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
                                         <td className="p-4 flex items-center gap-2">{status === "OVERDUE" && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
-                                        <td className="p-4 font-medium">{task.taskName}</td>
+                                        <td className="p-4 font-medium whitespace-pre-line leading-relaxed">{task.taskName}</td>
                                         <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td>
                                         <td className="p-4 capitalize">{task.frequency}</td>
                                         <td className="p-4">{task.lastCompletedDate ? format(new Date(task.lastCompletedDate), "dd MMM yyyy") : 'NEVER'}</td>
@@ -426,14 +494,14 @@ export default function ReportsBuilderPage() {
                                 const date = m.type === 'corrective' ? m.serviceEndDate : m.maintenanceDate;
                                 const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
                                 const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
-                                const wasLate = wasDateOverdue || wasHoursOverdue;
+                                const wasLate = m._computedLate !== undefined ? m._computedLate : (wasDateOverdue || wasHoursOverdue);
 
                                 return (
-                                    <tr key={m.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                    <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
                                         <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
                                         <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
-                                        <td className="p-4 truncate max-w-[200px]">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
-                                        <td className="p-4 truncate max-w-[200px]">{m.solutionDetails || '—'}</td>
+                                        <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
+                                        <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.solutionDetails || '—'}</td>
                                         <td className="p-4">{m.usedParts || '—'}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${wasLate ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
