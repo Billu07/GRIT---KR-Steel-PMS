@@ -67,7 +67,8 @@ export default function ReportsBuilderPage() {
     return rawData.equipment.filter((eq: any) => String(eq.categoryId) === selectedCategory);
   }, [rawData, selectedCategory]);
 
-  // Derived / Filtered Data  const filteredData = useMemo(() => {
+  // Derived / Filtered Data
+  const filteredData = useMemo(() => {
     if (!rawData) return null;
     const { tasks, equipment, maintenanceHistory, inventory } = rawData;
     const today = new Date();
