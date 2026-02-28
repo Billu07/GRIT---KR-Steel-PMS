@@ -158,9 +158,10 @@ export async function exportEquipmentChecklistExcel(equipment: any, tasks: any[]
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
-  const sheetData = tasks.map((task) => {
+  const sheetData = tasks.map((task, index) => {
     const statusText = getTaskStatus(task);
     return {
+      'Sl No.': index + 1,
       'Task ID': task.taskId,
       'Task Name': task.taskName,
       'Frequency': task.frequency?.toUpperCase() || '—',
@@ -168,7 +169,7 @@ export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipmen
       'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
       'Criticality': task.criticality?.toUpperCase() || '—',
       'Status': statusText,
-      'Task Detail': task.taskDetail || '—',
+      'Remarks': task.taskDetail || '—',
     };
   });
 
@@ -185,7 +186,7 @@ export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipmen
 export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tasks: any[], equipment: any[], groupBy: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
-  tasks.forEach((task) => {
+  tasks.forEach((task, index) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eq = equipment.find((e: any) => e.id === task.equipmentId);
     let group = "All Tasks";
@@ -197,6 +198,7 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
     const statusText = getTaskStatus(task);
     sheetData.push({
       'Grouping': group,
+      'Sl No.': index + 1,
       'Equipment Code': eq?.code || '—',
       'Equipment Name': eq?.name || '—',
       'Task ID': task.taskId,
@@ -206,7 +208,7 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
       'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '—',
       'Criticality': task.criticality?.toUpperCase() || '—',
       'Status': statusText,
-      'Task Detail': task.taskDetail || '—',
+      'Remarks': task.taskDetail || '—',
     });
   });
 
@@ -288,7 +290,7 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
   let sheetData: any[] = [];
 
   if (type === 'corrective') {
-    sheetData = data.map((item) => {
+    sheetData = data.map((item, index) => {
       const information = item.informationDate ? new Date(item.informationDate) : null;
       const start = item.serviceStartDate ? new Date(item.serviceStartDate) : null;
       const end = item.serviceEndDate ? new Date(item.serviceEndDate) : null;
@@ -300,6 +302,7 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       }
 
       return {
+        'Sl No.': index + 1,
         'Equipment Code': item.equipment?.code || '—',
         'Equipment Name': item.equipment?.name || '—',
         'Category': item.equipment?.category?.name || '—',
@@ -318,13 +321,14 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       };
     });
   } else {
-    sheetData = data.map((item) => {
+    sheetData = data.map((item, index) => {
       const date = item.maintenanceDate ? new Date(item.maintenanceDate) : null;
       
       const wasDateOverdue = item.targetDate && item.maintenanceDate && new Date(item.maintenanceDate) > new Date(item.targetDate);
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
       return {
+        'Sl No.': index + 1,
         'Log ID': item.id,
         'Asset Code': item.equipment?.code || '—',
         'Asset Name': item.equipment?.name || '—',

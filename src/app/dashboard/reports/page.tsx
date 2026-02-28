@@ -475,6 +475,7 @@ export default function ReportsBuilderPage() {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-[#F5F3EF] text-[#225CA3] text-[11px] font-bold uppercase tracking-wider sticky top-0">
                             <tr>
+                                <th className="p-4 border-b border-[#D0CBC0] w-12">Sl No.</th>
                                 {reportType === "tasks" && (
                                     <>
                                         <th className="p-4 border-b border-[#D0CBC0]">Task ID</th>
@@ -492,7 +493,7 @@ export default function ReportsBuilderPage() {
                             </tr>
                         </thead>
                         <tbody className="text-[13px] text-[#1A1A1A]">
-                            {reportType === "tasks" && filteredData.tasks?.map((task: any) => {
+                            {reportType === "tasks" && filteredData.tasks?.map((task: any, index: number) => {
                                 const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
                                 const status = task._computedStatus || getTaskStatus(task);
 
@@ -511,6 +512,7 @@ export default function ReportsBuilderPage() {
 
                                 return (
                                     <tr key={task.id || task.taskId} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
+                                        <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                         <td className="p-4 flex items-center gap-2">{status === "OVERDUE" && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
                                         <td className="p-4 font-medium whitespace-pre-line leading-relaxed">{task.taskName}</td>
                                         <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '—'}</td>
@@ -525,14 +527,15 @@ export default function ReportsBuilderPage() {
                                     </tr>
                                 );
                             })}
-                            {reportType === "equipment" && filteredData.equipment?.map((eq: any) => (
+                            {reportType === "equipment" && filteredData.equipment?.map((eq: any, index: number) => (
                                 <tr key={eq.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                    <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                     <td className="p-4 font-medium">{eq.code}</td><td className="p-4">{eq.name}</td><td className="p-4">{eq.category?.name}</td>
                                     <td className="p-4">{eq.model || '—'}</td><td className="p-4">{eq.serialNumber || '—'}</td><td className="p-4">{eq.location || '—'}</td>
                                     <td className="p-4"><span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${eq.status === 'active' ? 'bg-[#E6F4EA] text-[#1E4620]' : 'bg-[#F5F3EF] text-[#2D3748]'}`}>{eq.status}</span></td>
                                 </tr>
                             ))}
-                            {reportType === "maintenance" && filteredData.maintenance?.map((m: any) => {
+                            {reportType === "maintenance" && filteredData.maintenance?.map((m: any, index: number) => {
                                 const date = m.type === 'corrective' ? m.serviceEndDate : m.maintenanceDate;
                                 const wasDateOverdue = m.targetDate && m.maintenanceDate && new Date(m.maintenanceDate) > new Date(m.targetDate);
                                 const wasHoursOverdue = m.targetHours && m.runningHours && m.runningHours >= m.targetHours;
@@ -540,6 +543,7 @@ export default function ReportsBuilderPage() {
 
                                 return (
                                     <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                        <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                         <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '—'}</td>
                                         <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
                                         <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.type === 'corrective' ? m.problemDescription : (m.task?.taskName || m.maintenanceDetails || '—')}</td>
@@ -553,8 +557,9 @@ export default function ReportsBuilderPage() {
                                     </tr>
                                 );
                             })}
-                            {reportType === "inventory" && filteredData.inventory?.map((item: any) => (
+                            {reportType === "inventory" && filteredData.inventory?.map((item: any, index: number) => (
                                 <tr key={item.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
+                                    <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
                                     <td className="p-4 font-medium">{item.name}</td><td className="p-4">{item.quantity || '—'}</td>
                                     <td className="p-4 truncate max-w-[300px]">{item.description || '—'}</td><td className="p-4">{item.swl || '—'}</td>
                                     <td className="p-4 font-mono text-xs">{item.certificateNo || '—'}</td>
