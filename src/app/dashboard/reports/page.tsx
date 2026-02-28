@@ -103,12 +103,14 @@ export default function ReportsBuilderPage() {
                 groupedTasksMap.set(key, { 
                     ...t, 
                     _count: 1, 
+                    _allTaskIds: [t.taskId],
                     _allNames: [`1. ${t.taskName}`], 
                     _rawStatuses: [getTaskStatus(t)] 
                 });
             } else {
                 const group = groupedTasksMap.get(key);
                 group._count++;
+                if (t.taskId) group._allTaskIds.push(t.taskId);
                 group._allNames.push(`${group._count}. ${t.taskName}`);
                 group._rawStatuses.push(getTaskStatus(t));
                 if (t.nextDueDate && (!group.nextDueDate || new Date(t.nextDueDate) < new Date(group.nextDueDate))) {
@@ -122,7 +124,7 @@ export default function ReportsBuilderPage() {
 
         filteredTasks = Array.from(groupedTasksMap.values()).map((g: any) => ({
             ...g,
-            taskId: g._count > 1 ? `Multiple (${g._count})` : g.taskId,
+            taskId: g._count > 1 ? g._allTaskIds.join(', ') : g.taskId,
             taskName: g._count > 1 ? g._allNames.join('\n') : g.taskName,
             _computedStatus: g._rawStatuses.includes("OVERDUE") ? "OVERDUE" : g._rawStatuses.includes("DUE") ? "DUE" : "UP-TO-DATE"
         }));
