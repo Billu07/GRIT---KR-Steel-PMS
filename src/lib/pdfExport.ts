@@ -101,9 +101,11 @@ const tableDefaults = (startY: number, meta: PdfMeta) => ({
   headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: "bold" as const, fontSize: 7.5 },
   alternateRowStyles: { fillColor: [253, 253, 252] as [number, number, number] },
   didDrawPage: (data: any) => {
-    // Check if we are on a new page (autoTable automatically creates new pages)
-    // We draw the header on every page.
-    drawHeader(data.doc, meta, data.pageNumber === 1);
+    // We draw the header on every page. 
+    // CRITICAL FIX: Only draw the full header (with title) on the absolute first page of the PDF.
+    // data.pageNumber in autoTable is relative to the table, not the document.
+    const isAbsoluteFirstPage = data.doc.internal.getCurrentPageInfo().pageNumber === 1;
+    drawHeader(data.doc, meta, isAbsoluteFirstPage);
   }
 });
 
