@@ -181,7 +181,19 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
 
 export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const meta: PdfMeta = { title: "Shipyard Equipment Registry", subtitle: `Master Asset List · Grouped by ${groupBy}`, orientation: "l" };
+  
+  let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
+  if (groupBy === 'none' && equipment.length > 0) {
+      const firstCat = equipment[0].category?.name;
+      const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
+      if (allSameCategory && firstCat) {
+          dynamicSubtitle = `Category: ${firstCat}`;
+      } else {
+          dynamicSubtitle = "All Equipment";
+      }
+  }
+
+  const meta: PdfMeta = { title: "Shipyard Equipment Registry", subtitle: dynamicSubtitle, orientation: "l" };
   let startY = drawHeader(doc, meta, true);
   const grouped = equipment.reduce((acc: any, eq: any) => {
     const key = groupBy === "category" ? eq.category?.name || "Uncategorized" : "All Equipment";
@@ -189,10 +201,14 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
   }, {});
   Object.entries(grouped).forEach(([groupName, groupEq]: [string, any], index) => {
     if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
+    
+    let headerPrefix = "";
+    if (groupBy === "category" && groupName !== "All Equipment") headerPrefix = "CATEGORY: ";
+
     doc.setFillColor(...C.paste); 
     doc.rect(14, startY, doc.internal.pageSize.getWidth()-28, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy); 
-    doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    doc.text(`${headerPrefix}${groupName.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupEq.map((eq: any, idx: number) => [
         idx + 1, eq.code, eq.name, eq.brand || "—", eq.model || "—", eq.serialNumber || "—", eq.capacity || "—", eq.unit || "—", eq.quantity || "—", eq.location || "—", eq.status.toUpperCase()
