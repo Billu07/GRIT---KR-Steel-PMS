@@ -9,6 +9,7 @@ import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExc
 import { exportToPDF } from "@/lib/pdfExport";
 import { format } from "date-fns";
 import { getTaskStatus } from "@/lib/taskUtils";
+import { calculateNextDueDate } from "@/lib/dateUtils";
 
 export default function ReportsBuilderPage() {
   const { data: rawData, error, isLoading } = useSWR("/api/reports", fetcher, {
@@ -247,6 +248,15 @@ export default function ReportsBuilderPage() {
               const freqStr = freqList.length > 0 ? freqList.join(', ') : 'N/A';
               
               if (g._count === 1) {
+                  let computedNextDue = g.task?.nextDueDate ? new Date(g.task.nextDueDate) : null;
+                  if (!computedNextDue && g.maintenanceDate && g.task?.frequency) {
+                       computedNextDue = calculateNextDueDate(new Date(g.maintenanceDate), g.task.frequency);
+                  }
+                  if (computedNextDue) {
+                      if (!g.task) g.task = {};
+                      g.task.nextDueDate = computedNextDue;
+                  }
+
                   return {
                       ...g,
                       maintenanceDetails: freqStr,
@@ -255,11 +265,17 @@ export default function ReportsBuilderPage() {
                       solutionDetails: g.task?.taskName || g.maintenanceDetails || 'Unknown Task'
                   };
               }
+
+              let groupNextDue = null;
+              if (g.maintenanceDate && freqList.length > 0) {
+                  groupNextDue = calculateNextDueDate(new Date(g.maintenanceDate), freqList[0].toLowerCase());
+              }
+              
               return {
                   ...g,
                   maintenanceDetails: freqStr,
                   solutionDetails: g._allTasks.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n'),
-                  task: null, // Override to ensure 'maintenanceDetails' is used
+                  task: groupNextDue ? { nextDueDate: groupNextDue } : null, // Include nextDueDate for exports
                   _computedLate: g._isLate,
                   _freqStr: freqStr
               };
