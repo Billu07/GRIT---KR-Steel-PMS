@@ -126,6 +126,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         testCertNumber: "",
         testCertValidity: "",
         testCertApplied: "",
+        unit: "",
+        quantity: "",
       });
       setImagePreview("");
       setImageFile(null);
