@@ -297,11 +297,14 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         const targets = item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : '-';
         let wasDateOverdue = false;
         if (item.targetDate && item.maintenanceDate) {
-          const targetDateOnly = new Date(item.targetDate);
-          targetDateOnly.setHours(0, 0, 0, 0);
-          const maintDateOnly = new Date(item.maintenanceDate);
-          maintDateOnly.setHours(0, 0, 0, 0);
-          wasDateOverdue = maintDateOnly > targetDateOnly;
+          const tDate = new Date(item.targetDate);
+          const mDate = new Date(item.maintenanceDate);
+          
+          // Compare YYYY-MM-DD in UTC to avoid timezone shifts pushing logs to next day
+          const tStr = tDate.toISOString().split('T')[0];
+          const mStr = mDate.toISOString().split('T')[0];
+          
+          wasDateOverdue = mStr > tStr;
         }
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
         const details = item.solutionDetails || "-";
