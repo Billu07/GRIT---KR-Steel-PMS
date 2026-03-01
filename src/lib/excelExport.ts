@@ -328,11 +328,9 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       
       let wasDateOverdue = false;
       if (item.targetDate && item.maintenanceDate) {
-         const tDate = new Date(item.targetDate);
-         const mDate = new Date(item.maintenanceDate);
-         
-         const tStr = tDate.toISOString().split('T')[0];
-         const mStr = mDate.toISOString().split('T')[0];
+         // Use local date strings (YYYY-MM-DD) for comparison to avoid UTC day-shifts
+         const tStr = format(new Date(item.targetDate), 'yyyy-MM-dd');
+         const mStr = format(new Date(item.maintenanceDate), 'yyyy-MM-dd');
          
          wasDateOverdue = mStr > tStr;
       }

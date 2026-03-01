@@ -297,12 +297,9 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
         const targets = item.targetDate ? format(new Date(item.targetDate), 'dd/MM/yy') : '-';
         let wasDateOverdue = false;
         if (item.targetDate && item.maintenanceDate) {
-          const tDate = new Date(item.targetDate);
-          const mDate = new Date(item.maintenanceDate);
-          
-          // Compare YYYY-MM-DD in UTC to avoid timezone shifts pushing logs to next day
-          const tStr = tDate.toISOString().split('T')[0];
-          const mStr = mDate.toISOString().split('T')[0];
+          // Use local date strings (YYYY-MM-DD) for comparison to avoid UTC day-shifts
+          const tStr = format(new Date(item.targetDate), 'yyyy-MM-dd');
+          const mStr = format(new Date(item.maintenanceDate), 'yyyy-MM-dd');
           
           wasDateOverdue = mStr > tStr;
         }
