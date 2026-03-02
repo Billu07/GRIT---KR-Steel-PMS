@@ -156,15 +156,23 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
         idx + 1,
         t.taskId,
         t.taskName,
+        eq?.name || "-",
         eq?.code || "-",
         t.frequency?.toUpperCase() || "-",
       ];
     });
     autoTable(doc, {
       ...tableDefaults(startY, meta),
-      head: [["SL NO", "ID", "TASK NAME", "EQ CODE", "FREQ"]],
+      head: [["SL NO", "ID", "TASK NAME", "EQ NAME", "EQ CODE", "FREQ"]],
       body: rows,
-      columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 25 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 35 }, 4: { cellWidth: 35 } }
+      columnStyles: { 
+        0: { cellWidth: 12 }, 
+        1: { cellWidth: 20 }, 
+        2: { cellWidth: 'auto' }, 
+        3: { cellWidth: 40 }, 
+        4: { cellWidth: 25 }, 
+        5: { cellWidth: 25 } 
+      }
     });
   });
   drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
