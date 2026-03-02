@@ -154,23 +154,23 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
 
       return [
         idx + 1,
+        eq?.code || "-",
+        eq?.name || "-",
         t.taskId,
         t.taskName,
-        eq?.name || "-",
-        eq?.code || "-",
         t.frequency?.toUpperCase() || "-",
       ];
     });
     autoTable(doc, {
       ...tableDefaults(startY, meta),
-      head: [["SL NO", "ID", "TASK NAME", "EQ NAME", "EQ CODE", "FREQ"]],
+      head: [["SL NO", "EQ CODE", "EQ NAME", "TASK ID", "TASK NAME", "FREQ"]],
       body: rows,
       columnStyles: { 
         0: { cellWidth: 12 }, 
-        1: { cellWidth: 20 }, 
-        2: { cellWidth: 'auto' }, 
-        3: { cellWidth: 40 }, 
-        4: { cellWidth: 25 }, 
+        1: { cellWidth: 25 }, 
+        2: { cellWidth: 40 }, 
+        3: { cellWidth: 20 }, 
+        4: { cellWidth: 'auto' }, 
         5: { cellWidth: 25 } 
       }
     });

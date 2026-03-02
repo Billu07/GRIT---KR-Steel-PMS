@@ -198,7 +198,6 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
       'Task ID': task.taskId,
       'Task Name': task.taskName,
       'Frequency': task.frequency?.toUpperCase() || '-',
-      'Criticality': task.criticality?.toUpperCase() || '-',
     });
   });
 
