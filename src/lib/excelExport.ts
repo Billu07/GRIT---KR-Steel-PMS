@@ -159,17 +159,12 @@ export async function exportEquipmentChecklistExcel(equipment: any, tasks: any[]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function exportEquipmentTasksExcel({ equipment, tasks }: { equipment: any, tasks: any[] }) {
   const sheetData = tasks.map((task, index) => {
-    const statusText = getTaskStatus(task);
     return {
       'Sl No.': index + 1,
       'Task ID': task.taskId,
       'Task Name': task.taskName,
       'Frequency': task.frequency?.toUpperCase() || '-',
-      'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
-      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '-',
       'Criticality': task.criticality?.toUpperCase() || '-',
-      'Status': statusText,
-      'Remarks': task.taskDetail || '-',
     };
   });
 
@@ -195,7 +190,6 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
     } else if (groupBy === "equipment") {
       group = eq ? `${eq.name} (${eq.code})` : "Unknown Equipment";
     }
-    const statusText = getTaskStatus(task);
     sheetData.push({
       'Grouping': group,
       'Sl No.': index + 1,
@@ -204,11 +198,7 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
       'Task ID': task.taskId,
       'Task Name': task.taskName,
       'Frequency': task.frequency?.toUpperCase() || '-',
-      'Last Done Date': task.lastCompletedDate ? format(new Date(task.lastCompletedDate), 'dd MMM yyyy') : 'NEVER',
-      'Next Due Date': task.nextDueDate ? format(new Date(task.nextDueDate), 'dd MMM yyyy') : '-',
       'Criticality': task.criticality?.toUpperCase() || '-',
-      'Status': statusText,
-      'Remarks': task.taskDetail || '-',
     });
   });
 

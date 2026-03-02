@@ -151,7 +151,6 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
     startY += 10;
     const rows = groupTasks.map((t: any, idx: number) => {
       const eq = equipment.find((e: any) => e.id === t.equipmentId);
-      const statusText = getTaskStatus(t);
 
       return [
         idx + 1,
@@ -159,17 +158,13 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
         t.taskName,
         eq?.code || "-",
         t.frequency?.toUpperCase() || "-",
-        t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
-        t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "-",
-        statusText,
-        t.taskDetail || "-"
       ];
     });
     autoTable(doc, {
       ...tableDefaults(startY, meta),
-      head: [["SL NO", "ID", "TASK NAME", "EQ CODE", "FREQ", "LAST DONE", "NEXT DUE", "STATUS", "REMARKS"]],
+      head: [["SL NO", "ID", "TASK NAME", "EQ CODE", "FREQ"]],
       body: rows,
-      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 15 }, 2: { cellWidth: 40 }, 8: { fontStyle: 'bold' } }
+      columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 25 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 35 }, 4: { cellWidth: 35 } }
     });
   });
   drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
@@ -347,26 +342,20 @@ export function exportEquipmentTasksPdf({ equipment, tasks }: { equipment: any; 
   const startY = drawHeader(doc, meta, true);
 
   const rows = tasks.map((t: any, idx: number) => {
-    const statusText = getTaskStatus(t);
-
     return [
       idx + 1,
       t.taskId,
       t.taskName,
       t.frequency?.toUpperCase() || "-",
-      t.lastCompletedDate ? format(new Date(t.lastCompletedDate), "dd/MM/yy") : "NEVER",
-      t.nextDueDate ? format(new Date(t.nextDueDate), "dd/MM/yy") : "-",
       t.criticality?.toUpperCase() || "-",
-      statusText,
-      t.taskDetail || "-"
     ];
   });
 
   autoTable(doc, {
     ...tableDefaults(startY, meta),
-    head: [["SL NO", "ID", "TASK NAME", "FREQUENCY", "LAST DONE", "NEXT DUE", "CRITICALITY", "STATUS", "REMARKS"]],
+    head: [["SL NO", "ID", "TASK NAME", "FREQUENCY", "CRITICALITY"]],
     body: rows,
-    columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 15 }, 2: { cellWidth: 40 }, 8: { fontStyle: 'bold' } }
+    columnStyles: { 0: { cellWidth: 15 }, 1: { cellWidth: 25 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 35 }, 4: { cellWidth: 35 } }
   });
   drawSignatures(doc, (doc as any).lastAutoTable.finalY + 10);
   const total = (doc.internal as any).getNumberOfPages();
