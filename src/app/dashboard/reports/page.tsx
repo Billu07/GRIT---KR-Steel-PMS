@@ -22,7 +22,7 @@ export default function ReportsBuilderPage() {
   // Configuration State
   const [reportType, setReportType] = useState("tasks");
   const [reportFormat, setReportFormat] = useState("pdf");
-  const [groupBy, setGroupBy] = useState("category"); // category, equipment, none
+  const [groupBy, setGroupBy] = useState("equipment"); // category, equipment, none
   const [statusFilter, setStatusFilter] = useState("all"); // all, overdue, due, healthy
 
   // Maintenance Filters
