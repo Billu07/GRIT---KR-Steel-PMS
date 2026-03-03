@@ -207,13 +207,10 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
   Object.entries(grouped).forEach(([groupName, groupEq]: [string, any], index) => {
     if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
 
-    let headerPrefix = "";
-    if ((groupBy === "category" || allSameCategory) && groupName !== "All Equipment") headerPrefix = "CATEGORY: ";
-
     doc.setFillColor(...C.paste);
     doc.rect(14, startY, doc.internal.pageSize.getWidth() - 28, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.navy);
-    doc.text(`${headerPrefix}${groupName.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
+    doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupEq.map((eq: any, idx: number) => [
       idx + 1, eq.code, eq.name, eq.brand || "-", eq.model || "-", eq.serialNumber || "-", eq.capacity || "-", eq.unit || "-", eq.quantity || "-", eq.location || "-", eq.status.toUpperCase()
