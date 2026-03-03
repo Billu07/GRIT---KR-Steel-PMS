@@ -123,28 +123,36 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const meta: PdfMeta = { title: "Scheduled Maintenance Tasks", subtitle: `Grouping: ${groupBy}`, orientation: "l" };
   let startY = drawHeader(doc, meta, true);
-  const grouped = tasks.reduce((acc: any, task: any) => {
+
+  const frequencyOrder: { [key: string]: number } = {
+    'daily': 1,
+    'weekly': 2,
+    'fifteen_days': 3,
+    'monthly': 4,
+    'quarterly': 5,
+    'semi_annually': 6,
+    'yearly': 7,
+    'five_yearly': 8
+  };
+
+  // Sort tasks by frequency first
+  const sortedBaseTasks = [...tasks].sort((a: any, b: any) => {
+    const freqA = a.frequency?.toLowerCase().trim() || 'yearly';
+    const freqB = b.frequency?.toLowerCase().trim() || 'yearly';
+    return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
+  });
+
+  const grouped = sortedBaseTasks.reduce((acc: any, task: any) => {
     const eq = equipment.find((e: any) => e.id === task.equipmentId);
     let key = groupBy === "category" ? eq?.category?.name || "Uncategorized" : (groupBy === "equipment" ? `${eq?.name} (${eq?.code})` : "All Tasks");
     if (!acc[key]) acc[key] = []; acc[key].push(task); return acc;
   }, {});
 
   Object.entries(grouped).forEach(([groupName, groupTasks]: [string, any], index) => {
-    // Sort tasks within group by frequency
-    const frequencyOrder: { [key: string]: number } = {
-      'daily': 1,
-      'weekly': 2,
-      'fifteen_days': 3,
-      'monthly': 4,
-      'quarterly': 5,
-      'semi_annually': 6,
-      'yearly': 7,
-      'five_yearly': 8
-    };
-
-    groupTasks.sort((a: any, b: any) => {
-      const freqA = a.frequency?.toLowerCase() || 'yearly';
-      const freqB = b.frequency?.toLowerCase() || 'yearly';
+    // Sort tasks within group by frequency again to be absolutely sure
+    const sortedTasks = [...groupTasks].sort((a: any, b: any) => {
+      const freqA = a.frequency?.toLowerCase().trim() || 'yearly';
+      const freqB = b.frequency?.toLowerCase().trim() || 'yearly';
       return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
     });
 
