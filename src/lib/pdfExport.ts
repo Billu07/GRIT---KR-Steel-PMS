@@ -183,28 +183,32 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
 export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
+  const firstCat = equipment.length > 0 ? equipment[0].category?.name : null;
+  const allSameCategory = equipment.length > 0 && equipment.every((eq: any) => eq.category?.name === firstCat);
+
   let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
-  if (equipment.length > 0) {
-    const firstCat = equipment[0].category?.name;
-    const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
-    if (allSameCategory && firstCat) {
-      dynamicSubtitle = `Category: ${firstCat}`;
-    } else if (groupBy === 'none') {
-      dynamicSubtitle = "All Equipment";
-    }
+  if (allSameCategory && firstCat) {
+    dynamicSubtitle = `Category: ${firstCat}`;
+  } else if (groupBy === 'none') {
+    dynamicSubtitle = "All Equipment";
   }
 
   const meta: PdfMeta = { title: "Shipyard Equipment Registry", subtitle: dynamicSubtitle, orientation: "l" };
   let startY = drawHeader(doc, meta, true);
   const grouped = equipment.reduce((acc: any, eq: any) => {
-    const key = groupBy === "category" ? eq.category?.name || "Uncategorized" : "All Equipment";
+    let key = "All Equipment";
+    if (groupBy === "category") {
+      key = eq.category?.name || "Uncategorized";
+    } else if (allSameCategory && firstCat) {
+      key = firstCat;
+    }
     if (!acc[key]) acc[key] = []; acc[key].push(eq); return acc;
   }, {});
   Object.entries(grouped).forEach(([groupName, groupEq]: [string, any], index) => {
     if (index > 0) { startY = (doc as any).lastAutoTable.finalY + 10; if (startY > 170) { doc.addPage(); startY = 35; } }
 
     let headerPrefix = "";
-    if (groupBy === "category" && groupName !== "All Equipment") headerPrefix = "CATEGORY: ";
+    if ((groupBy === "category" || allSameCategory) && groupName !== "All Equipment") headerPrefix = "CATEGORY: ";
 
     doc.setFillColor(...C.paste);
     doc.rect(14, startY, doc.internal.pageSize.getWidth() - 28, 8, "F");

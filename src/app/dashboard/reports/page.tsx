@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
@@ -24,6 +24,13 @@ export default function ReportsBuilderPage() {
   const [reportFormat, setReportFormat] = useState("pdf");
   const [groupBy, setGroupBy] = useState("equipment"); // category, equipment, none
   const [statusFilter, setStatusFilter] = useState("all"); // all, overdue, due, healthy
+
+  // Sync GroupBy with Report Type
+  useEffect(() => {
+    if (reportType === "equipment" && groupBy === "equipment") {
+      setGroupBy("category");
+    }
+  }, [reportType, groupBy]);
 
   // Maintenance Filters
   const [maintenanceType, setMaintenanceType] = useState("corrective");

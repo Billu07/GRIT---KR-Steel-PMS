@@ -217,10 +217,15 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
 export async function exportEquipmentReportExcel({ equipment, groupBy }: { equipment: any[], groupBy: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sheetData: any[] = [];
+  const firstCat = equipment.length > 0 ? equipment[0].category?.name : null;
+  const allSameCategory = equipment.length > 0 && equipment.every((eq: any) => eq.category?.name === firstCat);
+
   equipment.forEach((eq) => {
     let group = "All Equipment";
     if (groupBy === "category") {
       group = eq?.category?.name || "Uncategorized";
+    } else if (allSameCategory && firstCat) {
+      group = firstCat;
     }
     sheetData.push({
       'Grouping': group,
@@ -244,7 +249,7 @@ export async function exportEquipmentReportExcel({ equipment, groupBy }: { equip
     });
   });
 
-  if (groupBy === "none") {
+  if (groupBy === "none" && !allSameCategory) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     sheetData = sheetData.map(({ Grouping, ...rest }) => rest);
   } else {
@@ -252,14 +257,10 @@ export async function exportEquipmentReportExcel({ equipment, groupBy }: { equip
   }
 
   let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
-  if (equipment.length > 0) {
-    const firstCat = equipment[0].category?.name;
-    const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
-    if (allSameCategory && firstCat) {
-      dynamicSubtitle = `Category: ${firstCat}`;
-    } else if (groupBy === "none") {
-      dynamicSubtitle = "All Equipment";
-    }
+  if (allSameCategory && firstCat) {
+    dynamicSubtitle = `Category: ${firstCat}`;
+  } else if (groupBy === "none") {
+    dynamicSubtitle = "All Equipment";
   }
 
   const workbook = new ExcelJS.Workbook();
