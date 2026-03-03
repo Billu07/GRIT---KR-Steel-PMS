@@ -144,7 +144,7 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
 
   const grouped = sortedBaseTasks.reduce((acc: any, task: any) => {
     const eq = equipment.find((e: any) => e.id === task.equipmentId);
-    let key = groupBy === "category" ? eq?.category?.name || "Uncategorized" : (groupBy === "equipment" ? `${eq?.name} (${eq?.code})` : "All Tasks");
+    let key = groupBy === "category" ? eq?.category?.name || "Uncategorized" : (groupBy === "equipment" ? eq?.name || "Unknown Asset" : "All Tasks");
     if (!acc[key]) acc[key] = []; acc[key].push(task); return acc;
   }, {});
 

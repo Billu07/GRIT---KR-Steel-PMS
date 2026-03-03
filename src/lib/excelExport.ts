@@ -184,7 +184,7 @@ export async function exportTaskReportExcel({ tasks, equipment, groupBy }: { tas
     if (groupBy === "category") {
       group = eq?.category?.name || "Uncategorized";
     } else if (groupBy === "equipment") {
-      group = eq ? `${eq.name} (${eq.code})` : "Unknown Equipment";
+      group = eq?.name || "Unknown Asset";
     }
     sheetData.push({
       'Grouping': group,
