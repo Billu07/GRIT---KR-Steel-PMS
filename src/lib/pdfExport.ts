@@ -130,6 +130,24 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
   }, {});
 
   Object.entries(grouped).forEach(([groupName, groupTasks]: [string, any], index) => {
+    // Sort tasks within group by frequency
+    const frequencyOrder: { [key: string]: number } = {
+      'daily': 1,
+      'weekly': 2,
+      'fifteen_days': 3,
+      'monthly': 4,
+      'quarterly': 5,
+      'semi_annually': 6,
+      'yearly': 7,
+      'five_yearly': 8
+    };
+
+    groupTasks.sort((a: any, b: any) => {
+      const freqA = a.frequency?.toLowerCase() || 'yearly';
+      const freqB = b.frequency?.toLowerCase() || 'yearly';
+      return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
+    });
+
     // Force a page break if there's less than ~50mm of space left to prevent header/table splitting awkwardly
     if (index > 0) {
       startY = (doc as any).lastAutoTable.finalY + 10;
