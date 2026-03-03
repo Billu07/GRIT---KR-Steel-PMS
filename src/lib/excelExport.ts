@@ -320,7 +320,25 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       };
     });
   } else {
-    sheetData = data.map((item, index) => {
+    // Sort preventive data by frequency
+    const frequencyOrder: { [key: string]: number } = {
+      'daily': 1,
+      'weekly': 2,
+      'fifteen_days': 3,
+      'monthly': 4,
+      'quarterly': 5,
+      'semi_annually': 6,
+      'yearly': 7,
+      'five_yearly': 8
+    };
+
+    const sortedData = [...data].sort((a: any, b: any) => {
+       const freqA = (a.maintenanceDetails || a.task?.frequency || 'yearly').toLowerCase().trim();
+       const freqB = (b.maintenanceDetails || b.task?.frequency || 'yearly').toLowerCase().trim();
+       return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
+    });
+
+    sheetData = sortedData.map((item, index) => {
       const date = item.maintenanceDate ? new Date(item.maintenanceDate) : null;
       
       let wasDateOverdue = false;
@@ -333,11 +351,6 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
       }
       const performanceStatus = wasDateOverdue ? "LATE" : "ON-TIME";
 
-      let nextDueDateStr = '-';
-      if (item.task && item.task.nextDueDate) {
-          nextDueDateStr = format(new Date(item.task.nextDueDate), 'dd MMM yyyy');
-      }
-
       return {
         'Sl No.': index + 1,
         'Log ID': item.id,
@@ -346,7 +359,6 @@ export async function exportMaintenanceExcel(data: any[], type: 'corrective' | '
         'Done Date': date ? format(date, 'dd MMM yyyy') : '-',
         'Maintenance Type': item.type?.toUpperCase(),
         'Frequency': item.maintenanceDetails || item.task?.frequency?.toUpperCase() || '-',
-        'Next Due Date': nextDueDateStr,
         'Performance Status': performanceStatus,
         'Work Performed': item.solutionDetails || '-',
         'Parts Used': item.usedParts || '-',

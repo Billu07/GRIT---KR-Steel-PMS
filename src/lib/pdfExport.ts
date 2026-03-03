@@ -302,7 +302,25 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
     doc.text(`DATE: ${dateGroup.toUpperCase()}`, doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
 
-    const rows = groupData.map((item: any, idx: number) => {
+    // Sort groupData by frequency
+    const frequencyOrder: { [key: string]: number } = {
+      'daily': 1,
+      'weekly': 2,
+      'fifteen_days': 3,
+      'monthly': 4,
+      'quarterly': 5,
+      'semi_annually': 6,
+      'yearly': 7,
+      'five_yearly': 8
+    };
+
+    const sortedGroupData = [...groupData].sort((a: any, b: any) => {
+      const freqA = (a.maintenanceDetails || a.task?.frequency || 'yearly').toLowerCase().trim();
+      const freqB = (b.maintenanceDetails || b.task?.frequency || 'yearly').toLowerCase().trim();
+      return (frequencyOrder[freqA] || 99) - (frequencyOrder[freqB] || 99);
+    });
+
+    const rows = sortedGroupData.map((item: any, idx: number) => {
       const eqInfo = item.equipment ? `${item.equipment.name}\n${item.equipment.code}\nMod: ${item.equipment.model || 'N/A'}\nS/N: ${item.equipment.serialNumber || 'N/A'}` : "-";
 
       if (type === "corrective") {
