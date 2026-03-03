@@ -62,14 +62,13 @@ function drawHeader(doc: jsPDF, meta: PdfMeta, isFirstPage: boolean = true): num
   doc.text(meta.title.toUpperCase(), 14, 38);
 
   if (meta.subtitle) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(...C.muted);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...C.navy);
     doc.text(meta.subtitle, 14, 44);
   }
 
   doc.setFontSize(7);
-  doc.text(`PRINTED: ${format(new Date(), "dd MMM yyyy, HH:mm")}`, pw - 14, 44, { align: "right" });
   doc.setDrawColor(...C.rule);
   doc.setLineWidth(0.3);
   doc.line(14, 48, pw - 14, 48);

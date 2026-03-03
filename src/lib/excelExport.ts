@@ -43,14 +43,10 @@ function addExcelHeader(workbook: ExcelJS.Workbook, worksheet: ExcelJS.Worksheet
   
   if (subtitle) {
     worksheet.getCell('A6').value = subtitle;
-    worksheet.getCell('A6').font = { name: 'Arial', size: 10, color: { argb: C.muted } };
+    worksheet.getCell('A6').font = { name: 'Arial', size: 12, bold: true, color: { argb: C.navy } };
   }
-  
-  worksheet.getCell('F6').value = `PRINTED: ${format(new Date(), "dd MMM yyyy, HH:mm")}`;
-  worksheet.getCell('F6').font = { name: 'Arial', size: 8, color: { argb: C.muted } };
-  
-  for(let i = 1; i <= Math.max(8, worksheet.columnCount); i++) {
-    worksheet.getCell(6, i).border = { bottom: { style: 'thin', color: { argb: C.rule } } };
+
+  for(let i = 1; i <= Math.max(8, worksheet.columnCount); i++) {    worksheet.getCell(6, i).border = { bottom: { style: 'thin', color: { argb: C.rule } } };
   }
 }
 
