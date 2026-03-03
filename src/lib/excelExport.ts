@@ -251,10 +251,21 @@ export async function exportEquipmentReportExcel({ equipment, groupBy }: { equip
     sheetData.sort((a, b) => a.Grouping.localeCompare(b.Grouping));
   }
 
+  let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
+  if (equipment.length > 0) {
+    const firstCat = equipment[0].category?.name;
+    const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
+    if (allSameCategory && firstCat) {
+      dynamicSubtitle = `Category: ${firstCat}`;
+    } else if (groupBy === "none") {
+      dynamicSubtitle = "All Equipment";
+    }
+  }
+
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Equipment');
   buildSheetFromJson(worksheet, sheetData);
-  addExcelHeader(workbook, worksheet, `Shipyard Equipment Registry`, `Master Asset List · Grouped by ${groupBy}`);
+  addExcelHeader(workbook, worksheet, `Shipyard Equipment Registry`, dynamicSubtitle);
 
   const buffer = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buffer]), `Equipment_Registry_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);

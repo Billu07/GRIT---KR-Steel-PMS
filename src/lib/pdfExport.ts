@@ -184,12 +184,12 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
 
   let dynamicSubtitle = `Master Asset List · Grouped by ${groupBy}`;
-  if (groupBy === 'none' && equipment.length > 0) {
+  if (equipment.length > 0) {
     const firstCat = equipment[0].category?.name;
     const allSameCategory = equipment.every((eq: any) => eq.category?.name === firstCat);
     if (allSameCategory && firstCat) {
       dynamicSubtitle = `Category: ${firstCat}`;
-    } else {
+    } else if (groupBy === 'none') {
       dynamicSubtitle = "All Equipment";
     }
   }
