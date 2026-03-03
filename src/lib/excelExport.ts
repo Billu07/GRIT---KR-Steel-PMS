@@ -146,7 +146,7 @@ export async function exportEquipmentChecklistExcel(equipment: any, tasks: any[]
   worksheet.mergeCells(`A${safetyRow.number}:H${safetyRow.number}`);
   safetyRow.font = { bold: true };
 
-  addExcelHeader(workbook, worksheet, `Equipment Checklist`, `Equipment Name: ${equipment.name} (${equipment.code})`);
+  addExcelHeader(workbook, worksheet, `Equipment Checklist`, `Equipment Name: ${equipment.name}`);
 
   const buffer = await workbook.xlsx.writeBuffer();
   saveAs(new Blob([buffer]), `Checklist_${equipment.code}_${format(new Date(), 'yyyyMMdd')}.xlsx`);

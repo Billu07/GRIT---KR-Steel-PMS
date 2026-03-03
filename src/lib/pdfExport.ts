@@ -267,7 +267,7 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
       const allSameEq = data.every(d => d.equipmentId === firstEq.id);
 
       if (allSameEq) {
-        dynamicSubtitle = `Equipment: ${firstEq.name} (${firstEq.code})`;
+        dynamicSubtitle = `Equipment: ${firstEq.name}`;
       } else if (allSameCategory && firstEq.category?.name) {
         dynamicSubtitle = `Category: ${firstEq.category.name}`;
       }
