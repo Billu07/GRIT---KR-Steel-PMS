@@ -384,13 +384,10 @@ export default function PlannedTasksPage() {
                         <td style={{ padding: "14px 16px", color: "#1A1A1A" }}>
                           <span className={isOverdue ? "text-overdue" : ""}>
                             {t.nextDueDate ? new Date(t.nextDueDate).toLocaleDateString() : "—"}
-                                                    </span>
-                                                  </td>
-                                                  <td style={{ padding: "14px 16px" }}>
-                                                      <span style={{                                padding: "2px 8px", 
-                                background: statusBg,
-                                color: statusColor,
-                                borderRadius: "10px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
+                          </span>
+                        </td>
+                        <td style={{ padding: "14px 16px" }}>
+                            <span style={{ padding: "2px 8px", background: statusBg, color: statusColor, borderRadius: "10px", fontSize: "10px", fontWeight: 700, textTransform: "uppercase" }}>
                                 {statusText}
                             </span>
                         </td>
