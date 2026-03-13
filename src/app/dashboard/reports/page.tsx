@@ -47,6 +47,15 @@ export default function ReportsBuilderPage() {
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [equipmentSearch, setEquipmentSearch] = useState(""); // ADDED SEARCH
 
+  // Pagination for Preview
+  const [previewPage, setPreviewPage] = useState(1);
+  const previewItemsPerPage = 50;
+
+  // Reset preview page on filter changes
+  useEffect(() => {
+      setPreviewPage(1);
+  }, [reportType, statusFilter, maintenanceType, selectedCategory, selectedEquipments, fromDate, toDate, singleDate, month, year]);
+
   const categories = useMemo(() => {
     if (!rawData?.equipment) return [];
     const cats = new Map();
@@ -572,7 +581,7 @@ export default function ReportsBuilderPage() {
                             </tr>
                         </thead>
                         <tbody className="text-[13px] text-[#1A1A1A]">
-                            {reportType === "tasks" && filteredData.tasks?.map((task: any, index: number) => {
+                            {reportType === "tasks" && filteredData.tasks?.slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage).map((task: any, index: number) => {
                                 const eq = rawData?.equipment.find((e: any) => e.id === task.equipmentId);
                                 const status = task._computedStatus || getTaskStatus(task);
 
@@ -591,7 +600,7 @@ export default function ReportsBuilderPage() {
 
                                 return (
                                     <tr key={task.id || task.taskId} className={`border-b border-[#F0EDE6] hover:bg-[#FAFAF8] ${rowColor}`}>
-                                        <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                        <td className="p-4 font-medium text-[#7A8A93]">{(previewPage - 1) * previewItemsPerPage + index + 1}</td>
                                         <td className="p-4 flex items-center gap-2">{status === "OVERDUE" && <AlertTriangle size={14} className="text-red-600" />} {task.taskId}</td>
                                         <td className="p-4 font-medium whitespace-pre-line leading-relaxed">{task.taskName}</td>
                                         <td className="p-4">{eq ? `${eq.name} (${eq.code})` : '-'}</td>
@@ -606,15 +615,15 @@ export default function ReportsBuilderPage() {
                                     </tr>
                                 );
                             })}
-                            {reportType === "equipment" && filteredData.equipment?.map((eq: any, index: number) => (
+                            {reportType === "equipment" && filteredData.equipment?.slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage).map((eq: any, index: number) => (
                                 <tr key={eq.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
-                                    <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                    <td className="p-4 font-medium text-[#7A8A93]">{(previewPage - 1) * previewItemsPerPage + index + 1}</td>
                                     <td className="p-4 font-medium">{eq.code}</td><td className="p-4">{eq.name}</td><td className="p-4">{eq.category?.name}</td>
                                     <td className="p-4">{eq.model || '-'}</td><td className="p-4">{eq.serialNumber || '-'}</td><td className="p-4">{eq.location || '-'}</td>
                                     <td className="p-4"><span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${eq.status === 'active' ? 'bg-[#E6F4EA] text-[#1E4620]' : 'bg-[#F5F3EF] text-[#2D3748]'}`}>{eq.status}</span></td>
                                 </tr>
                             ))}
-                            {reportType === "maintenance" && filteredData.maintenance?.map((m: any, index: number) => {
+                            {reportType === "maintenance" && filteredData.maintenance?.slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage).map((m: any, index: number) => {
                                 const date = m.type === 'corrective' ? m.serviceEndDate : m.maintenanceDate;
                                 let wasDateOverdue = false;
                                 if (m.targetDate && m.maintenanceDate) {
@@ -630,7 +639,7 @@ export default function ReportsBuilderPage() {
                                 if (maintenanceType === "corrective") {
                                     return (
                                         <tr key={m.id || `${m.equipmentId}-${m.maintenanceDate}`} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
-                                            <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                            <td className="p-4 font-medium text-[#7A8A93]">{(previewPage - 1) * previewItemsPerPage + index + 1}</td>
                                             <td className="p-4">{date ? format(new Date(date), "dd MMM yyyy") : '-'}</td>
                                             <td className="p-4 font-medium">{m.equipment?.name} <span className="text-[#4A5568]">({m.equipment?.code})</span></td>
                                             <td className="p-4 truncate max-w-[200px] whitespace-pre-line leading-relaxed">{m.problemDescription || '-'}</td>
@@ -663,9 +672,9 @@ export default function ReportsBuilderPage() {
                                     );
                                 }
                             })}
-                            {reportType === "inventory" && filteredData.inventory?.map((item: any, index: number) => (
+                            {reportType === "inventory" && filteredData.inventory?.slice((previewPage - 1) * previewItemsPerPage, previewPage * previewItemsPerPage).map((item: any, index: number) => (
                                 <tr key={item.id} className="border-b border-[#F0EDE6] hover:bg-[#FAFAF8]">
-                                    <td className="p-4 font-medium text-[#7A8A93]">{index + 1}</td>
+                                    <td className="p-4 font-medium text-[#7A8A93]">{(previewPage - 1) * previewItemsPerPage + index + 1}</td>
                                     <td className="p-4 font-medium">{item.name}</td><td className="p-4">{item.quantity || '-'}</td>
                                     <td className="p-4 truncate max-w-[300px]">{item.description || '-'}</td><td className="p-4">{item.swl || '-'}</td>
                                     <td className="p-4 font-mono text-xs">{item.certificateNo || '-'}</td>
@@ -674,6 +683,41 @@ export default function ReportsBuilderPage() {
                         </tbody>
                     </table>
                  </div>
+                 
+                 {/* Pagination Controls */}
+                 {(() => {
+                     const currentList = filteredData[reportType as keyof typeof filteredData] as any[] || [];
+                     const totalPages = Math.ceil(currentList.length / previewItemsPerPage);
+                     
+                     if (totalPages <= 1) return null;
+                     
+                     return (
+                        <div className="flex items-center justify-between p-4 border-t border-[#D0CBC0] bg-[#F5F3EF]">
+                          <span className="text-[11px] font-medium text-[#7A8A93]">
+                            Showing {(previewPage - 1) * previewItemsPerPage + 1} to {Math.min(previewPage * previewItemsPerPage, currentList.length)} of {currentList.length} items
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={previewPage === 1}
+                              onClick={() => setPreviewPage(prev => Math.max(prev - 1, 1))}
+                              className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                            >
+                              PREV
+                            </button>
+                            <span className="text-[11px] font-bold text-[#1A1A1A] px-2">
+                              Page {previewPage} of {totalPages}
+                            </span>
+                            <button
+                              disabled={previewPage === totalPages}
+                              onClick={() => setPreviewPage(prev => Math.min(prev + 1, totalPages))}
+                              className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                            >
+                              NEXT
+                            </button>
+                          </div>
+                        </div>
+                     );
+                 })()}
              </div>
          )}
       </div>
