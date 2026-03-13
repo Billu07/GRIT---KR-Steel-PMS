@@ -96,6 +96,11 @@ export default function InventoryPage() {
     return matchesSearch;
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const handleDownloadExcel = async () => {
     const data = filteredInventory.map((item, idx) => ({
       "SL No.": idx + 1,
@@ -204,10 +209,10 @@ export default function InventoryPage() {
                 </tr>
               </thead>
               <tbody className="inv-tbody">
-                {filteredInventory.length > 0 ? (
-                  filteredInventory.map((item: any, idx) => (
+                {paginatedInventory.length > 0 ? (
+                  paginatedInventory.map((item: any, idx) => (
                     <tr key={item.id} style={{ borderBottom: "1px solid #EAE7DF" }}>
-                      <td style={{ padding: "14px 24px", color: "#7A8A93", fontWeight: 500 }}>{idx + 1}</td>
+                      <td style={{ padding: "14px 24px", color: "#7A8A93", fontWeight: 500 }}>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                       <td style={{ padding: "14px 24px", color: "#1A1A1A", fontWeight: 600 }}>{item.name}</td>
                       <td style={{ padding: "14px 24px", color: "#4A6A7A" }}>{item.quantity || "—"}</td>
                       <td style={{ padding: "14px 24px", color: "#5A6A73", maxWidth: "300px" }}>{item.description || "—"}</td>
@@ -241,6 +246,34 @@ export default function InventoryPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-[#D0CBC0] bg-[#F5F3EF]">
+              <span className="text-[11px] font-medium text-[#7A8A93]">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredInventory.length)} of {filteredInventory.length} entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  PREV
+                </button>
+                <span className="text-[11px] font-bold text-[#1A1A1A] px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

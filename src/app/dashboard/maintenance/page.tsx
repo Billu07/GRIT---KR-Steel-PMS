@@ -21,6 +21,10 @@ export default function MaintenanceLogPage() {
   const [filterEq, setFilterEq] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
   const handleSaveLog = async (data: any) => {
     try {
       let res;
@@ -89,6 +93,9 @@ export default function MaintenanceLogPage() {
     if (filterCat !== "all" && log.equipment?.categoryId.toString() !== filterCat) match = false;
     return match;
   });
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const selectStyle: React.CSSProperties = {
     padding: "8px 12px",
@@ -281,8 +288,8 @@ export default function MaintenanceLogPage() {
                 </tr>
               </thead>
               <tbody className="ml-tbody">
-                {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log: any) => {
+                {paginatedLogs.length > 0 ? (
+                  paginatedLogs.map((log: any) => {
                     return (
                       <tr key={log.id}>
                         <td
@@ -431,6 +438,34 @@ export default function MaintenanceLogPage() {
               </tbody>
             </table>
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-[#D0CBC0] bg-[#F5F3EF]">
+              <span className="text-[11px] font-medium text-[#7A8A93]">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredLogs.length)} of {filteredLogs.length} entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  PREV
+                </button>
+                <span className="text-[11px] font-bold text-[#1A1A1A] px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

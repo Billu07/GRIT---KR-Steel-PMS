@@ -194,6 +194,11 @@ export default function PlannedTasksPage() {
     return matchesSearch;
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const paginatedTasks = filteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const inlineInput: React.CSSProperties = {
     width: "100%", padding: "6px 8px", fontSize: "12px", color: "#1A1A1A",
     background: "#FFFFFF", border: "1px solid #1CA5CE", borderRadius: "2px", outline: "none"
@@ -330,8 +335,8 @@ export default function PlannedTasksPage() {
                   </tr>
                 )}
 
-                {filteredTasks.length > 0 || isAdding ? (
-                  filteredTasks.map((t: any) => {
+                {paginatedTasks.length > 0 || isAdding ? (
+                  paginatedTasks.map((t: any) => {
                     const nextDueDate = t.nextDueDate ? new Date(t.nextDueDate) : null;
                     if (nextDueDate) nextDueDate.setHours(0, 0, 0, 0);
                     const dueSoonDate = new Date(); dueSoonDate.setDate(today.getDate() + 7);
@@ -415,6 +420,34 @@ export default function PlannedTasksPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between p-4 border-t border-[#D0CBC0] bg-[#F5F3EF]">
+              <span className="text-[11px] font-medium text-[#7A8A93]">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} entries
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  PREV
+                </button>
+                <span className="text-[11px] font-bold text-[#1A1A1A] px-2">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                >
+                  NEXT
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

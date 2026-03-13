@@ -104,18 +104,22 @@ export default function RegistryPage() {
         .map((eq: any) => [eq.category.id, eq.category]),
     ).values()
   );
+const filteredEquipment = equipment.filter((eq: any) => {
+  const matchesSearch =
+    eq.name.toLowerCase().includes(search.toLowerCase()) ||
+    eq.code.toLowerCase().includes(search.toLowerCase()) ||
+    (eq.location && eq.location.toLowerCase().includes(search.toLowerCase()));
+  const matchesStatus = filterStatus === "all" || eq.status === filterStatus;
+  const matchesCategory =
+    filterCategory === "all" ||
+    eq.category?.id?.toString() === filterCategory;
+  return matchesSearch && matchesStatus && matchesCategory;
+});
 
-  const filteredEquipment = equipment.filter((eq: any) => {
-    const matchesSearch =
-      eq.name.toLowerCase().includes(search.toLowerCase()) ||
-      eq.code.toLowerCase().includes(search.toLowerCase()) ||
-      (eq.location && eq.location.toLowerCase().includes(search.toLowerCase()));
-    const matchesStatus = filterStatus === "all" || eq.status === filterStatus;
-    const matchesCategory =
-      filterCategory === "all" ||
-      eq.category?.id?.toString() === filterCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+const [currentPage, setCurrentPage] = useState(1);
+const itemsPerPage = 50;
+const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const statusConfig: Record<
     string,
@@ -338,85 +342,115 @@ export default function RegistryPage() {
         </div>
 
         {/* ── Gallery Grid ── */}
-        {filteredEquipment.length > 0 ? (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {filteredEquipment.map((eq: any) => {
-              const status = statusConfig[eq.status] ?? statusConfig.inactive;
-              return (
-                <div
-                  key={eq.id}
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/equipment/${eq.category?.id}/detail/${eq.id}`,
-                    )
-                  }
-                  className="group relative flex cursor-pointer flex-col overflow-hidden rounded-sm border border-slate-200 bg-white transition-all hover:border-[#225CA3] hover:shadow-md"
-                >
-                  {/* Status Strip */}
-                  <div className={`h-1 w-full ${status.dot}`} />
+        {paginatedEquipment.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {paginatedEquipment.map((eq: any) => {
+                const status = statusConfig[eq.status] ?? statusConfig.inactive;
+                return (
+                  <div
+                    key={eq.id}
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/equipment/${eq.category?.id}/detail/${eq.id}`,
+                      )
+                    }
+                    className="group relative flex cursor-pointer flex-col overflow-hidden rounded-sm border border-slate-200 bg-white transition-all hover:border-[#225CA3] hover:shadow-md"
+                  >
+                    {/* Status Strip */}
+                    <div className={`h-1 w-full ${status.dot}`} />
 
-                  <div className="flex p-4 gap-4">
-                    {/* Compact Image/Icon Section */}
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-slate-50 border border-slate-100 flex items-center justify-center">
-                      {eq.imageUrl ? (
-                        <img
-                          src={eq.imageUrl}
-                          alt={eq.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <Tag size={20} className="text-slate-300" />
-                      )}
+                    <div className="flex p-4 gap-4">
+                      {/* Compact Image/Icon Section */}
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-sm bg-slate-50 border border-slate-100 flex items-center justify-center">
+                        {eq.imageUrl ? (
+                          <img
+                            src={eq.imageUrl}
+                            alt={eq.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Tag size={20} className="text-slate-300" />
+                        )}
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="truncate text-[13px] font-bold text-slate-900 group-hover:text-[#225CA3] transition-colors">
+                            {eq.name}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          {eq.code}
+                        </span>
+                        
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-tight ${status.color}`}>
+                            {status.label}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Content Section */}
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="truncate text-[13px] font-bold text-slate-900 group-hover:text-[#225CA3] transition-colors">
-                          {eq.name}
-                        </span>
+                    {/* Metadata Row */}
+                    <div className="flex items-center justify-between border-t border-slate-50 bg-[#FAFAF8] px-4 py-2">
+                      <div className="flex items-center gap-3">
+                          {eq.category && (
+                              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                  <Layers size={10} className="text-[#1CA5CE]" />
+                                  <span className="truncate max-w-[80px]">{eq.category.name}</span>
+                              </div>
+                          )}
+                          {eq.location && (
+                              <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                  <MapPin size={10} className="text-[#1CA5CE]" />
+                                  <span className="truncate max-w-[80px]">{eq.location}</span>
+                              </div>
+                          )}
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        {eq.code}
-                      </span>
-                      
-                      <div className="mt-2 flex items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                        <span className={`text-[10px] font-bold uppercase tracking-tight ${status.color}`}>
-                          {status.label}
-                        </span>
-                      </div>
+                      <button 
+                        onClick={(e) => handleOpenEditModal(e, eq)}
+                        className="text-slate-300 hover:text-[#225CA3] transition-colors p-1"
+                      >
+                        <Edit size={12} />
+                      </button>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Metadata Row */}
-                  <div className="flex items-center justify-between border-t border-slate-50 bg-[#FAFAF8] px-4 py-2">
-                    <div className="flex items-center gap-3">
-                        {eq.category && (
-                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                                <Layers size={10} className="text-[#1CA5CE]" />
-                                <span className="truncate max-w-[80px]">{eq.category.name}</span>
-                            </div>
-                        )}
-                        {eq.location && (
-                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                                <MapPin size={10} className="text-[#1CA5CE]" />
-                                <span className="truncate max-w-[80px]">{eq.location}</span>
-                            </div>
-                        )}
-                    </div>
-                    <button 
-                      onClick={(e) => handleOpenEditModal(e, eq)}
-                      className="text-slate-300 hover:text-[#225CA3] transition-colors p-1"
-                    >
-                      <Edit size={12} />
-                    </button>
-                  </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-4 mt-6 border border-[#D0CBC0] rounded-sm bg-[#FAFAF8]">
+                <span className="text-[11px] font-medium text-[#7A8A93]">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredEquipment.length)} of {filteredEquipment.length} items
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                  >
+                    PREV
+                  </button>
+                  <span className="text-[11px] font-bold text-[#1A1A1A] px-2">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    className="px-3 py-1.5 border border-[#D0CBC0] rounded-[2px] bg-white text-[11px] font-bold text-[#225CA3] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#EAE7DF] transition-colors"
+                  >
+                    NEXT
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="reg-empty" style={{
             gridColumn: "1 / -1",
