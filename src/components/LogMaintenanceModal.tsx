@@ -57,6 +57,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [equipmentSearch, setEquipmentSearch] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = useMemo(() => {
     if (!rawData?.equipment) return [];
@@ -176,7 +177,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validation
@@ -234,7 +235,12 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
       payload.taskIds = undefined;
     }
 
-    onSubmit(payload);
+    setIsSubmitting(true);
+    try {
+        await onSubmit(payload);
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const fieldStyle: React.CSSProperties = {
@@ -494,8 +500,10 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
           </div>
 
           <div style={{ padding: "16px 24px", background: "#F5F3EF", borderTop: "1px solid #D0CBC0", display: "flex", justifyContent: "flex-end", gap: "12px", flexShrink: 0 }}>
-            <button type="button" onClick={onClose} style={{ padding: "10px 20px", border: "1px solid #D0CBC0", background: "transparent", color: "#7A8A93", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: "pointer", textTransform: "uppercase" }}>Cancel</button>
-            <button type="submit" style={{ padding: "10px 24px", background: "#225CA3", color: "#FFFFFF", border: "none", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: "pointer", textTransform: "uppercase", borderRadius: "2px" }}>Save Log Record</button>
+            <button type="button" onClick={onClose} disabled={isSubmitting} style={{ padding: "10px 20px", border: "1px solid #D0CBC0", background: "transparent", color: "#7A8A93", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: isSubmitting ? "not-allowed" : "pointer", textTransform: "uppercase", opacity: isSubmitting ? 0.5 : 1 }}>Cancel</button>
+            <button type="submit" disabled={isSubmitting} style={{ padding: "10px 24px", background: "#225CA3", color: "#FFFFFF", border: "none", fontWeight: 700, fontSize: "11px", letterSpacing: "0.1em", cursor: isSubmitting ? "not-allowed" : "pointer", textTransform: "uppercase", borderRadius: "2px", opacity: isSubmitting ? 0.7 : 1 }}>
+              {isSubmitting ? "Saving..." : "Save Log Record"}
+            </button>
           </div>
         </form>
       </div>
