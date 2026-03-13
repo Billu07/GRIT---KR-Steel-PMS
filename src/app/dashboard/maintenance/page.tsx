@@ -20,6 +20,7 @@ export default function MaintenanceLogPage() {
   const [filterType, setFilterType] = useState("all");
   const [filterEq, setFilterEq] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
+  const [filterFrequency, setFilterFrequency] = useState("all");
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,6 +92,7 @@ export default function MaintenanceLogPage() {
     if (filterType !== "all" && log.type !== filterType) match = false;
     if (filterEq !== "all" && log.equipmentId.toString() !== filterEq) match = false;
     if (filterCat !== "all" && log.equipment?.categoryId.toString() !== filterCat) match = false;
+    if (filterFrequency !== "all" && log.task?.frequency !== filterFrequency) match = false;
     return match;
   });
 
@@ -194,7 +196,7 @@ export default function MaintenanceLogPage() {
             <span style={{ fontSize: "12px", fontWeight: 600, color: "#1A1A1A" }}>Filters:</span>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full">
             <select style={selectStyle} value={filterType} onChange={e => setFilterType(e.target.value)}>
                 <option value="all">All Types</option>
                 <option value="scheduled">Scheduled</option>
@@ -214,6 +216,17 @@ export default function MaintenanceLogPage() {
                 {equipmentList.filter((e: any) => filterCat === "all" || e.categoryId.toString() === filterCat).map((e: any) => (
                 <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
                 ))}
+            </select>
+
+            <select style={selectStyle} value={filterFrequency} onChange={e => setFilterFrequency(e.target.value)}>
+                <option value="all">All Frequencies</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="semi_annually">Semi-Annually</option>
+                <option value="yearly">Yearly</option>
+                <option value="five_yearly">Five Yearly</option>
             </select>
           </div>
         </div>

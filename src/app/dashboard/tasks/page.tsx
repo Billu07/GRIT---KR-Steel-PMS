@@ -16,6 +16,7 @@ export default function PlannedTasksPage() {
   });
 
   const [search, setSearch] = useState("");
+  const [filterFrequency, setFilterFrequency] = useState("all");
   const [updatingHours, setUpdatingHours] = useState<number | null>(null);
 
   // Inline creation state
@@ -191,7 +192,8 @@ export default function PlannedTasksPage() {
       t.taskId.toLowerCase().includes(search.toLowerCase()) ||
       t.equipment?.name.toLowerCase().includes(search.toLowerCase()) ||
       t.equipment?.code.toLowerCase().includes(search.toLowerCase());
-    return matchesSearch;
+    const matchesFrequency = filterFrequency === "all" || t.frequency === filterFrequency;
+    return matchesSearch && matchesFrequency;
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -259,17 +261,33 @@ export default function PlannedTasksPage() {
           <div style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }} />
         </div>
 
-        {/* Search */}
-        <div style={{ marginBottom: "20px", position: "relative", maxWidth: "400px", flexShrink: 0 }}>
-          <Search size={14} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#7A8A93", pointerEvents: "none" }} />
-          <input
-            type="text"
-            className="task-search"
-            placeholder="Search tasks or equipment…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "10px 14px 10px 38px", fontSize: "13px", color: "#1A1A1A", background: "#FAFAF8", border: "1px solid #D0CBC0", borderRadius: "2px" }}
-          />
+        {/* Filters */}
+        <div style={{ marginBottom: "20px", display: "flex", gap: "16px", flexShrink: 0 }}>
+          <div style={{ position: "relative", maxWidth: "400px", flex: 1 }}>
+            <Search size={14} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#7A8A93", pointerEvents: "none" }} />
+            <input
+              type="text"
+              className="task-search"
+              placeholder="Search tasks or equipment…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ width: "100%", padding: "10px 14px 10px 38px", fontSize: "13px", color: "#1A1A1A", background: "#FAFAF8", border: "1px solid #D0CBC0", borderRadius: "2px" }}
+            />
+          </div>
+          <select
+            value={filterFrequency}
+            onChange={(e) => setFilterFrequency(e.target.value)}
+            style={{ padding: "10px 14px", fontSize: "13px", color: "#1A1A1A", background: "#FAFAF8", border: "1px solid #D0CBC0", borderRadius: "2px", outline: "none", cursor: "pointer", width: "180px" }}
+          >
+            <option value="all">All Frequencies</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="semi_annually">Semi-Annually</option>
+            <option value="yearly">Yearly</option>
+            <option value="five_yearly">Five Yearly</option>
+          </select>
         </div>
 
         {/* Table */}
