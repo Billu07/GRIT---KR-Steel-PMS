@@ -16,6 +16,7 @@ export default function RegistryPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Modal state
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
@@ -114,11 +115,9 @@ const filteredEquipment = equipment.filter((eq: any) => {
     filterCategory === "all" ||
     eq.category?.id?.toString() === filterCategory;
   return matchesSearch && matchesStatus && matchesCategory;
-});
+  });
 
-const [currentPage, setCurrentPage] = useState(1);
-const itemsPerPage = 50;
-const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
+  const itemsPerPage = 50;const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
 const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const statusConfig: Record<

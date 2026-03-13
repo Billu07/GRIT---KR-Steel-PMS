@@ -14,6 +14,7 @@ export default function InventoryPage() {
   });
 
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,7 +97,6 @@ export default function InventoryPage() {
     return matchesSearch;
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
   const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);

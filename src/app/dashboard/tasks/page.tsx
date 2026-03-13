@@ -18,6 +18,7 @@ export default function PlannedTasksPage() {
   const [search, setSearch] = useState("");
   const [filterFrequency, setFilterFrequency] = useState("all");
   const [updatingHours, setUpdatingHours] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Inline creation state
   const [isAdding, setIsAdding] = useState(false);
@@ -196,7 +197,6 @@ export default function PlannedTasksPage() {
     return matchesSearch && matchesFrequency;
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
   const paginatedTasks = filteredTasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
