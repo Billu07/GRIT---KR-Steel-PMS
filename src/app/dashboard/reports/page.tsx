@@ -45,6 +45,7 @@ export default function ReportsBuilderPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [selectedEquipments, setSelectedEquipments] = useState<string[]>([]);
+  const [equipmentSearch, setEquipmentSearch] = useState(""); // ADDED SEARCH
 
   const categories = useMemo(() => {
     if (!rawData?.equipment) return [];
@@ -59,21 +60,39 @@ export default function ReportsBuilderPage() {
 
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
-    if (categoryId === "all") {
-      setSelectedEquipments([]);
-    } else {
-      const eqIds = rawData?.equipment
-        .filter((eq: any) => String(eq.categoryId) === categoryId)
-        .map((eq: any) => String(eq.id)) || [];
-      setSelectedEquipments(eqIds);
-    }
+    // Always start with none selected
+    setSelectedEquipments([]);
+    setEquipmentSearch("");
   };
 
   const filteredEquipmentList = useMemo(() => {
     if (!rawData?.equipment) return [];
-    if (selectedCategory === "all") return rawData.equipment;
-    return rawData.equipment.filter((eq: any) => String(eq.categoryId) === selectedCategory);
-  }, [rawData, selectedCategory]);
+    let list = rawData.equipment;
+    if (selectedCategory !== "all") {
+      list = list.filter((eq: any) => String(eq.categoryId) === selectedCategory);
+    }
+    if (equipmentSearch) {
+      const lower = equipmentSearch.toLowerCase();
+      list = list.filter((eq: any) => eq.name.toLowerCase().includes(lower) || eq.code.toLowerCase().includes(lower));
+    }
+    return list;
+  }, [rawData, selectedCategory, equipmentSearch]);
+
+  const handleSelectAllEquipment = () => {
+    const currentIds = filteredEquipmentList.map((eq: any) => String(eq.id));
+    const allSelected = currentIds.every((id: string) => selectedEquipments.includes(id));
+    
+    if (allSelected && currentIds.length > 0) {
+      // Deselect all
+      setSelectedEquipments(prev => prev.filter(id => !currentIds.includes(id)));
+    } else {
+      // Select all
+      setSelectedEquipments(prev => {
+        const newSelection = new Set([...prev, ...currentIds]);
+        return Array.from(newSelection);
+      });
+    }
+  };
 
   // Derived / Filtered Data
   const filteredData = useMemo(() => {
@@ -483,17 +502,39 @@ export default function ReportsBuilderPage() {
                         {showEquipmentFilter ? <ChevronUp size={14} className="text-[#7A8A93]" /> : <ChevronDown size={14} className="text-[#7A8A93]" />}
                     </button>
                     {showEquipmentFilter && rawData && (
-                        <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] max-h-[300px] overflow-y-auto bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 p-2 scroll-custom">
-                            <div className="flex items-center justify-between mb-2 px-2">
-                                <span className="text-xs font-semibold text-[#225CA3]">Select Equipment</span>
-                                <button onClick={() => setSelectedEquipments([])} className="text-[10px] text-[#7A8A93] hover:text-[#225CA3] uppercase tracking-wide">Clear</button>
-                            </div>
-                            {filteredEquipmentList.map((eq: any) => (
-                                <div key={eq.id} className="flex items-center gap-2 hover:bg-[#F5F3EF] p-1.5 rounded cursor-pointer" onClick={() => handleEquipmentToggle(String(eq.id))}>
-                                    <input type="checkbox" checked={selectedEquipments.includes(String(eq.id))} readOnly className="accent-[#225CA3] w-3.5 h-3.5" />
-                                    <div className="flex flex-col"><span className="text-[12px] font-medium text-[#1A1A1A]">{eq.name}</span><span className="text-[10px] text-[#7A8A93]">{eq.code}</span></div>
+                        <div className="absolute top-full left-0 mt-1 w-full sm:w-[280px] max-h-[300px] bg-white border border-[#D0CBC0] shadow-lg rounded-[2px] z-50 flex flex-col">
+                            <div className="flex flex-col gap-2 p-2 border-b border-[#EAE7DF]">
+                                <div className="relative">
+                                    <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-[#7A8A93]" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search equipment..." 
+                                        value={equipmentSearch}
+                                        onChange={(e) => setEquipmentSearch(e.target.value)}
+                                        className="w-full pl-6 pr-2 py-1.5 text-[11px] border border-[#D0CBC0] rounded-[2px] outline-none focus:border-[#225CA3]"
+                                    />
                                 </div>
-                            ))}
+                                <div className="flex items-center justify-between px-1">
+                                    <span className="text-[10px] font-semibold text-[#7A8A93]">{filteredEquipmentList.length} items</span>
+                                    <button 
+                                        onClick={handleSelectAllEquipment} 
+                                        className="text-[10px] font-bold text-[#225CA3] hover:text-[#1B4A82] uppercase tracking-wide"
+                                    >
+                                        {filteredEquipmentList.length > 0 && filteredEquipmentList.every((eq: any) => selectedEquipments.includes(String(eq.id))) ? "Deselect All" : "Select All"}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="overflow-y-auto p-1 scroll-custom" style={{ maxHeight: "200px" }}>
+                                {filteredEquipmentList.map((eq: any) => (
+                                    <div key={eq.id} className="flex items-center gap-2 hover:bg-[#F5F3EF] p-1.5 rounded cursor-pointer" onClick={() => handleEquipmentToggle(String(eq.id))}>
+                                        <input type="checkbox" checked={selectedEquipments.includes(String(eq.id))} readOnly className="accent-[#225CA3] w-3.5 h-3.5" />
+                                        <div className="flex flex-col"><span className="text-[12px] font-medium text-[#1A1A1A]">{eq.name}</span><span className="text-[10px] text-[#7A8A93]">{eq.code}</span></div>
+                                    </div>
+                                ))}
+                                {filteredEquipmentList.length === 0 && (
+                                    <div className="p-3 text-center text-[11px] text-[#7A8A93]">No equipment found.</div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
