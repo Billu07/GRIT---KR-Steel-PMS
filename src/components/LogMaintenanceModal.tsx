@@ -128,6 +128,8 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             serviceStartDate: initialData.serviceStartDate ? new Date(initialData.serviceStartDate).toISOString().slice(0, 16) : "",
             serviceEndDate: initialData.serviceEndDate ? new Date(initialData.serviceEndDate).toISOString().slice(0, 16) : "",
             maintenanceDate: initialData.maintenanceDate ? new Date(initialData.maintenanceDate).toISOString().slice(0, 16) : "",
+            fromDate: "",
+            toDate: "",
             problemDescription: initialData.problemDescription || "",
             solutionDetails: initialData.solutionDetails || "",
             usedParts: initialData.usedParts || "",
