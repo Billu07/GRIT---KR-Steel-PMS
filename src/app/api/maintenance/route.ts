@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
       problemType, 
       remarks,
       maintenanceDate,
-      maintenanceDetails
+      maintenanceDetails,
+      fromDate,
+      toDate
     } = body;
 
     const baseEquipments = equipmentIds && Array.isArray(equipmentIds) && equipmentIds.length > 0 
@@ -72,42 +74,81 @@ export async function POST(req: NextRequest) {
     // If taskIds are provided, log by tasks. Otherwise, log by equipments.
     if (targetTaskIds[0] !== null) {
       for (const tId of targetTaskIds) {
-        let taskTargetDate = null;
-        let task = null;
-        let currentEquipmentId = baseEquipments[0]; // fallback
+        const task = await prisma.task.findUnique({ where: { id: tId } });
+        if (!task) continue;
 
-        task = await prisma.task.findUnique({ where: { id: tId } });
-        if (task) {
-            taskTargetDate = task.nextDueDate;
-            currentEquipmentId = task.equipmentId;
-        }
+        const currentEquipmentId = task.equipmentId;
 
-        if (!currentEquipmentId) continue;
+        if (type === 'scheduled' && fromDate && toDate) {
+          // Sequential logging for date range
+          let currentLogDate = new Date(fromDate);
+          const endLogDate = new Date(toDate);
 
-        const newHistory = await prisma.maintenanceHistory.create({
-          data: {
-            equipmentId: currentEquipmentId,
-            taskId: tId,
-            type,
-            targetDate: taskTargetDate,
-            informationDate: informationDate ? new Date(informationDate) : null,
-            serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
-            serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
-            problemDescription: type === 'scheduled' ? null : problemDescription,
-            solutionDetails,
-            usedParts,
-            workType,
-            problemType,
-            remarks,
-            maintenanceDate: maintenanceDate ? new Date(maintenanceDate) : null,
-            maintenanceDetails,
-            performedAt: new Date(),
-          },
-        });
+          // Safety break to prevent infinite loops (max 100 logs per task)
+          let iterations = 0;
+          while (currentLogDate <= endLogDate && iterations < 100) {
+            iterations++;
+            
+            const newHistory = await prisma.maintenanceHistory.create({
+              data: {
+                equipmentId: currentEquipmentId,
+                taskId: tId,
+                type,
+                targetDate: currentLogDate, // In sequential mode, targetDate is the same as maintenanceDate
+                informationDate: informationDate ? new Date(informationDate) : null,
+                problemDescription: null,
+                solutionDetails,
+                usedParts,
+                workType,
+                problemType,
+                remarks,
+                maintenanceDate: currentLogDate,
+                maintenanceDetails,
+                performedAt: new Date(),
+              },
+            });
+            createdLogs.push(newHistory);
 
-        createdLogs.push(newHistory);
+            // Update task to this date to get the next one correctly
+            const nextDue = calculateNextDueDate(currentLogDate, task.frequency as any);
+            
+            await prisma.task.update({
+              where: { id: task.id },
+              data: {
+                lastCompletedDate: currentLogDate,
+                nextDueDate: nextDue
+              }
+            });
 
-        if (task) {
+            // Move to the next due date for the next iteration
+            currentLogDate = new Date(nextDue);
+          }
+        } else {
+          // Standard single log
+          const taskTargetDate = task.nextDueDate;
+          const newHistory = await prisma.maintenanceHistory.create({
+            data: {
+              equipmentId: currentEquipmentId,
+              taskId: tId,
+              type,
+              targetDate: taskTargetDate,
+              informationDate: informationDate ? new Date(informationDate) : null,
+              serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
+              serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : null,
+              problemDescription: type === 'scheduled' ? null : problemDescription,
+              solutionDetails,
+              usedParts,
+              workType,
+              problemType,
+              remarks,
+              maintenanceDate: maintenanceDate ? new Date(maintenanceDate) : null,
+              maintenanceDetails,
+              performedAt: new Date(),
+            },
+          });
+
+          createdLogs.push(newHistory);
+
           const completedDate = maintenanceDate ? new Date(maintenanceDate) : new Date();
           const nextDue = calculateNextDueDate(completedDate, task.frequency as any);
 

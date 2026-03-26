@@ -44,6 +44,8 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     serviceStartDate: "",
     serviceEndDate: "",
     maintenanceDate: "",
+    fromDate: "",
+    toDate: "",
     problemDescription: "",
     solutionDetails: "",
     usedParts: "",
@@ -165,6 +167,24 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     const targetEqIds = selectedEquipments.length > 0 ? selectedEquipments : [formData.equipmentId];
     return allTasks.filter((t: any) => targetEqIds.includes(String(t.equipmentId)));
   }, [initialEqId, initialTasks, allTasks, selectedEquipments, formData.equipmentId]);
+
+  useEffect(() => {
+    if (formData.type === 'scheduled' && !initialData && formData.frequency && filteredTasks.length > 0) {
+      const freqTasks = filteredTasks.filter((t: any) => t.frequency === formData.frequency);
+      if (freqTasks.length > 0) {
+        // Find earliest nextDueDate among matching tasks
+        const validDates = freqTasks
+          .map((t: any) => t.nextDueDate ? new Date(t.nextDueDate).getTime() : 0)
+          .filter((time: number) => time > 0);
+        
+        if (validDates.length > 0) {
+          const earliestTime = Math.min(...validDates);
+          const earliestDate = new Date(earliestTime).toISOString().slice(0, 16);
+          setFormData(prev => ({ ...prev, fromDate: earliestDate }));
+        }
+      }
+    }
+  }, [formData.type, formData.frequency, filteredTasks, initialData]);
 
   if (!isOpen) return null;
 
@@ -408,7 +428,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                   <option value="predictive">Predictive (Condition)</option>
                 </select>
               </div>
-              {!isCorrective && (
+              {!isCorrective && !(isScheduled && !initialData) && (
                 <div>
                   <label style={labelStyle}>
                       <Calendar size={12}/> 
@@ -418,6 +438,19 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                 </div>
               )}
             </div>
+
+            {isScheduled && !initialData && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px", background: "#FDFDFD", padding: "16px", borderRadius: "4px", border: "1px dashed #D0CBC0" }}>
+                 <div>
+                    <label style={labelStyle}><Calendar size={12}/> From Date (Auto-filled Next Due)</label>
+                    <input type="datetime-local" name="fromDate" value={formData.fromDate} onChange={handleChange} style={fieldStyle} required />
+                  </div>
+                  <div>
+                    <label style={labelStyle}><Calendar size={12}/> To Date</label>
+                    <input type="datetime-local" name="toDate" value={formData.toDate} onChange={handleChange} style={fieldStyle} required />
+                  </div>
+              </div>
+            )}
 
             {isScheduled && !initialData && (
               <div style={{ marginBottom: "24px", background: "#EBF4FA", padding: "16px", borderRadius: "4px", border: "1px solid #1CA5CE" }}>
