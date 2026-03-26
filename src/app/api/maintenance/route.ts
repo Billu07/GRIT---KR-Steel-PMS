@@ -69,13 +69,13 @@ export async function POST(req: NextRequest) {
       ? taskIds 
       : (taskId ? [parseInt(taskId)] : [null]);
 
-    const createdLogs = [];
+    const createdLogsCount = [];
 
-    // If taskIds are provided, log by tasks. Otherwise, log by equipments.
+    // Process tasks in parallel using Promise.all
     if (targetTaskIds[0] !== null) {
-      for (const tId of targetTaskIds) {
+      await Promise.all(targetTaskIds.map(async (tId) => {
         const task = await prisma.task.findUnique({ where: { id: tId } });
-        if (!task) continue;
+        if (!task) return;
 
         const currentEquipmentId = task.equipmentId;
 
@@ -83,45 +83,49 @@ export async function POST(req: NextRequest) {
           // Sequential logging for date range
           let currentLogDate = new Date(fromDate);
           const endLogDate = new Date(toDate);
+          const logsToCreate = [];
+          let lastProcessedDate = null;
 
           // Safety break to prevent infinite loops (max 100 logs per task)
           let iterations = 0;
           while (currentLogDate <= endLogDate && iterations < 100) {
             iterations++;
-            
-            const newHistory = await prisma.maintenanceHistory.create({
-              data: {
-                equipmentId: currentEquipmentId,
-                taskId: tId,
-                type,
-                targetDate: currentLogDate, // In sequential mode, targetDate is the same as maintenanceDate
-                informationDate: informationDate ? new Date(informationDate) : null,
-                problemDescription: null,
-                solutionDetails,
-                usedParts,
-                workType,
-                problemType,
-                remarks,
-                maintenanceDate: currentLogDate,
-                maintenanceDetails,
-                performedAt: new Date(),
-              },
-            });
-            createdLogs.push(newHistory);
 
-            // Update task to this date to get the next one correctly
-            const nextDue = calculateNextDueDate(currentLogDate, task.frequency as any);
-            
+            logsToCreate.push({
+              equipmentId: currentEquipmentId,
+              taskId: tId,
+              type,
+              targetDate: currentLogDate,
+              informationDate: informationDate ? new Date(informationDate) : null,
+              problemDescription: null,
+              solutionDetails,
+              usedParts,
+              workType,
+              problemType,
+              remarks,
+              maintenanceDate: currentLogDate,
+              maintenanceDetails,
+              performedAt: new Date(),
+            });
+
+            lastProcessedDate = new Date(currentLogDate);
+            // Move to the next due date for the next iteration
+            currentLogDate = calculateNextDueDate(currentLogDate, task.frequency as any);
+          }
+
+          if (logsToCreate.length > 0) {
+            await prisma.maintenanceHistory.createMany({ data: logsToCreate });
+
+            // Final task update
+            const nextDue = calculateNextDueDate(lastProcessedDate!, task.frequency as any);
             await prisma.task.update({
               where: { id: task.id },
               data: {
-                lastCompletedDate: currentLogDate,
+                lastCompletedDate: lastProcessedDate,
                 nextDueDate: nextDue
               }
             });
-
-            // Move to the next due date for the next iteration
-            currentLogDate = new Date(nextDue);
+            createdLogsCount.push(...logsToCreate);
           }
         } else {
           // Standard single log
@@ -147,7 +151,7 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          createdLogs.push(newHistory);
+          createdLogsCount.push(newHistory);
 
           const completedDate = maintenanceDate ? new Date(maintenanceDate) : new Date();
           const nextDue = calculateNextDueDate(completedDate, task.frequency as any);
@@ -160,10 +164,10 @@ export async function POST(req: NextRequest) {
             }
           });
         }
-      }
+      }));
     } else {
       // Corrective/Predictive across multiple equipments
-      for (const eId of baseEquipments) {
+      await Promise.all(baseEquipments.map(async (eId) => {
         const newHistory = await prisma.maintenanceHistory.create({
           data: {
             equipmentId: parseInt(eId),
@@ -184,13 +188,14 @@ export async function POST(req: NextRequest) {
             performedAt: new Date(),
           },
         });
-        createdLogs.push(newHistory);
-      }
+        createdLogsCount.push(newHistory);
+      }));
     }
 
-    return NextResponse.json(createdLogs.length === 1 ? createdLogs[0] : createdLogs, { status: 201 });
-  } catch (error) {
+    return NextResponse.json({ success: true, count: createdLogsCount.length }, { status: 201 });
+    } catch (error) {
     console.error('Maintenance logging error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+    }
+    }
+
