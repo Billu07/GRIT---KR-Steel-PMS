@@ -15,6 +15,8 @@ export default function MaintenanceLogPage() {
 
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<any>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState<number | 'bulk' | null>(null);
 
   // Filters
   const [filterType, setFilterType] = useState("all");
@@ -59,14 +61,64 @@ export default function MaintenanceLogPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this maintenance record?")) return;
+    setIsDeleting(id);
     try {
         const res = await fetch(`/api/maintenance/${id}`, { method: "DELETE" });
-        if (res.ok) mutate();
-        else alert("Failed to delete log");
+        if (res.ok) {
+            mutate();
+            setSelectedIds(prev => prev.filter(sid => sid !== id));
+        } else {
+            alert("Failed to delete log");
+        }
     } catch (err) {
         console.error(err);
         alert("Error deleting log");
+    } finally {
+        setIsDeleting(null);
     }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected records?`)) return;
+    
+    setIsDeleting('bulk');
+    
+    try {
+        const res = await fetch(`/api/maintenance`, { 
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: selectedIds })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            alert(`Successfully deleted ${data.count} records.`);
+            setSelectedIds([]);
+            mutate();
+        } else {
+            alert("Failed to delete records.");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Error during bulk deletion");
+    } finally {
+        setIsDeleting(null);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === paginatedLogs.length && paginatedLogs.length > 0) {
+        setSelectedIds([]);
+    } else {
+        setSelectedIds(paginatedLogs.map((l: any) => l.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => 
+        prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
+    );
   };
 
   const handleEdit = (log: any) => {
@@ -143,6 +195,21 @@ export default function MaintenanceLogPage() {
         }
         .ml-add-btn:hover  { background: #1B4A82; }
         .ml-add-btn:active { background: #133660; }
+
+        .ml-bulk-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 10px 20px;
+          font-family: 'DM Sans', 'Helvetica Neue', Arial, sans-serif;
+          font-size: 11px; font-weight: 600;
+          letter-spacing: 0.16em; text-transform: uppercase;
+          color: #FFFFFF; background: #8B2020;
+          border: none; border-radius: 2px;
+          cursor: pointer; transition: background 0.15s ease;
+          white-space: nowrap;
+          margin-right: 12px;
+        }
+        .ml-bulk-btn:hover { background: #A72828; }
+        .ml-bulk-btn:disabled { background: #D0CBC0; cursor: not-allowed; opacity: 0.7; }
       `}</style>
 
       <div className="ml-root">
@@ -173,16 +240,28 @@ export default function MaintenanceLogPage() {
             >
               Maintenance Log
             </h1>
-            <button
-              className="ml-add-btn self-start"
-              onClick={() => {
-                setEditingLog(null);
-                setIsLogModalOpen(true);
-              }}
-            >
-              <Plus size={13} />
-              Add Log
-            </button>
+            <div className="flex items-center">
+                {selectedIds.length > 0 && (
+                    <button
+                        className="ml-bulk-btn"
+                        onClick={handleBulkDelete}
+                        disabled={isDeleting !== null}
+                    >
+                        <Trash2 size={13} />
+                        {isDeleting === 'bulk' ? `Deleting ${selectedIds.length}...` : `Delete Selected (${selectedIds.length})`}
+                    </button>
+                )}
+                <button
+                className="ml-add-btn"
+                onClick={() => {
+                    setEditingLog(null);
+                    setIsLogModalOpen(true);
+                }}
+                >
+                <Plus size={13} />
+                Add Log
+                </button>
+            </div>
           </div>
           <div style={{ height: "1px", background: "#D0CBC0", marginTop: "20px" }} />
         </div>
@@ -271,6 +350,14 @@ export default function MaintenanceLogPage() {
             >
               <thead style={{ position: "sticky", top: 0, zIndex: 10, background: "#EAE7DF" }}>
                 <tr>
+                  <th style={{ padding: "11px 16px", borderBottom: "1px solid #D0CBC0", width: "40px" }}>
+                    <input 
+                        type="checkbox" 
+                        checked={paginatedLogs.length > 0 && selectedIds.length === paginatedLogs.length}
+                        onChange={toggleSelectAll}
+                        style={{ accentColor: "#225CA3", cursor: "pointer" }}
+                    />
+                  </th>
                   {[
                     "Timeline / Dates",
                     "Type",
@@ -303,8 +390,18 @@ export default function MaintenanceLogPage() {
               <tbody className="ml-tbody">
                 {paginatedLogs.length > 0 ? (
                   paginatedLogs.map((log: any) => {
+                    const isRowDeleting = isDeleting === log.id;
                     return (
-                      <tr key={log.id}>
+                      <tr key={log.id} style={{ opacity: isRowDeleting ? 0.5 : 1 }}>
+                        <td style={{ padding: "14px 16px", borderBottom: "1px solid #EAE7DF", textAlign: "center" }}>
+                           <input 
+                                type="checkbox" 
+                                checked={selectedIds.includes(log.id)}
+                                onChange={() => toggleSelect(log.id)}
+                                style={{ accentColor: "#225CA3", cursor: "pointer" }}
+                                disabled={isRowDeleting}
+                            />
+                        </td>
                         <td
                           style={{
                             padding: "14px 16px",
@@ -422,11 +519,21 @@ export default function MaintenanceLogPage() {
                           {log.usedParts || "—"}
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "right", whiteSpace: "nowrap", borderBottom: "1px solid #EAE7DF" }}>
-                          <button onClick={() => handleEdit(log)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease" }} title="Edit Log">
+                          <button 
+                            onClick={() => handleEdit(log)} 
+                            disabled={isRowDeleting}
+                            style={{ background: "transparent", border: "none", padding: "4px", cursor: isRowDeleting ? "not-allowed" : "pointer", color: "#7A8A93", transition: "color 0.15s ease" }} 
+                            title="Edit Log"
+                          >
                              <Edit size={14} />
                           </button>
-                          <button onClick={() => handleDelete(log.id)} style={{ background: "transparent", border: "none", padding: "4px", cursor: "pointer", color: "#7A8A93", transition: "color 0.15s ease", marginLeft: "4px" }} title="Delete Log">
-                             <Trash2 size={14} />
+                          <button 
+                            onClick={() => handleDelete(log.id)} 
+                            disabled={isRowDeleting}
+                            style={{ background: "transparent", border: "none", padding: "4px", cursor: isRowDeleting ? "not-allowed" : "pointer", color: isRowDeleting ? "#D0CBC0" : "#7A8A93", transition: "color 0.15s ease", marginLeft: "4px" }} 
+                            title="Delete Log"
+                          >
+                             {isRowDeleting ? <span style={{ fontSize: '10px', fontWeight: 700 }}>...</span> : <Trash2 size={14} />}
                           </button>
                         </td>
                       </tr>
@@ -435,7 +542,7 @@ export default function MaintenanceLogPage() {
                 ) : (
                   <tr>
                     <td
-                      colSpan={9}
+                      colSpan={10}
                       style={{
                         padding: "48px 24px",
                         textAlign: "center",

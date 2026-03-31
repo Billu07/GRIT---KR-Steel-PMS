@@ -216,5 +216,31 @@ export async function POST(req: NextRequest) {
     console.error('Maintenance logging error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { ids } = await req.json();
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
     }
+
+    const deleteResult = await prisma.maintenanceHistory.deleteMany({
+      where: {
+        id: {
+          in: ids.map(id => parseInt(id))
+        }
+      }
+    });
+
+    return NextResponse.json({ 
+      message: `Successfully deleted ${deleteResult.count} maintenance records`,
+      count: deleteResult.count
+    });
+  } catch (error) {
+    console.error('Bulk maintenance delete error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
