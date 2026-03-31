@@ -3,21 +3,40 @@ import { prisma } from '@/lib/prisma';
 import { calculateNextDueDate } from '@/lib/dateUtils';
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const maintenanceId = parseInt(id);
-
-  if (isNaN(maintenanceId)) {
-    return NextResponse.json({ error: 'Invalid maintenance ID' }, { status: 400 });
-  }
-
+  let maintenanceId: number | undefined;
   try {
+    const { id } = await params;
+    maintenanceId = parseInt(id);
+
+    console.log('[DELETE] Attempting to delete maintenance record with ID:', maintenanceId);
+
+    if (isNaN(maintenanceId)) {
+      return NextResponse.json({ error: 'Invalid maintenance ID' }, { status: 400 });
+    }
+
+    // Check if record exists first
+    const record = await prisma.maintenanceHistory.findUnique({
+      where: { id: maintenanceId }
+    });
+
+    if (!record) {
+      console.warn('[DELETE] Record not found:', maintenanceId);
+      return NextResponse.json({ error: 'Maintenance record not found' }, { status: 404 });
+    }
+
     await prisma.maintenanceHistory.delete({
       where: { id: maintenanceId },
     });
+    
+    console.log('[DELETE] Successfully deleted maintenance record:', maintenanceId);
     return NextResponse.json({ message: 'Maintenance record deleted successfully' });
-  } catch (error) {
-    console.error('Maintenance delete error:', error);
-    return NextResponse.json({ error: 'Failed to delete maintenance record' }, { status: 500 });
+  } catch (error: any) {
+    console.error('[DELETE] Maintenance delete error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to delete maintenance record', 
+      details: error.message || String(error),
+      code: error.code // Prisma error code if available
+    }, { status: 500 });
   }
 }
 
