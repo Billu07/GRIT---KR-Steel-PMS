@@ -81,8 +81,13 @@ export async function POST(req: NextRequest) {
 
         if (type === 'scheduled' && fromDate && toDate) {
           // Sequential logging for date range
-          let currentLogDate = new Date(fromDate);
+          const userFromDate = new Date(fromDate);
           const endLogDate = new Date(toDate);
+          
+          // Start from the LATER of user-provided fromDate or task's nextDueDate
+          const taskNextDue = task.nextDueDate ? new Date(task.nextDueDate) : userFromDate;
+          let currentLogDate = new Date(Math.max(userFromDate.getTime(), taskNextDue.getTime()));
+          
           const logsToCreate = [];
           let lastProcessedDate = null;
 
@@ -90,6 +95,13 @@ export async function POST(req: NextRequest) {
           let iterations = 0;
           while (currentLogDate <= endLogDate && iterations < 100) {
             iterations++;
+
+            // Skip Fridays (Day 5) for logging
+            if (currentLogDate.getDay() === 5) {
+              // Move to the next scheduled date
+              currentLogDate = calculateNextDueDate(currentLogDate, task.frequency as any);
+              continue;
+            }
 
             logsToCreate.push({
               equipmentId: currentEquipmentId,
@@ -118,11 +130,18 @@ export async function POST(req: NextRequest) {
 
             // Final task update
             const nextDue = calculateNextDueDate(lastProcessedDate!, task.frequency as any);
+            
+            // Ensure nextDue is also not a Friday if it's a daily task or just generally
+            let finalNextDue = nextDue;
+            if (finalNextDue.getDay() === 5) {
+                finalNextDue = calculateNextDueDate(finalNextDue, task.frequency as any);
+            }
+
             await prisma.task.update({
               where: { id: task.id },
               data: {
                 lastCompletedDate: lastProcessedDate,
-                nextDueDate: nextDue
+                nextDueDate: finalNextDue
               }
             });
             createdLogsCount.push(...logsToCreate);

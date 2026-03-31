@@ -37,5 +37,11 @@ export function calculateNextDueDate(lastCompletedDate: Date | string, frequency
       nextDue.setDate(nextDue.getDate() + 7); 
       break;
   }
+  
+  // Skip Fridays (Day 5) as no logs are taken on those days
+  if (nextDue.getDay() === 5) {
+    nextDue.setDate(nextDue.getDate() + 1);
+  }
+  
   return nextDue;
 }

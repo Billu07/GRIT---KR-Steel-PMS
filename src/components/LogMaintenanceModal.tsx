@@ -60,6 +60,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   const [showEquipmentFilter, setShowEquipmentFilter] = useState(false);
   const [equipmentSearch, setEquipmentSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastAutoFrequency, setLastAutoFrequency] = useState("");
 
   const categories = useMemo(() => {
     if (!rawData?.equipment) return [];
@@ -137,6 +138,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             problemType: initialData.problemType || "minor",
             remarks: initialData.remarks || "",
         });
+        setLastAutoFrequency("");
       } else {
         // Create mode
         const now = new Date().toISOString().slice(0, 16);
@@ -150,6 +152,8 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             taskId: "",
             frequency: "",
             type: "corrective",
+            fromDate: "",
+            toDate: "",
             problemDescription: "",
             solutionDetails: "",
             usedParts: "",
@@ -158,6 +162,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
         setSelectedCategory("all");
         setSelectedEquipments([]);
         setEquipmentSearch("");
+        setLastAutoFrequency("");
       }
     }
   }, [isOpen, initialEqId, initialData]);
@@ -182,11 +187,16 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
         if (validDates.length > 0) {
           const earliestTime = Math.min(...validDates);
           const earliestDate = new Date(earliestTime).toISOString().slice(0, 16);
-          setFormData(prev => ({ ...prev, fromDate: earliestDate }));
+          
+          // Only auto-fill if fromDate is empty OR if frequency has changed
+          if (!formData.fromDate || formData.frequency !== lastAutoFrequency) {
+            setFormData(prev => ({ ...prev, fromDate: earliestDate }));
+            setLastAutoFrequency(formData.frequency);
+          }
         }
       }
     }
-  }, [formData.type, formData.frequency, filteredTasks, initialData]);
+  }, [formData.type, formData.frequency, filteredTasks, initialData, lastAutoFrequency]);
 
   if (!isOpen) return null;
 
