@@ -49,6 +49,7 @@ export default function EquipmentDetailPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdateEquipment = async (updatedData: any) => {
+    const toastId = toast.loading("Updating equipment...");
     try {
       const res = await fetch(`/api/equipment/detail/${equipmentId}`, {
         method: "PATCH",
@@ -56,15 +57,15 @@ export default function EquipmentDetailPage() {
         body: JSON.stringify(updatedData),
       });
       if (res.ok) {
-        alert("Equipment updated successfully!");
+        toast.success("Equipment updated successfully!", { id: toastId });
         mutate();
         setIsEqModalOpen(false);
       } else {
-        alert("Failed to update equipment");
+        toast.error("Failed to update equipment", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error updating equipment");
+      toast.error("Error updating equipment", { id: toastId });
     }
   };
 
@@ -125,6 +126,12 @@ export default function EquipmentDetailPage() {
   };
 
   const handleCreateTask = async () => {
+    if (!newTask.taskName) {
+      toast.error("Please fill in the Task Name.");
+      return;
+    }
+
+    const toastId = toast.loading("Creating task...");
     try {
       let nextDueDate = null;
       if (newTask.lastCompletedDate) {
@@ -143,6 +150,7 @@ export default function EquipmentDetailPage() {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        toast.success("Task created successfully!", { id: toastId });
         mutate();
         setIsAdding(false);
         setNewTask({
@@ -155,16 +163,17 @@ export default function EquipmentDetailPage() {
         });
       } else {
         const data = await res.json().catch(() => ({}));
-        alert(data.error || "Failed to create task");
+        toast.error(data.error || "Failed to create task", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating task");
+      toast.error("Error creating task", { id: toastId });
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdateTask = async (taskData: any) => {
+    const toastId = toast.loading("Updating task...");
     try {
       if (editingTask) {
         const res = await fetch(`/api/tasks/${editingTask.id}`, {
@@ -173,17 +182,18 @@ export default function EquipmentDetailPage() {
           body: JSON.stringify(taskData),
         });
         if (res.ok) {
+          toast.success("Task updated successfully!", { id: toastId });
           mutate();
           setIsTaskModalOpen(false);
           setEditingTask(null);
         } else {
           const data = await res.json().catch(() => ({}));
-          alert(data.error || "Failed to update task");
+          toast.error(data.error || "Failed to update task", { id: toastId });
         }
       }
     } catch (err) {
       console.error(err);
-      alert("Error updating task");
+      toast.error("Error updating task", { id: toastId });
     }
   };
 
@@ -684,7 +694,7 @@ export default function EquipmentDetailPage() {
                           value={newTask.taskId}
                           onChange={handleInputChange}
                           style={inlineInput}
-                          placeholder="ID"
+                          placeholder="ID (Auto)"
                           autoFocus
                         />
                       </td>

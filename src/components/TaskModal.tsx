@@ -391,7 +391,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   name="taskDetail"
                   value={formData.taskDetail}
                   onChange={handleChange}
-                  required
                   rows={3}
                   className="jm-field"
                   style={{ ...fieldStyle, resize: "vertical", lineHeight: 1.6 }}
