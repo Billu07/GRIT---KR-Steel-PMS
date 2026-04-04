@@ -24,10 +24,39 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Maintenance record not found' }, { status: 404 });
     }
 
+    // Find task before deleting the log
+    const linkedTaskId = record.taskId;
+
     await prisma.maintenanceHistory.delete({
       where: { id: maintenanceId },
     });
     
+    // Sync task dates after deletion
+    if (linkedTaskId) {
+      const task = await prisma.task.findUnique({ where: { id: linkedTaskId } });
+      if (task) {
+        const latestLog = await prisma.maintenanceHistory.findFirst({
+          where: { taskId: linkedTaskId, type: 'scheduled', maintenanceDate: { not: null } },
+          orderBy: { maintenanceDate: 'desc' }
+        });
+
+        if (latestLog && latestLog.maintenanceDate) {
+          const completedDate = new Date(latestLog.maintenanceDate);
+          const nextDue = calculateNextDueDate(completedDate, task.frequency);
+          await prisma.task.update({
+            where: { id: linkedTaskId },
+            data: { lastCompletedDate: completedDate, nextDueDate: nextDue }
+          });
+        } else {
+          // No logs left, nullify dates
+          await prisma.task.update({
+            where: { id: linkedTaskId },
+            data: { lastCompletedDate: null, nextDueDate: null }
+          });
+        }
+      }
+    }
+
     console.log('[DELETE] Successfully deleted maintenance record:', maintenanceId);
     return NextResponse.json({ message: 'Maintenance record deleted successfully' });
   } catch (error: any) {
@@ -96,24 +125,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data: updateData,
     });
 
-    // If this maintenance record is linked to a task, update the task's next due date
+    // If this maintenance record is linked to a task, update the task's next due date safely
     const linkedTaskId = updatedRecord.taskId;
-    if (linkedTaskId && updatedRecord.maintenanceDate) {
+    if (linkedTaskId) {
       const task = await prisma.task.findUnique({ where: { id: linkedTaskId } });
       if (task) {
-        const completedDate = new Date(updatedRecord.maintenanceDate);
-        const nextDue = calculateNextDueDate(completedDate, task.frequency);
-
-        await prisma.task.update({
-          where: { id: linkedTaskId },
-          data: {
-            lastCompletedDate: completedDate,
-            nextDueDate: nextDue,
-            // We might optionally reset runningHours here, but it's tricky on edit. 
-            // Usually runningHours is reset on NEW maintenance. On edit, it's ambiguous.
-            // Let's stick to dates for now as requested.
-          }
+        // Find the absolute latest scheduled log for this task to determine its true lastCompletedDate
+        const latestLog = await prisma.maintenanceHistory.findFirst({
+          where: { taskId: linkedTaskId, type: 'scheduled', maintenanceDate: { not: null } },
+          orderBy: { maintenanceDate: 'desc' }
         });
+
+        if (latestLog && latestLog.maintenanceDate) {
+          const completedDate = new Date(latestLog.maintenanceDate);
+          const nextDue = calculateNextDueDate(completedDate, task.frequency);
+          await prisma.task.update({
+            where: { id: linkedTaskId },
+            data: { lastCompletedDate: completedDate, nextDueDate: nextDue }
+          });
+        }
       }
     }
 

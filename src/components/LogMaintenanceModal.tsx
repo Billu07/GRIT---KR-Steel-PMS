@@ -27,7 +27,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   equipmentName: initialEqName = "",
   initialData,
 }) => {
-  const { data: rawData } = useSWR(isOpen && (!initialEqId || initialData) ? "/api/reports" : null, fetcher, {
+  const { data: rawData } = useSWR(isOpen && (!initialEqId || initialData) ? "/api/tasks" : null, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
   });
