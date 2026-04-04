@@ -17,6 +17,7 @@ export async function GET() {
     });
 
     const equipment = await prisma.equipment.findMany({
+        include: { category: true },
         orderBy: { code: 'asc' }
     });
 
