@@ -74,6 +74,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    if (lastCompletedDate) {
+      await prisma.maintenanceHistory.create({
+        data: {
+          equipmentId: parseInt(equipmentId),
+          taskId: newTask.id,
+          type: 'scheduled',
+          targetDate: new Date(lastCompletedDate),
+          maintenanceDate: new Date(lastCompletedDate),
+          informationDate: new Date(lastCompletedDate),
+          performedAt: new Date(),
+          remarks: 'Initial completion logged at task creation',
+        }
+      });
+    }
+
     return NextResponse.json(newTask, { status: 201 });
   } catch (error: any) {
     console.error('Global task creation error:', error);

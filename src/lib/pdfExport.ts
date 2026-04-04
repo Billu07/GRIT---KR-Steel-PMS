@@ -96,8 +96,8 @@ function drawSignatures(doc: jsPDF, y: number) {
 const tableDefaults = (startY: number, meta: PdfMeta) => ({
   startY,
   margin: { left: 14, right: 14, top: 32, bottom: 20 },
-  styles: { font: "helvetica", fontSize: 8, cellPadding: 2.5, textColor: C.ink, lineColor: C.rule, lineWidth: 0.1 },
-  headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: "bold" as const, fontSize: 7.5 },
+  styles: { font: "helvetica", fontSize: 8, cellPadding: 3, textColor: C.ink, lineColor: C.rule, lineWidth: 0.1, valign: "middle" as const, lineHeightFactor: 1.4 },
+  headStyles: { fillColor: C.navy, textColor: C.white, fontStyle: "bold" as const, fontSize: 7.5, valign: "middle" as const },
   alternateRowStyles: { fillColor: [253, 253, 252] as [number, number, number] },
   didDrawPage: (data: any) => {
     // We draw the header on every page. 
@@ -182,7 +182,7 @@ export function exportTaskReportPdf({ tasks, equipment, groupBy }: { tasks: any[
         eq?.code || "-",
         eq?.name || "-",
         t.taskId,
-        t.taskName,
+        t.taskDetail ? `${t.taskName}\n\n${t.taskDetail}` : t.taskName,
         t.frequency?.toUpperCase() || "-",
       ];
     });
@@ -351,7 +351,15 @@ export function exportMaintenancePdf({ data, type }: { data: any[], type: "corre
           wasDateOverdue = mStr > tStr;
         }
         const status = wasDateOverdue ? "LATE" : "ON-TIME";
-        const details = item.solutionDetails || "-";
+        let details = "-";
+        if (item.task?.taskDetail) {
+          details = item.task.taskDetail;
+          if (item.solutionDetails && item.solutionDetails !== item.task.taskName && item.solutionDetails !== item.task.taskDetail) {
+             details += `\n\n[Note: ${item.solutionDetails}]`;
+          }
+        } else {
+          details = item.solutionDetails || item.task?.taskName || "-";
+        }
         const remarks = item.remarks || "-";
         return [idx + 1, eqInfo, taskInfo, targets, doneDate, status, details, item.usedParts || "-", remarks];
       }
