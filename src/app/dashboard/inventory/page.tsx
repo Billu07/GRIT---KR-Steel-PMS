@@ -6,6 +6,7 @@ import { fetcher } from "@/lib/fetcher";
 import { Search, Package, FileText, Download, Plus, Edit2, Trash2, X } from "lucide-react";
 import { exportToExcel } from "@/lib/excelExport";
 import { exportToPDF } from "@/lib/pdfExport";
+import { toast } from "react-hot-toast";
 
 export default function InventoryPage() {
   const { data: rawData, error, isLoading, mutate } = useSWR("/api/inventory", fetcher, {

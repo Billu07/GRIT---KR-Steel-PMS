@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import toast from 'react-hot-toast';
 import { format } from "date-fns";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 import TaskModal from "@/components/TaskModal";
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const handleAddLog = async (logData: any) => {
+    const toastId = toast.loading("Adding log...");
     try {
       const res = await fetch("/api/maintenance", {
         method: "POST",
@@ -26,19 +28,21 @@ export default function DashboardPage() {
         body: JSON.stringify(logData),
       });
       if (res.ok) {
+        toast.success("Log added successfully!", { id: toastId });
         setIsLogModalOpen(false);
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to add log");
+        toast.error(err.error || "Failed to add log", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error adding log");
+      toast.error("Error adding log", { id: toastId });
     }
   };
 
   const handleAddTask = async (taskData: any) => {
+    const toastId = toast.loading("Adding task...");
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
@@ -46,15 +50,16 @@ export default function DashboardPage() {
         body: JSON.stringify(taskData),
       });
       if (res.ok) {
+        toast.success("Task added successfully!", { id: toastId });
         setIsTaskModalOpen(false);
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to add task");
+        toast.error(err.error || "Failed to add task", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error adding task");
+      toast.error("Error adding task", { id: toastId });
     }
   };
 

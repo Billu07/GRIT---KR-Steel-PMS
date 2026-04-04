@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import { toast } from "react-hot-toast";
 import { Search, Plus, CalendarCheck, Edit, Trash2, Tag, HardHat, Save, X, AlertTriangle, RefreshCw, Wrench } from "lucide-react";
 import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
@@ -145,16 +146,23 @@ export default function PlannedTasksPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this planned task?")) return;
+    const toastId = toast.loading("Deleting task...");
     try {
       const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-      if (res.ok) mutate();
-      else alert("Failed to delete task");
+      if (res.ok) {
+        toast.success("Task deleted successfully!", { id: toastId });
+        mutate();
+      } else {
+        toast.error("Failed to delete task", { id: toastId });
+      }
     } catch (err) {
       console.error(err);
+      toast.error("Error deleting task", { id: toastId });
     }
   };
 
   const handleSaveModal = async (taskData: any) => {
+    const toastId = toast.loading("Saving task...");
     try {
       const res = await fetch(`/api/tasks/${editingTask.id}`, {
         method: "PATCH",
@@ -163,15 +171,16 @@ export default function PlannedTasksPage() {
       });
 
       if (res.ok) {
+        toast.success("Task saved successfully!", { id: toastId });
         setIsModalOpen(false);
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to save task");
+        toast.error(err.error || "Failed to save task", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving task");
+      toast.error("Error saving task", { id: toastId });
     }
   };
 

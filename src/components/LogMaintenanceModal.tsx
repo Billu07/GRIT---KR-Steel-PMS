@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { X, Calendar, ClipboardCheck, AlertCircle, Package, Search, ChevronDown, ChevronUp } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 interface LogMaintenanceModalProps {
   isOpen: boolean;
@@ -215,12 +216,12 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     // Validation
     if (!initialEqId && !initialData) {
       if (selectedEquipments.length === 0) {
-        alert("Please select at least one equipment.");
+        toast.error("Please select at least one equipment.");
         return;
       }
     } else {
       if (!formData.equipmentId) {
-        alert("Please select equipment.");
+        toast.error("Please select equipment.");
         return;
       }
     }
@@ -231,13 +232,13 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     if (formData.type === 'scheduled') {
       if (!initialData) {
         if (!formData.frequency) {
-          alert("Please select a frequency.");
+          toast.error("Please select a frequency.");
           return;
         }
         const tasks = filteredTasks.filter((t: any) => t.frequency === formData.frequency);
         taskIdsToSubmit = tasks.map((t: any) => t.id);
         if (taskIdsToSubmit.length === 0) {
-          alert("No tasks found for the selected frequency and equipment.");
+          toast.error("No tasks found for the selected frequency and equipment.");
           return;
         }
         // Auto-fill maintenanceDetails with task names for bulk logging

@@ -7,14 +7,12 @@ export async function GET() {
     const logs = await prisma.maintenanceHistory.findMany({
       include: {
         equipment: {
-          include: {
-            category: true,
-          }
+          include: { category: true },
         },
         task: true,
       },
       orderBy: {
-        performedAt: 'desc',
+        maintenanceDate: 'desc',
       },
     });
 

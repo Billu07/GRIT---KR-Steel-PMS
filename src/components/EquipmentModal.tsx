@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { X, Upload, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { createClient } from "@supabase/supabase-js";
 
 // Supabase client — reads from your .env.local
@@ -149,11 +150,11 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     if (!file) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (!allowed.includes(file.type)) {
-      alert("Please upload a JPG, PNG, or WebP image.");
+      toast.error("Please upload a JPG, PNG, or WebP image.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be under 5MB.");
+      toast.error("Image must be under 5MB.");
       return;
     }
     setImageFile(file);
@@ -164,11 +165,11 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.type !== "application/pdf") {
-      alert("Please upload a PDF document for the service report.");
+      toast.error("Please upload a PDF document for the service report.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("PDF must be under 10MB.");
+      toast.error("PDF must be under 10MB.");
       return;
     }
     setReportFile(file);
@@ -201,10 +202,11 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.selectedCategoryId) {
-      alert("Please select a category");
+      toast.error("Please select a category");
       return;
     }
     setUploading(true);
+    const toastId = toast.loading("Saving equipment...");
     try {
       let imageUrl = formData.imageUrl;
       let serviceReportUrl = formData.serviceReportUrl;
@@ -222,9 +224,10 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         imageUrl,
         serviceReportUrl
       });
+      toast.dismiss(toastId);
       // Don't auto-close here, let parent handle success/close
     } catch {
-      alert("Failed to upload files. Please try again.");
+      toast.error("Failed to upload files. Please try again.", { id: toastId });
     } finally {
       setUploading(false);
     }

@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { format } from "date-fns";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
+import { toast } from "react-hot-toast";
 
 export default function MaintenanceLogPage() {
   const { data: rawData, error, isLoading, mutate } = useSWR("/api/maintenance", fetcher, {
@@ -62,17 +63,19 @@ export default function MaintenanceLogPage() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this maintenance record?")) return;
     setIsDeleting(id);
+    const toastId = toast.loading("Deleting log...");
     try {
         const res = await fetch(`/api/maintenance/${id}`, { method: "DELETE" });
         if (res.ok) {
+            toast.success("Log deleted successfully!", { id: toastId });
             mutate();
             setSelectedIds(prev => prev.filter(sid => sid !== id));
         } else {
-            alert("Failed to delete log");
+            toast.error("Failed to delete log", { id: toastId });
         }
     } catch (err) {
         console.error(err);
-        alert("Error deleting log");
+        toast.error("Error deleting log", { id: toastId });
     } finally {
         setIsDeleting(null);
     }
@@ -83,6 +86,7 @@ export default function MaintenanceLogPage() {
     if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected records?`)) return;
     
     setIsDeleting('bulk');
+    const toastId = toast.loading("Deleting records...");
     
     try {
         const res = await fetch(`/api/maintenance`, { 
@@ -93,15 +97,15 @@ export default function MaintenanceLogPage() {
         
         if (res.ok) {
             const data = await res.json();
-            alert(`Successfully deleted ${data.count} records.`);
+            toast.success(`Successfully deleted ${data.count} records.`, { id: toastId });
             setSelectedIds([]);
             mutate();
         } else {
-            alert("Failed to delete records.");
+            toast.error("Failed to delete records.", { id: toastId });
         }
     } catch (err) {
         console.error(err);
-        alert("Error during bulk deletion");
+        toast.error("Error during bulk deletion", { id: toastId });
     } finally {
         setIsDeleting(null);
     }

@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import { toast } from "react-hot-toast";
 import { Download, FileSpreadsheet, FileText, Filter, Calendar, Layers, Search, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { exportTaskReportPdf, exportEquipmentReportPdf, exportMaintenancePdf } from "@/lib/pdfExport";
 import { exportMaintenanceExcel, exportTaskReportExcel, exportEquipmentReportExcel, exportToExcel } from "@/lib/excelExport";
@@ -372,7 +373,7 @@ export default function ReportsBuilderPage() {
       }
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Failed to export report. Please try again.");
+      toast.error("Failed to export report. Please try again.");
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import EquipmentModal from "@/components/EquipmentModal";
 import { Plus, Search } from "lucide-react";
+import { toast } from "react-hot-toast";
 
 export default function CategoryPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function CategoryPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreateEquipment = async (newEquipment: any) => {
+    const toastId = toast.loading("Creating equipment...");
     try {
       const res = await fetch("/api/equipment/create", {
         method: "POST",
@@ -30,15 +32,16 @@ export default function CategoryPage() {
       });
 
       if (res.ok) {
+        toast.success("Equipment created successfully!", { id: toastId });
         mutate();
         setIsEquipmentModalOpen(false);
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create equipment");
+        toast.error(err.error || "Failed to create equipment", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating equipment");
+      toast.error("Error creating equipment", { id: toastId });
     }
   };
 

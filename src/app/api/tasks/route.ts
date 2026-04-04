@@ -13,7 +13,7 @@ export async function GET() {
           }
         },
       },
-      orderBy: { taskId: 'asc' },
+      orderBy: { updatedAt: 'desc' },
     });
 
     const equipment = await prisma.equipment.findMany({

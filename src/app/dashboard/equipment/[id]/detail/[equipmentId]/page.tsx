@@ -12,6 +12,7 @@ import TaskModal from "@/components/TaskModal";
 import LogMaintenanceModal from "@/components/LogMaintenanceModal";
 import { calculateNextDueDate } from "@/lib/dateUtils";
 import { getTaskStatus } from "@/lib/taskUtils";
+import { toast } from "react-hot-toast";
 
 export default function EquipmentDetailPage() {
   const params = useParams();
@@ -189,23 +190,26 @@ export default function EquipmentDetailPage() {
   const handleDeleteTask = async (dbId: number) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
 
+    const toastId = toast.loading("Deleting task...");
     try {
       const res = await fetch(`/api/tasks/${dbId}`, {
         method: "DELETE",
       });
       if (res.ok) {
+        toast.success("Task deleted successfully!", { id: toastId });
         mutate(); // Refresh list
       } else {
-        alert("Failed to delete task");
+        toast.error("Failed to delete task", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting task");
+      toast.error("Error deleting task", { id: toastId });
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleLogMaintenance = async (maintenanceData: any) => {
+    const toastId = toast.loading("Logging maintenance...");
     try {
       const payload = {
         ...maintenanceData,
@@ -219,15 +223,15 @@ export default function EquipmentDetailPage() {
       });
       
       if (res.ok) {
-        alert("Maintenance logged successfully!");
+        toast.success("Maintenance logged successfully!", { id: toastId });
         mutate(); // Important: Refresh to see updated hours/dates
         setIsLogMaintenanceModalOpen(false);
       } else {
-        alert("Failed to log maintenance.");
+        toast.error("Failed to log maintenance.", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error logging maintenance.");
+      toast.error("Error logging maintenance.", { id: toastId });
     }
   };
 

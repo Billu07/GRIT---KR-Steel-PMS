@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
+import { toast } from "react-hot-toast";
 import EquipmentModal from "@/components/EquipmentModal";
 import { Search, Plus, MapPin, Tag, Edit, Layers } from "lucide-react";
 
@@ -39,6 +40,7 @@ export default function RegistryPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSaveEquipment = async (data: any) => {
+    const toastId = toast.loading("Saving equipment...");
     try {
       if (editingEquipment) {
         // UPDATE
@@ -48,13 +50,13 @@ export default function RegistryPage() {
           body: JSON.stringify(data),
         });
         if (res.ok) {
-          alert("Equipment updated successfully!");
+          toast.success("Equipment updated successfully!", { id: toastId });
           mutate();
           setIsEquipmentModalOpen(false);
           setEditingEquipment(null);
         } else {
           const err = await res.json();
-          alert(err.error || "Failed to update equipment");
+          toast.error(err.error || "Failed to update equipment", { id: toastId });
         }
       } else {
         // CREATE
@@ -64,17 +66,17 @@ export default function RegistryPage() {
           body: JSON.stringify(data),
         });
         if (res.ok) {
-          alert("Equipment created successfully!");
+          toast.success("Equipment created successfully!", { id: toastId });
           mutate();
           setIsEquipmentModalOpen(false);
         } else {
           const err = await res.json();
-          alert(err.error || "Failed to create equipment");
+          toast.error(err.error || "Failed to create equipment", { id: toastId });
         }
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving equipment");
+      toast.error("Error saving equipment", { id: toastId });
     }
   };
 
