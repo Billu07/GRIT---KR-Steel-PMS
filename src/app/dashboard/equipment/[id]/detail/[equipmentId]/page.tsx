@@ -693,9 +693,9 @@ export default function EquipmentDetailPage() {
                           name="taskId"
                           value={newTask.taskId}
                           onChange={handleInputChange}
-                          style={inlineInput}
-                          placeholder="ID (Auto)"
-                          autoFocus
+                          style={{ ...inlineInput, background: "#F1F5F9", cursor: "not-allowed", opacity: 0.8 }}
+                          placeholder="Auto"
+                          readOnly
                         />
                       </td>
                       <td style={{ padding: "8px 12px", borderBottom: "1px solid #D0CBC0" }}>

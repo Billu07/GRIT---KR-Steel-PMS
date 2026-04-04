@@ -326,10 +326,10 @@ export default function PlannedTasksPage() {
                 {isAdding && (
                   <tr className="task-inline-row">
                     <td style={{ padding: "8px 12px" }}>
-                      <input name="taskId" value={newTask.taskId} onChange={handleInputChange} style={inlineInput} placeholder="ID (Auto)" autoFocus />
+                      <input name="taskId" value={newTask.taskId} onChange={handleInputChange} style={{ ...inlineInput, background: "#F1F5F9", cursor: "not-allowed", opacity: 0.8 }} placeholder="Auto" readOnly />
                     </td>
                     <td style={{ padding: "8px 12px" }}>
-                      <input name="taskName" value={newTask.taskName} onChange={handleInputChange} style={inlineInput} placeholder="Task Name" />
+                      <input name="taskName" value={newTask.taskName} onChange={handleInputChange} style={inlineInput} placeholder="Task Name" autoFocus />
                     </td>
                     <td style={{ padding: "8px 12px" }}>
                       <select name="equipmentId" value={newTask.equipmentId} onChange={handleInputChange} style={{ ...inlineInput, cursor: 'pointer' }}>

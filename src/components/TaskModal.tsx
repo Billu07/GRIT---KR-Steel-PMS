@@ -265,15 +265,16 @@ const TaskModal: React.FC<TaskModalProps> = ({
                   }}
                 >
                   <div>
-                    <label style={labelStyle}>Task ID (Auto-generated if empty)</label>
+                    <label style={labelStyle}>Task ID (Auto-generated)</label>
                     <input
                       type="text"
                       name="taskId"
                       value={formData.taskId}
                       onChange={handleChange}
+                      readOnly
                       className="jm-field"
-                      style={fieldStyle}
-                      placeholder="Leave empty for auto-generation"
+                      style={{ ...fieldStyle, background: "#F1F5F9", cursor: "not-allowed", opacity: 0.8 }}
+                      placeholder="Auto-assigned"
                     />
                   </div>
                   <div>
