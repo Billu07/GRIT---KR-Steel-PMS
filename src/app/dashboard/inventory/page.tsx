@@ -48,12 +48,18 @@ export default function InventoryPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
+    const toastId = toast.loading("Deleting item...");
     try {
       const res = await fetch(`/api/inventory?id=${id}`, { method: "DELETE" });
-      if (res.ok) mutate();
-      else alert("Failed to delete item");
+      if (res.ok) {
+        toast.success("Item deleted successfully!", { id: toastId });
+        mutate();
+      } else {
+        toast.error("Failed to delete item", { id: toastId });
+      }
     } catch (err) {
       console.error(err);
+      toast.error("Error deleting item", { id: toastId });
     }
   };
 
@@ -61,6 +67,7 @@ export default function InventoryPage() {
     e.preventDefault();
     const method = editingItem ? "PATCH" : "POST";
     const body = editingItem ? { id: editingItem.id, ...formData } : formData;
+    const toastId = toast.loading(editingItem ? "Updating item..." : "Adding item...");
 
     try {
       const res = await fetch("/api/inventory", {
@@ -69,13 +76,16 @@ export default function InventoryPage() {
         body: JSON.stringify(body)
       });
       if (res.ok) {
+        toast.success(editingItem ? "Item updated successfully!" : "Item added successfully!", { id: toastId });
         setIsModalOpen(false);
         mutate();
       } else {
-        alert("Failed to save item");
+        const err = await res.json();
+        toast.error(err.error || "Failed to save item", { id: toastId });
       }
     } catch (err) {
       console.error(err);
+      toast.error("Error saving item", { id: toastId });
     }
   };
 

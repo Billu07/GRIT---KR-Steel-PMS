@@ -77,18 +77,20 @@ export default function EquipmentDetailPage() {
     )
       return;
 
+    const toastId = toast.loading("Deleting equipment...");
     try {
       const res = await fetch(`/api/equipment/detail/${equipmentId}`, {
         method: "DELETE",
       });
       if (res.ok) {
+        toast.success("Equipment deleted successfully!", { id: toastId });
         router.push("/dashboard/registry");
       } else {
-        alert("Failed to delete equipment");
+        toast.error("Failed to delete equipment", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error deleting equipment");
+      toast.error("Error deleting equipment", { id: toastId });
     }
   };
 

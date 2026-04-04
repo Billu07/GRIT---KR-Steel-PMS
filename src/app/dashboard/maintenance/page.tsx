@@ -30,6 +30,7 @@ export default function MaintenanceLogPage() {
   const itemsPerPage = 50;
 
   const handleSaveLog = async (data: any) => {
+    const toastId = toast.loading(editingLog ? "Updating log..." : "Saving log...");
     try {
       let res;
       if (editingLog) {
@@ -47,16 +48,17 @@ export default function MaintenanceLogPage() {
       }
 
       if (res.ok) {
+        toast.success(editingLog ? "Log updated successfully!" : "Log saved successfully!", { id: toastId });
         setIsLogModalOpen(false);
         setEditingLog(null);
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to save log");
+        toast.error(err.error || "Failed to save log", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving log");
+      toast.error("Error saving log", { id: toastId });
     }
   };
 
