@@ -52,6 +52,7 @@ export default function PlannedTasksPage() {
   };
 
   const handleLogMaintenanceSubmit = async (maintenanceData: any) => {
+    const toastId = toast.loading("Logging maintenance...");
     try {
       const payload = {
         ...maintenanceData,
@@ -67,16 +68,17 @@ export default function PlannedTasksPage() {
       });
       
       if (res.ok) {
+        toast.success("Maintenance logged successfully!", { id: toastId });
         setIsLogMaintenanceOpen(false);
         setSelectedTaskForLog(null);
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to log maintenance.");
+        toast.error(err.error || "Failed to log maintenance.", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error logging maintenance.");
+      toast.error("Error logging maintenance.", { id: toastId });
     }
   };
 
@@ -107,11 +109,12 @@ export default function PlannedTasksPage() {
   };
 
   const handleCreateInline = async () => {
-    if (!newTask.taskId || !newTask.taskName || !newTask.equipmentId) {
-      alert("Please fill in ID, Name and select an Equipment.");
+    if (!newTask.taskName || !newTask.equipmentId) {
+      toast.error("Please fill in Name and select an Equipment.");
       return;
     }
 
+    const toastId = toast.loading("Creating task...");
     try {
       // Calculate next due date if last completed date is provided
       let nextDueDate = null;
@@ -131,16 +134,17 @@ export default function PlannedTasksPage() {
       });
 
       if (res.ok) {
+        toast.success("Task created successfully!", { id: toastId });
         setIsAdding(false);
         setNewTask({ taskId: "", taskName: "", equipmentId: "", frequency: "weekly", taskDetail: "", criticality: "medium", lastCompletedDate: "" });
         mutate();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create task");
+        toast.error(err.error || "Failed to create task", { id: toastId });
       }
     } catch (err) {
       console.error(err);
-      alert("Error creating task");
+      toast.error("Error creating task", { id: toastId });
     }
   };
 
@@ -198,10 +202,10 @@ export default function PlannedTasksPage() {
 
   const filteredTasks = tasks.filter((t: any) => {
     const matchesSearch =
-      t.taskName.toLowerCase().includes(search.toLowerCase()) ||
-      t.taskId.toLowerCase().includes(search.toLowerCase()) ||
-      t.equipment?.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.equipment?.code.toLowerCase().includes(search.toLowerCase());
+      (t.taskName || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.taskId || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.equipment?.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (t.equipment?.code || "").toLowerCase().includes(search.toLowerCase());
     const matchesFrequency = filterFrequency === "all" || t.frequency === filterFrequency;
     return matchesSearch && matchesFrequency;
   });
