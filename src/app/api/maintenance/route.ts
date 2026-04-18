@@ -82,8 +82,12 @@ export async function POST(req: NextRequest) {
           const userFromDate = new Date(fromDate);
           const endLogDate = new Date(toDate);
           
-          // Start from the LATER of user-provided fromDate or task's nextDueDate
-          const taskNextDue = task.nextDueDate ? new Date(task.nextDueDate) : userFromDate;
+          // Start from the LATER of user-provided fromDate or a freshly computed due date.
+          // This avoids stale task.nextDueDate values (from prior buggy calculations) blocking valid backfills.
+          const computedNextDue = task.lastCompletedDate
+            ? calculateNextDueDate(new Date(task.lastCompletedDate), task.frequency)
+            : null;
+          const taskNextDue = computedNextDue ?? (task.nextDueDate ? new Date(task.nextDueDate) : userFromDate);
           let currentLogDate = new Date(Math.max(userFromDate.getTime(), taskNextDue.getTime()));
           
           const logsToCreate = [];
@@ -224,12 +228,76 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'No IDs provided' }, { status: 400 });
     }
 
-    const deleteResult = await prisma.maintenanceHistory.deleteMany({
-      where: {
-        id: {
-          in: ids.map(id => parseInt(id))
+    const maintenanceIds = ids
+      .map((id) => parseInt(id))
+      .filter((id) => !Number.isNaN(id));
+
+    if (maintenanceIds.length === 0) {
+      return NextResponse.json({ error: 'No valid IDs provided' }, { status: 400 });
+    }
+
+    const logsToDelete = await prisma.maintenanceHistory.findMany({
+      where: { id: { in: maintenanceIds } },
+      select: { taskId: true },
+    });
+
+    const affectedTaskIds = Array.from(
+      new Set(
+        logsToDelete
+          .map((log) => log.taskId)
+          .filter((taskId): taskId is number => taskId !== null)
+      )
+    );
+
+    const deleteResult = await prisma.$transaction(async (tx) => {
+      const result = await tx.maintenanceHistory.deleteMany({
+        where: {
+          id: {
+            in: maintenanceIds
+          }
+        }
+      });
+
+      for (const taskId of affectedTaskIds) {
+        const task = await tx.task.findUnique({
+          where: { id: taskId },
+          select: { id: true, frequency: true },
+        });
+
+        if (!task) continue;
+
+        const latestLog = await tx.maintenanceHistory.findFirst({
+          where: {
+            taskId,
+            type: 'scheduled',
+            maintenanceDate: { not: null },
+          },
+          orderBy: { maintenanceDate: 'desc' },
+        });
+
+        if (latestLog?.maintenanceDate) {
+          const completedDate = new Date(latestLog.maintenanceDate);
+          const nextDue = calculateNextDueDate(completedDate, task.frequency);
+
+          await tx.task.update({
+            where: { id: task.id },
+            data: {
+              lastCompletedDate: completedDate,
+              nextDueDate: nextDue,
+            },
+          });
+        } else {
+          await tx.task.update({
+            where: { id: task.id },
+            data: {
+              lastCompletedDate: null,
+              nextDueDate: null,
+            },
+          });
         }
       }
+
+      return result;
     });
 
     return NextResponse.json({ 

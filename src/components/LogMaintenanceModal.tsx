@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
 import { X, Calendar, ClipboardCheck, AlertCircle, Package, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { calculateNextDueDate } from "@/lib/dateUtils";
 
 interface LogMaintenanceModalProps {
   isOpen: boolean;
@@ -180,9 +181,14 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
     if (formData.type === 'scheduled' && !initialData && formData.frequency && filteredTasks.length > 0) {
       const freqTasks = filteredTasks.filter((t: any) => t.frequency === formData.frequency);
       if (freqTasks.length > 0) {
-        // Find earliest nextDueDate among matching tasks
+        // Prefer a freshly computed due date from lastCompletedDate, so stale nextDueDate values do not skew range logging.
         const validDates = freqTasks
-          .map((t: any) => t.nextDueDate ? new Date(t.nextDueDate).getTime() : 0)
+          .map((t: any) => {
+            if (t.lastCompletedDate) {
+              return calculateNextDueDate(new Date(t.lastCompletedDate), t.frequency).getTime();
+            }
+            return t.nextDueDate ? new Date(t.nextDueDate).getTime() : 0;
+          })
           .filter((time: number) => time > 0);
         
         if (validDates.length > 0) {
@@ -472,12 +478,12 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
                   <option value="">-- Select Frequency --</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
-                  <option value="15-days">15 Days</option>
+                  <option value="fifteen_days">15 Days</option>
                   <option value="monthly">Monthly</option>
-                  <option value="3-monthly">Quarterly (3 Months)</option>
-                  <option value="6-monthly">Semi-Annually (6 Months)</option>
+                  <option value="quarterly">Quarterly (3 Months)</option>
+                  <option value="semi_annually">Semi-Annually (6 Months)</option>
                   <option value="yearly">Yearly</option>
-                  <option value="5-yearly">5 Yearly</option>
+                  <option value="five_yearly">5 Yearly</option>
                 </select>
                 {formData.frequency && (
                   <div style={{ marginTop: "12px", fontSize: "12px", color: "#225CA3", fontWeight: 500 }}>
