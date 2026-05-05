@@ -27,6 +27,10 @@ export default function RegistryPage() {
   
   const router = useRouter();
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterStatus, filterCategory, filterCalibration]);
+
   const handleOpenCreateModal = () => {
     setEditingEquipment(null);
     setIsEquipmentModalOpen(true);
@@ -122,10 +126,6 @@ const filteredEquipment = equipment.filter((eq: any) => {
     filterCalibration === "all" || (filterCalibration === "with_data" && hasCalibrationData);
   return matchesSearch && matchesStatus && matchesCategory && matchesCalibration;
   });
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, filterStatus, filterCategory, filterCalibration]);
 
   const itemsPerPage = 50;const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
 const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
