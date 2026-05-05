@@ -214,15 +214,6 @@ export default function MaintenanceLogPage() {
     setIsLogModalOpen(true);
   };
 
-  if (isLoading && !rawData)
-    return (
-      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
-        Loading Logs...
-      </div>
-    );
-
-  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading maintenance logs.</div>;
-
   const filteredLogs = logs.filter((log: any) => {
     let match = true;
     if (filterType !== "all" && log.type !== filterType) match = false;
@@ -244,6 +235,15 @@ export default function MaintenanceLogPage() {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  if (isLoading && !rawData)
+    return (
+      <div style={{ padding: "40px", fontFamily: "inherit", fontSize: "13px", color: "#7A8A93", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        Loading Logs...
+      </div>
+    );
+
+  if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading maintenance logs.</div>;
 
   const selectStyle: React.CSSProperties = {
     padding: "8px 12px",
