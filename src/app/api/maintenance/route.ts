@@ -2,27 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { calculateNextDueDate } from '@/lib/dateUtils';
 
+const MONTH_BASED_FREQUENCIES = new Set([
+  'monthly',
+  'quarterly',
+  'semi_annually',
+  'yearly',
+  'five_yearly',
+]);
+
 export async function GET() {
   try {
-    const logs = await prisma.maintenanceHistory.findMany({
-      include: {
-        equipment: {
-          include: { category: true },
+    const [logs, equipment, categories] = await Promise.all([
+      prisma.maintenanceHistory.findMany({
+        include: {
+          equipment: {
+            include: { category: true },
+          },
+          task: true,
         },
-        task: true,
-      },
-      orderBy: {
-        maintenanceDate: 'desc',
-      },
-    });
-
-    const equipment = await prisma.equipment.findMany({
-      include: {
-        category: true,
-      }
-    });
-
-    const categories = await prisma.equipmentCategory.findMany();
+        orderBy: {
+          maintenanceDate: 'desc',
+        },
+      }),
+      prisma.equipment.findMany({
+        include: {
+          category: true,
+        }
+      }),
+      prisma.equipmentCategory.findMany(),
+    ]);
 
     return NextResponse.json({ logs, equipment, categories });
   } catch (error) {
@@ -99,7 +107,7 @@ export async function POST(req: NextRequest) {
             iterations++;
 
             // Skip Fridays (Day 5) for logging
-            if (currentLogDate.getDay() === 5) {
+            if (currentLogDate.getDay() === 5 && !MONTH_BASED_FREQUENCIES.has(task.frequency)) {
               // Move to the next scheduled date
               currentLogDate = calculateNextDueDate(currentLogDate, task.frequency as any);
               continue;
@@ -135,7 +143,7 @@ export async function POST(req: NextRequest) {
             
             // Ensure nextDue is also not a Friday if it's a daily task or just generally
             let finalNextDue = nextDue;
-            if (finalNextDue.getDay() === 5) {
+            if (finalNextDue.getDay() === 5 && !MONTH_BASED_FREQUENCIES.has(task.frequency)) {
                 finalNextDue = calculateNextDueDate(finalNextDue, task.frequency as any);
             }
 

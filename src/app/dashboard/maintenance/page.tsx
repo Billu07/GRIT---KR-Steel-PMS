@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Search, Filter, Calendar, Plus, Edit, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -13,6 +13,7 @@ export default function MaintenanceLogPage() {
     revalidateOnFocus: false,
     dedupingInterval: 10000,
   });
+  const FILTER_STATE_KEY = "maintenance-log-filters-v1";
 
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<any>(null);
@@ -27,7 +28,55 @@ export default function MaintenanceLogPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [didLoadFilterState, setDidLoadFilterState] = useState(false);
   const itemsPerPage = 50;
+
+  const logs = rawData?.logs || [];
+  const equipmentList = rawData?.equipment || [];
+  const categories = rawData?.categories || [];
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(FILTER_STATE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        setFilterType(state.filterType || "all");
+        setFilterEq(state.filterEq || "all");
+        setFilterCat(state.filterCat || "all");
+        setFilterFrequency(state.filterFrequency || "all");
+        setCurrentPage(Number.isFinite(state.currentPage) ? Math.max(1, state.currentPage) : 1);
+      }
+    } catch (err) {
+      console.error("Failed to restore maintenance log filter state:", err);
+    } finally {
+      setDidLoadFilterState(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!didLoadFilterState) return;
+    try {
+      localStorage.setItem(
+        FILTER_STATE_KEY,
+        JSON.stringify({ filterType, filterEq, filterCat, filterFrequency, currentPage }),
+      );
+    } catch (err) {
+      console.error("Failed to persist maintenance log filter state:", err);
+    }
+  }, [didLoadFilterState, filterType, filterEq, filterCat, filterFrequency, currentPage]);
+
+  const categoryFilteredEquipment = useMemo(
+    () => equipmentList.filter((e: any) => filterCat === "all" || e.categoryId.toString() === filterCat),
+    [equipmentList, filterCat],
+  );
+
+  useEffect(() => {
+    if (filterEq === "all") return;
+    const exists = categoryFilteredEquipment.some((e: any) => e.id.toString() === filterEq);
+    if (!exists) {
+      setFilterEq("all");
+    }
+  }, [filterEq, categoryFilteredEquipment]);
 
   const handleSaveLog = async (data: any) => {
     const toastId = toast.loading(editingLog ? "Updating log..." : "Saving log...");
@@ -48,10 +97,31 @@ export default function MaintenanceLogPage() {
       }
 
       if (res.ok) {
+        if (editingLog) {
+          const updatedLog = await res.json();
+          await mutate((current: any) => {
+            if (!current?.logs) return current;
+            return {
+              ...current,
+              logs: current.logs.map((log: any) => (
+                log.id === editingLog.id
+                  ? {
+                      ...log,
+                      ...updatedLog,
+                      equipment: updatedLog.equipment ?? log.equipment,
+                      task: updatedLog.task ?? log.task,
+                    }
+                  : log
+              )),
+            };
+          }, { revalidate: false });
+          mutate();
+        } else {
+          mutate();
+        }
         toast.success(editingLog ? "Log updated successfully!" : "Log saved successfully!", { id: toastId });
         setIsLogModalOpen(false);
         setEditingLog(null);
-        mutate();
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to save log", { id: toastId });
@@ -69,8 +139,12 @@ export default function MaintenanceLogPage() {
     try {
         const res = await fetch(`/api/maintenance/${id}`, { method: "DELETE" });
         if (res.ok) {
-            toast.success("Log deleted successfully!", { id: toastId });
+            await mutate((current: any) => {
+              if (!current?.logs) return current;
+              return { ...current, logs: current.logs.filter((log: any) => log.id !== id) };
+            }, { revalidate: false });
             mutate();
+            toast.success("Log deleted successfully!", { id: toastId });
             setSelectedIds(prev => prev.filter(sid => sid !== id));
         } else {
             toast.error("Failed to delete log", { id: toastId });
@@ -99,9 +173,17 @@ export default function MaintenanceLogPage() {
         
         if (res.ok) {
             const data = await res.json();
+            await mutate((current: any) => {
+              if (!current?.logs) return current;
+              const selectedIdSet = new Set(selectedIds);
+              return {
+                ...current,
+                logs: current.logs.filter((log: any) => !selectedIdSet.has(log.id)),
+              };
+            }, { revalidate: false });
+            mutate();
             toast.success(`Successfully deleted ${data.count} records.`, { id: toastId });
             setSelectedIds([]);
-            mutate();
         } else {
             toast.error("Failed to delete records.", { id: toastId });
         }
@@ -141,10 +223,6 @@ export default function MaintenanceLogPage() {
 
   if (error) return <div className="p-8 text-red-500 font-bold uppercase text-xs tracking-widest">Error loading maintenance logs.</div>;
 
-  const logs = rawData?.logs || [];
-  const equipmentList = rawData?.equipment || [];
-  const categories = rawData?.categories || [];
-
   const filteredLogs = logs.filter((log: any) => {
     let match = true;
     if (filterType !== "all" && log.type !== filterType) match = false;
@@ -156,6 +234,16 @@ export default function MaintenanceLogPage() {
 
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
   const paginatedLogs = filteredLogs.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    if (totalPages === 0 && currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const selectStyle: React.CSSProperties = {
     padding: "8px 12px",
@@ -298,7 +386,7 @@ export default function MaintenanceLogPage() {
 
             <select style={selectStyle} value={filterEq} onChange={e => setFilterEq(e.target.value)}>
                 <option value="all">All Equipment</option>
-                {equipmentList.filter((e: any) => filterCat === "all" || e.categoryId.toString() === filterCat).map((e: any) => (
+                {categoryFilteredEquipment.map((e: any) => (
                 <option key={e.id} value={e.id}>{e.name} ({e.code})</option>
                 ))}
             </select>
