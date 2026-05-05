@@ -49,6 +49,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
     testCertNumber: "",
     testCertValidity: "",
     testCertApplied: "",
+    calibrationTestingDate: "",
+    calibrationExpiryDate: "",
     unit: "",
     quantity: "",
   });
@@ -102,6 +104,12 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         testCertNumber: initialData.testCertNumber || "",
         testCertValidity: initialData.testCertValidity || "",
         testCertApplied: initialData.testCertApplied || "",
+        calibrationTestingDate: initialData.calibrationTestingDate
+          ? new Date(initialData.calibrationTestingDate).toISOString().slice(0, 10)
+          : "",
+        calibrationExpiryDate: initialData.calibrationExpiryDate
+          ? new Date(initialData.calibrationExpiryDate).toISOString().slice(0, 10)
+          : "",
         unit: initialData.unit || "",
         quantity: initialData.quantity || "",
       });
@@ -127,6 +135,8 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
         testCertNumber: "",
         testCertValidity: "",
         testCertApplied: "",
+        calibrationTestingDate: "",
+        calibrationExpiryDate: "",
         unit: "",
         quantity: "",
       });
@@ -658,6 +668,33 @@ const EquipmentModal: React.FC<EquipmentModalProps> = ({
                       type="text"
                       name="testCertApplied"
                       value={formData.testCertApplied}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div style={{ gridColumn: "span 2", marginTop: "4px" }}>
+                    <p style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#8B2020", margin: "0 0 8px 0" }}>
+                      Calibration Data
+                    </p>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Testing Date</label>
+                    <input
+                      type="date"
+                      name="calibrationTestingDate"
+                      value={formData.calibrationTestingDate}
+                      onChange={handleChange}
+                      className="eq-modal-field"
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Expiry Date</label>
+                    <input
+                      type="date"
+                      name="calibrationExpiryDate"
+                      value={formData.calibrationExpiryDate}
                       onChange={handleChange}
                       className="eq-modal-field"
                       style={fieldStyle}

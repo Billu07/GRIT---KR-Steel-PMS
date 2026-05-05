@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     const {
       name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
       capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied,
-      unit, quantity
+      calibrationTestingDate, calibrationExpiryDate, unit, quantity
     } = body;
 
     if (!name || !categoryId) {
@@ -53,6 +53,8 @@ export async function POST(req: NextRequest) {
         testCertNumber,
         testCertValidity,
         testCertApplied,
+        calibrationTestingDate: calibrationTestingDate ? new Date(calibrationTestingDate) : null,
+        calibrationExpiryDate: calibrationExpiryDate ? new Date(calibrationExpiryDate) : null,
         unit,
         quantity,
       },

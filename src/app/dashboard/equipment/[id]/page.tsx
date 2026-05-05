@@ -352,12 +352,32 @@ export default function CategoryPage() {
                       <td
                         style={{
                           padding: "14px 24px",
-                          whiteSpace: "nowrap",
                           color: "#1A1A1A",
                           borderBottom: "1px solid #EAE7DF",
                         }}
                       >
-                        {eq.name}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span style={{ whiteSpace: "nowrap" }}>{eq.name}</span>
+                          {eq.calibrationExpiryDate && (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: "fit-content",
+                                padding: "2px 8px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
+                                color: "#8B2020",
+                                background: "rgba(139,32,32,0.08)",
+                                border: "1px solid rgba(139,32,32,0.25)",
+                                borderRadius: "2px",
+                              }}
+                            >
+                              Cal Exp: {new Date(eq.calibrationExpiryDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td
                         style={{

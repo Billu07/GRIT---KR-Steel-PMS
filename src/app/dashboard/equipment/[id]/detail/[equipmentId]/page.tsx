@@ -461,6 +461,20 @@ export default function EquipmentDetailPage() {
               >
                 {equipment.code} &bull; {equipment.location}
               </p>
+              {equipment.calibrationExpiryDate && (
+                <p
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#8B2020",
+                    marginTop: "8px",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Calibration Expiry: {new Date(equipment.calibrationExpiryDate).toLocaleDateString()}
+                </p>
+              )}
             </div>
 
             {/* Equipment Actions */}
@@ -572,6 +586,25 @@ export default function EquipmentDetailPage() {
                         <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Applied</p>
                         <p style={{ fontSize: "13px", color: "#1A1A1A" }}>{equipment.testCertApplied || "—"}</p>
                       </div>
+                   </div>
+                   <div style={{ marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #EAE7DF" }}>
+                     <p style={{ fontSize: "10px", fontWeight: 700, color: "#8B2020", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "8px" }}>
+                       Calibration Data
+                     </p>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
+                       <div>
+                         <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Testing Date</p>
+                         <p style={{ fontSize: "13px", color: "#1A1A1A" }}>
+                           {equipment.calibrationTestingDate ? new Date(equipment.calibrationTestingDate).toLocaleDateString() : "—"}
+                         </p>
+                       </div>
+                       <div>
+                         <p style={{ fontSize: "10px", fontWeight: 600, color: "#7A8A93", textTransform: "uppercase", marginBottom: "4px" }}>Expiry Date</p>
+                         <p style={{ fontSize: "13px", color: equipment.calibrationExpiryDate ? "#8B2020" : "#1A1A1A", fontWeight: equipment.calibrationExpiryDate ? 700 : 400 }}>
+                           {equipment.calibrationExpiryDate ? new Date(equipment.calibrationExpiryDate).toLocaleDateString() : "—"}
+                         </p>
+                       </div>
+                     </div>
                    </div>
                 </div>
 

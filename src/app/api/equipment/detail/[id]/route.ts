@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const {
       code, name, categoryId, location, description, status, imageUrl, serviceReportUrl, safetyMeasures,
       capacity, model, serialNumber, brand, runningHours, testCertNumber, testCertValidity, testCertApplied,
-      unit, quantity
+      calibrationTestingDate, calibrationExpiryDate, unit, quantity
     } = body;
 
     const updateData: any = {
@@ -53,6 +53,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       testCertNumber,
       testCertValidity,
       testCertApplied,
+      calibrationTestingDate: calibrationTestingDate ? new Date(calibrationTestingDate) : null,
+      calibrationExpiryDate: calibrationExpiryDate ? new Date(calibrationExpiryDate) : null,
       unit,
       quantity
     };

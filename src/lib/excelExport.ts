@@ -243,6 +243,8 @@ export async function exportEquipmentReportExcel({ equipment, groupBy }: { equip
       'Test Cert No': eq.testCertNumber || '-',
       'Test Cert Validity': eq.testCertValidity || '-',
       'Test Cert Applied': eq.testCertApplied || '-',
+      'Calibration Testing Date': eq.calibrationTestingDate ? format(new Date(eq.calibrationTestingDate), 'dd MMM yyyy') : '-',
+      'Calibration Expiry Date': eq.calibrationExpiryDate ? format(new Date(eq.calibrationExpiryDate), 'dd MMM yyyy') : '-',
       'Status': eq.status || '-',
       'Safety Measures': eq.safetyMeasures || '-',
       'Description': eq.description || '-',

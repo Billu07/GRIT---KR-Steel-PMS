@@ -239,11 +239,23 @@ export function exportEquipmentReportPdf({ equipment, groupBy }: { equipment: an
     doc.text(groupName.toUpperCase(), doc.internal.pageSize.getWidth() / 2, startY + 5.5, { align: "center" });
     startY += 10;
     const rows = groupEq.map((eq: any, idx: number) => [
-      idx + 1, eq.code, eq.name, eq.brand || "-", eq.model || "-", eq.serialNumber || "-", eq.capacity || "-", eq.unit || "-", eq.quantity || "-", eq.location || "-", eq.status.toUpperCase()
+      idx + 1,
+      eq.code,
+      eq.name,
+      eq.brand || "-",
+      eq.model || "-",
+      eq.serialNumber || "-",
+      eq.capacity || "-",
+      eq.unit || "-",
+      eq.quantity || "-",
+      eq.location || "-",
+      eq.calibrationTestingDate ? format(new Date(eq.calibrationTestingDate), "dd MMM yyyy") : "-",
+      eq.calibrationExpiryDate ? format(new Date(eq.calibrationExpiryDate), "dd MMM yyyy") : "-",
+      eq.status.toUpperCase()
     ]);
     autoTable(doc, {
       ...tableDefaults(startY, meta),
-      head: [["SL NO", "CODE", "NAME", "BRAND", "MODEL", "SERIAL NO", "CAPACITY", "UNIT", "QTY", "LOCATION", "STATUS"]],
+      head: [["SL NO", "CODE", "NAME", "BRAND", "MODEL", "SERIAL NO", "CAPACITY", "UNIT", "QTY", "LOCATION", "TESTING DATE", "EXPIRY DATE", "STATUS"]],
       body: rows,
       columnStyles: { 0: { cellWidth: 10 } }
     });

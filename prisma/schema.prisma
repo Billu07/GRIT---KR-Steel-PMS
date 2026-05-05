@@ -48,6 +48,8 @@ model Equipment {
   testCertApplied    String?
   testCertNumber     String?
   testCertValidity   String?
+  calibrationTestingDate DateTime?
+  calibrationExpiryDate  DateTime?
   serviceReportUrl   String?
   unit               String?
   quantity           String?
