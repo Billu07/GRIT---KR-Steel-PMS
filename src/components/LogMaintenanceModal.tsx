@@ -20,6 +20,22 @@ interface LogMaintenanceModalProps {
   initialData?: any;
 }
 
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+const toLocalDateTimeInputValue = (value?: string | Date | null) => {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+};
+
+const toIsoFromLocalInput = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString();
+};
+
 const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
   isOpen,
   onClose,
@@ -127,10 +143,10 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
             taskId: initialData.taskId ? String(initialData.taskId) : "",
             frequency: "",
             equipmentId: initialData.equipmentId ? String(initialData.equipmentId) : "",
-            informationDate: initialData.informationDate ? new Date(initialData.informationDate).toISOString().slice(0, 16) : "",
-            serviceStartDate: initialData.serviceStartDate ? new Date(initialData.serviceStartDate).toISOString().slice(0, 16) : "",
-            serviceEndDate: initialData.serviceEndDate ? new Date(initialData.serviceEndDate).toISOString().slice(0, 16) : "",
-            maintenanceDate: initialData.maintenanceDate ? new Date(initialData.maintenanceDate).toISOString().slice(0, 16) : "",
+            informationDate: toLocalDateTimeInputValue(initialData.informationDate),
+            serviceStartDate: toLocalDateTimeInputValue(initialData.serviceStartDate),
+            serviceEndDate: toLocalDateTimeInputValue(initialData.serviceEndDate),
+            maintenanceDate: toLocalDateTimeInputValue(initialData.maintenanceDate),
             fromDate: "",
             toDate: "",
             problemDescription: initialData.problemDescription || "",
@@ -143,7 +159,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
         setLastAutoFrequency("");
       } else {
         // Create mode
-        const now = new Date().toISOString().slice(0, 16);
+        const now = toLocalDateTimeInputValue(new Date());
         setFormData(prev => ({
             ...prev,
             equipmentId: initialEqId ? String(initialEqId) : "",
@@ -193,7 +209,7 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
         
         if (validDates.length > 0) {
           const earliestTime = Math.min(...validDates);
-          const earliestDate = new Date(earliestTime).toISOString().slice(0, 16);
+          const earliestDate = toLocalDateTimeInputValue(new Date(earliestTime));
           
           // Only auto-fill if fromDate is empty OR if frequency has changed
           if (!formData.fromDate || formData.frequency !== lastAutoFrequency) {
@@ -262,6 +278,12 @@ const LogMaintenanceModal: React.FC<LogMaintenanceModalProps> = ({
 
     const payload = { 
       ...formData,
+      informationDate: toIsoFromLocalInput(formData.informationDate),
+      serviceStartDate: toIsoFromLocalInput(formData.serviceStartDate),
+      serviceEndDate: toIsoFromLocalInput(formData.serviceEndDate),
+      maintenanceDate: toIsoFromLocalInput(formData.maintenanceDate),
+      fromDate: toIsoFromLocalInput(formData.fromDate),
+      toDate: toIsoFromLocalInput(formData.toDate),
       equipmentId: initialEqId || initialData ? parseInt(formData.equipmentId) : undefined,
       equipmentIds: !initialEqId && !initialData ? selectedEquipments.map(id => parseInt(id)) : undefined,
       taskId: formData.taskId ? parseInt(formData.taskId) : null,
