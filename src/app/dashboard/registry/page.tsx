@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/fetcher";
@@ -17,6 +17,7 @@ export default function RegistryPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [filterCalibration, setFilterCalibration] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   
   // Modal state
@@ -116,8 +117,15 @@ const filteredEquipment = equipment.filter((eq: any) => {
   const matchesCategory =
     filterCategory === "all" ||
     eq.category?.id?.toString() === filterCategory;
-  return matchesSearch && matchesStatus && matchesCategory;
+  const hasCalibrationData = !!eq.calibrationTestingDate || !!eq.calibrationExpiryDate;
+  const matchesCalibration =
+    filterCalibration === "all" || (filterCalibration === "with_data" && hasCalibrationData);
+  return matchesSearch && matchesStatus && matchesCategory && matchesCalibration;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterStatus, filterCategory, filterCalibration]);
 
   const itemsPerPage = 50;const totalPages = Math.ceil(filteredEquipment.length / itemsPerPage);
 const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -340,6 +348,15 @@ const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerP
             <option value="maintenance">Maintenance</option>
             <option value="retired">Retired</option>
           </select>
+
+          <select
+            className="reg-filter-select"
+            value={filterCalibration}
+            onChange={(e) => setFilterCalibration(e.target.value)}
+          >
+            <option value="all">All Calibration</option>
+            <option value="with_data">With Calibration Data</option>
+          </select>
         </div>
 
         {/* ── Gallery Grid ── */}
@@ -349,6 +366,7 @@ const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerP
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {paginatedEquipment.map((eq: any) => {
                 const status = statusConfig[eq.status] ?? statusConfig.inactive;
+                const showCalibrationPanel = filterCalibration === "with_data" && (eq.calibrationTestingDate || eq.calibrationExpiryDate);
                 return (
                   <div
                     key={eq.id}
@@ -395,6 +413,28 @@ const paginatedEquipment = filteredEquipment.slice((currentPage - 1) * itemsPerP
                         </div>
                       </div>
                     </div>
+
+                    {showCalibrationPanel && (
+                      <div style={{ borderTop: "1px solid #F4D4D4", borderBottom: "1px solid #F4D4D4", background: "#FFF6F6", padding: "8px 12px" }}>
+                        <p style={{ fontSize: "9px", fontWeight: 700, color: "#8B2020", letterSpacing: "0.12em", textTransform: "uppercase", margin: 0 }}>
+                          Calibration Data
+                        </p>
+                        <div style={{ marginTop: "4px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                          <div>
+                            <p style={{ fontSize: "9px", fontWeight: 600, color: "#7A8A93", margin: 0, textTransform: "uppercase" }}>Testing</p>
+                            <p style={{ fontSize: "11px", fontWeight: 600, color: "#1A1A1A", margin: "2px 0 0 0" }}>
+                              {eq.calibrationTestingDate ? new Date(eq.calibrationTestingDate).toLocaleDateString() : "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <p style={{ fontSize: "9px", fontWeight: 600, color: "#7A8A93", margin: 0, textTransform: "uppercase" }}>Expiry</p>
+                            <p style={{ fontSize: "11px", fontWeight: 700, color: eq.calibrationExpiryDate ? "#8B2020" : "#1A1A1A", margin: "2px 0 0 0" }}>
+                              {eq.calibrationExpiryDate ? new Date(eq.calibrationExpiryDate).toLocaleDateString() : "—"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Metadata Row */}
                     <div className="flex items-center justify-between border-t border-slate-50 bg-[#FAFAF8] px-4 py-2">
